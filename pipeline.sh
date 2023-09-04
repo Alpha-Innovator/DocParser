@@ -25,7 +25,7 @@ if [ "$?" -ne 0 ]; then
 fi
 
 # name of output tex file
-output_tex = "$input_directory/${input_filename}_rendered.tex"
+output_tex="$input_directory/${input_filename}_rendered.tex"
 
 # Run the Python script to render the .tex file
 if [ -z "$debug_flag" ]; then
