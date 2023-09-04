@@ -18,7 +18,7 @@ filename_with_extension=$(basename -- "$input_tex")
 input_filename="${filename_with_extension%.*}"
 
 # store the result
-mkdir output
+mkdir -p $input_directory/output
 if [ "$?" -ne 0 ]; then
     echo "Error: Failed to create the output directory"
     exit 1
@@ -88,10 +88,10 @@ if [ "$?" -ne 0 ]; then
 fi
 
 ############## generate the bounding box with original and rendered PDF ##########
-python generate_bounding_box.py "$input_directory" "$output_directory"
+# python generate_bounding_box.py "$input_directory" "$output_directory"
 
-# Check if the shell script execution was successful
-if [ "$?" -ne 0 ]; then
-    echo "Error: Failed to generate the bounding box."
-    exit 1
-fi
+# # Check if the shell script execution was successful
+# if [ "$?" -ne 0 ]; then
+#     echo "Error: Failed to generate the bounding box."
+#     exit 1
+# fi
