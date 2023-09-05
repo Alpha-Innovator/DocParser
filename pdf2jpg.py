@@ -29,7 +29,7 @@ def main() -> None:
     parser.add_argument('--pdf', type=str, required=True)
     parser.add_argument('--output_path', type=str, required=True)
     args = parser.parse_args()
-    pdf2jpg(args.pdf, args.path)
+    pdf2jpg(args.pdf, args.output_path)
 
 if __name__ == '__main__':
     main()
