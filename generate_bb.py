@@ -1,15 +1,16 @@
 import os
 from PIL import Image, ImageDraw
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
 from pdfminer.high_level import extract_pages
+from pdfminer.layout import LAParams
 
 from logger import logger
 
 log = logger.setup_app_level_logger(file_name="app_debug.log")
 
 
-def generate_bb(filename: str) -> Dict[int, List]:
+def generate_bb(filename: str, lpparams=None) -> Dict[int, List]:
     """
     Generate a dictionary of elements from a given file.
 
@@ -21,7 +22,9 @@ def generate_bb(filename: str) -> Dict[int, List]:
         and the values are lists of elements.
     """
     elements = {}
-    page_layouts = extract_pages(filename)
+    if lpparams is None:
+        lpparams = LAParams()
+    page_layouts = extract_pages(filename, lpparams=lpparams)
     for page_index, page_layout in enumerate(page_layouts):
         elements[page_index] = []
         elements[page_index].append(page_layout)
@@ -29,6 +32,14 @@ def generate_bb(filename: str) -> Dict[int, List]:
             elements[page_index].append(element)
 
     return elements
+
+
+def merge_bb():
+    pass
+    # 1. delete an element if this element is inside another element
+    # 2. merge two elements if there is an overlap
+    # 3. merge two elements if they lie on the same side 
+    #    and horizontally overlap
 
 
 def transform(elements: List, image: Image.Image):
@@ -66,7 +77,7 @@ def transform(elements: List, image: Image.Image):
     return elements
 
 
-def generate_annotation(image_path: str, elements: List) -> None:
+def generate_annotation(image_path: str, elements: List) -> Tuple[Image.Image, List]:
     """
     Display bounding boxes on an image.
 
@@ -84,17 +95,35 @@ def generate_annotation(image_path: str, elements: List) -> None:
     for element in elements:
         draw.rectangle(element.bbox, outline="red")
 
-    image.show()
+    return image, elements
+
+
+def export_to_coco(elements: Dict[int, List], filename: str):
+    pass
 
 
 def main():
     filename = os.path.expanduser("~/icml2022/example_paper.pdf")
     elements = generate_bb(filename)
 
-    first_page = os.path.expanduser(
-        "~/icml2022/output/original/example_paper_page_0.jpg"
+    annotation_infos = {}
+    for page_index, page_elements in elements.items():
+        annotation_infos[page_index] = []
+        page = os.path.expanduser(
+            f"~/icml2022/output/original/example_paper_page_{page_index}.jpg"
+        )
+        image, transformed_elements = generate_annotation(page, elements[page_index])
+        output = os.path.expanduser(
+            f"~/icml2022/output/result/example_paper_page_{page_index}.jpg"
+        )
+
+        image.save(output, "JPEG")
+        annotation_infos[page_index].append(transformed_elements)
+
+    json_file = os.path.expanduser(
+        f"~/icml2022/output/result/annotation.json"
     )
-    generate_annotation(first_page, elements[0])
+    export_to_coco(annotation_infos, filename=json_file)
 
 
 if __name__ == "__main__":
