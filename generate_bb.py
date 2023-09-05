@@ -74,7 +74,7 @@ def transform(elements: List, image: Image.Image):
         y0 = y0 * scale
         y1 = y0 + element_height * scale
         x1 = x0 + element_width * scale
-        elements[index].bbox = (x0, y1, x1, y0)
+        elements[index].bbox = (x0, y0, x1, y1)
     return elements
 
 
