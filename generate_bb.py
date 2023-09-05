@@ -170,7 +170,6 @@ def main():
 
     annotation_infos = {}
     for page_index, page_elements in elements.items():
-        annotation_infos[page_index] = []
         page = os.path.expanduser(
             f"~/icml2022/output/original/example_paper_page_{page_index}.jpg"
         )
@@ -180,7 +179,7 @@ def main():
         )
 
         image.save(output, "JPEG")
-        annotation_infos[page_index].append(transformed_elements)
+        annotation_infos[page_index] = transformed_elements
 
     json_file = os.path.expanduser(
         f"~/icml2022/output/result/annotation.json"
