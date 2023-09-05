@@ -48,3 +48,10 @@ Explanation:
 
 
 # Pipeline
+
+
+# Acknowledgements
+This project is based on the following python packages:
+- [Texsoup](https://texsoup.alvinwan.com/)
+- [pdf2image](https://pypi.org/project/pdf2image/)
+- [pdfminer.six](https://pdfminersix.readthedocs.io/en/latest/index.html)
