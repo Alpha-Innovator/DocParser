@@ -20,16 +20,17 @@ def pdf2jpg(pdf: str, path: str) -> None:
     pdf_name = os.path.splitext(os.path.basename(pdf))[0]
     images = convert_from_path(pdf)
     for page_index, image in enumerate(images):
-        image_name = pdf_name + '_page_' + str(page_index) + '.jpg'
-        image.save(os.path.join(path, image_name), 'JPEG')
+        image_name = pdf_name + "_page_" + str(page_index) + ".jpg"
+        image.save(os.path.join(path, image_name), "JPEG")
 
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument('--pdf', type=str, required=True)
-    parser.add_argument('--output_path', type=str, required=True)
+    parser.add_argument("--pdf", type=str, required=True)
+    parser.add_argument("--output_path", type=str, required=True)
     args = parser.parse_args()
     pdf2jpg(args.pdf, args.output_path)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()
