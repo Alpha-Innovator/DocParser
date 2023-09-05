@@ -66,7 +66,7 @@ def transform(elements: List, image: Image.Image):
     return elements
 
 
-def show_bb(image_path: str, elements: List) -> None:
+def generate_annotation(image_path: str, elements: List) -> None:
     """
     Display bounding boxes on an image.
 
@@ -94,7 +94,7 @@ def main():
     first_page = os.path.expanduser(
         "~/icml2022/output/original/example_paper_page_0.jpg"
     )
-    show_bb(first_page, elements[0])
+    generate_annotation(first_page, elements[0])
 
 
 if __name__ == "__main__":
