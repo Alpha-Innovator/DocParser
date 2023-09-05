@@ -3,14 +3,14 @@ from PIL import Image, ImageDraw
 from typing import Dict, List, Tuple
 
 from pdfminer.high_level import extract_pages
-from pdfminer.layout import LAParams
+from pdfminer.layout import LAParams, LTPage
 
 from logger import logger
 
 log = logger.setup_app_level_logger(file_name="app_debug.log")
 
 
-def generate_bb(filename: str, lpparams=None) -> Dict[int, List]:
+def generate_bb(filename: str, laparams=None) -> Dict[int, List]:
     """
     Generate a dictionary of elements from a given file.
 
@@ -18,13 +18,13 @@ def generate_bb(filename: str, lpparams=None) -> Dict[int, List]:
         filename (str): The name of the file to extract elements from.
 
     Returns:
-        Dict[int, List]: A dictionary where the keys are page indices 
+        Dict[int, List]: A dictionary where the keys are page indices
         and the values are lists of elements.
     """
     elements = {}
-    if lpparams is None:
-        lpparams = LAParams()
-    page_layouts = extract_pages(filename, lpparams=lpparams)
+    if laparams is None:
+        laparams = LAParams()
+    page_layouts = extract_pages(filename, laparams=laparams)
     for page_index, page_layout in enumerate(page_layouts):
         elements[page_index] = []
         elements[page_index].append(page_layout)
