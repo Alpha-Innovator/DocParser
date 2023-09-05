@@ -39,7 +39,7 @@ def merge_bb():
     pass
     # 1. delete an element if this element is inside another element
     # 2. merge two elements if there is an overlap
-    # 3. merge two elements if they lie on the same side 
+    # 3. merge two elements if they lie on the same side
     #    and horizontally overlap
 
 
@@ -167,6 +167,7 @@ def export_to_coco(elements: Dict[int, List], filename: str):
 def main():
     filename = os.path.expanduser("~/icml2022/example_paper.pdf")
     elements = generate_bb(filename)
+    merge_bb()
 
     annotation_infos = {}
     for page_index, page_elements in elements.items():
@@ -181,9 +182,7 @@ def main():
         image.save(output, "JPEG")
         annotation_infos[page_index] = transformed_elements
 
-    json_file = os.path.expanduser(
-        f"~/icml2022/output/result/annotation.json"
-    )
+    json_file = os.path.expanduser("~/icml2022/output/result/annotation.json")
     export_to_coco(annotation_infos, filename=json_file)
 
 
