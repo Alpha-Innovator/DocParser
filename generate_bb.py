@@ -1,6 +1,7 @@
 import os
 from PIL import Image, ImageDraw
 from typing import Dict, List, Tuple
+import json
 
 from pdfminer.high_level import extract_pages
 from pdfminer.layout import LAParams, LTPage
@@ -98,8 +99,69 @@ def generate_annotation(image_path: str, elements: List) -> Tuple[Image.Image, L
     return image, elements
 
 
+def color_to_category(element):
+    return 0
+
+
 def export_to_coco(elements: Dict[int, List], filename: str):
-    pass
+    result = {
+        "info": {  # TODO: modify this
+            "year": 2023,
+            "version": "1.0",
+            "description": "",
+            "contributor": "manual",
+            "url": "",
+            "date_created": -1,
+        },
+        "licenses": [],  # TODO: modify this
+        "images": [],
+        "annotations": [],
+        "categories": [
+            {"id": 0, "name": "Algorithm"},
+            {"id": 1, "name": "Caption"},
+            {"id": 2, "name": "Equation"},
+            {"id": 3, "name": "Figure"},
+            {"id": 4, "name": "Footnote"},
+            {"id": 5, "name": "List"},
+            {"id": 6, "name": "Others"},
+            {"id": 7, "name": "Table"},
+            {"id": 8, "name": "Text"},
+            {"id": 9, "name": "Text-EQ", "supercategory": "Text"},
+            {"id": 10, "name": "Title"},
+        ],
+    }
+    # FIXME: the width and height computation error
+    for page_index, page_elements in elements.items():
+        log.debug(f"page_index: {page_index}, page_elements: {page_elements}")
+        for index, element in enumerate(page_elements):
+            if isinstance(element, LTPage):
+                image = {
+                    "id": page_index,
+                    "width": element.bbox[2] - element.bbox[0],
+                    "height": element.bbox[3] - element.bbox[1],
+                    "file_name": os.path.basename(f"~/icml2022/output/result/example_paper_page_{page_index}.jpg"),
+                    "coco_url": "",  # TODO: modify this
+                    "date_captured": "",  # TODO: modify this
+                    "flickr_url": "",  # TODO: modify this
+                    "license": 0,   # TODO: modify this
+                }
+                result["images"].append(image)
+            else:
+                width = element.bbox[2] - element.bbox[0]
+                height = element.bbox[3] - element.bbox[1]
+                annotation = {
+                    "id": index,
+                    "image_id": page_index,
+                    "category_id": color_to_category(element),  # TODO: modify this
+                    "segmentation": [],
+                    "bbox": [element.bbox[0], element.bbox[1], width, height],
+                    "area": width * height,
+                    "iscrowd": 0
+                }
+                result["annotations"].append(annotation)
+
+    with open(filename, "w") as f:
+        json.dump(result, f)
 
 
 def main():
