@@ -133,11 +133,37 @@ def overlap_in_y_axis(element1, element2,
     return True
 
 
+def is_two_column(page_elements: List, threshold: float) -> bool:
+    """
+    Determines if the given page elements are arranged in a two-column layout.
+
+    Args:
+        page_elements (List): A list of page elements.
+        threshold (float): The threshold used to determine if an
+            element belongs to a column.
+
+    Returns:
+        bool: True if the page elements are arranged in a
+            two-column layout, False otherwise.
+    """
+    page_layout = page_elements[0]
+    page_width = page_layout.bbox[2] - page_layout.bbox[0]
+    one_side_elements = []
+    for element in page_elements:
+        if (
+            element.bbox[2] < page_width / 2 - threshold  # left side
+            or element.bbox[0] > page_width / 2 + threshold  # right side
+        ):
+            one_side_elements.append(element)
+
+    return len(one_side_elements) > len(page_elements) / 2
+
+
 def merge_bb(elements: Dict[int, List]):
     result = {}
-    is_two_column = True
+    threshold = 0.1  # TODO: move this to config
     for page_index, page_elements in elements.items():
-        log.debug(f"page_index: {page_index}, page_elements: {len(page_elements)}")
+        two_column_flag = is_two_column(page_elements, threshold)
         # sort the elements by y coordinate then by x coordinate
         sorted_elements = sorted(
             page_elements, key=lambda element: (element.bbox[1], element.bbox[0])
