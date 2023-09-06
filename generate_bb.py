@@ -3,6 +3,7 @@ from PIL import Image, ImageDraw
 from typing import Dict, List, Tuple
 import json
 import argparse
+import datetime
 
 from pdfminer.high_level import extract_pages
 from pdfminer.layout import LAParams, LTPage
@@ -14,14 +15,16 @@ log = logger.setup_app_level_logger(file_name="app_debug.log")
 
 def generate_bb(filename: str, laparams=None) -> Dict[int, List]:
     """
-    Generate a dictionary of elements from a given file.
+    Generate a bounding box dictionary for each page in a PDF file.
 
     Args:
-        filename (str): The name of the file to extract elements from.
+        filename (str): The path to the PDF file.
+        laparams (Optional[LAParams]): The layout analysis parameters.
+            Defaults to None.
 
     Returns:
-        Dict[int, List]: A dictionary where the keys are page indices
-        and the values are lists of elements.
+        Dict[int, List]: A dictionary where the keys are the page indices
+            and the values are lists of bounding boxes.
     """
     elements = {}
     if laparams is None:
@@ -30,6 +33,7 @@ def generate_bb(filename: str, laparams=None) -> Dict[int, List]:
     for page_index, page_layout in enumerate(page_layouts):
         elements[page_index] = []
         elements[page_index].append(page_layout)
+        # TODO: extract te color
         for element in page_layout:
             elements[page_index].append(element)
 
@@ -79,16 +83,18 @@ def transform(elements: List, image: Image.Image):
     return elements
 
 
-def generate_annotation(image_path: str, elements: List) -> Tuple[Image.Image, List]:
+def generate_annotation(image_path: str,
+                        elements: List) -> Tuple[Image.Image, List]:
     """
-    Display bounding boxes on an image.
+    Generate an annotation for an image.
 
-    Parameters:
+    Args:
         image_path (str): The path to the image file.
-        elements (List): A list of elements to draw bounding boxes on.
+        elements (List): A list of elements to be annotated.
 
     Returns:
-        None
+        Tuple[Image.Image, List]: A tuple containing the annotated
+            image and the list of annotated elements.
     """
     image = Image.open(image_path)
     draw = ImageDraw.Draw(image)
@@ -104,19 +110,25 @@ def color_to_category(element):
     return 0
 
 
-def export_to_coco(elements: Dict[int, List],
-                   image_infos: Dict[int, str],
-                   filename: str) -> None:
+def export_to_coco(
+    elements: Dict[int, List], image_infos: Dict[int, str], filename: str
+) -> None:
     result = {
-        "info": {  # TODO: modify this
+        "info": {
             "year": 2023,
             "version": "1.0",
-            "description": "",
+            "description": "Visually Rich Document Understanding data process",
             "contributor": "manual",
-            "url": "",
-            "date_created": -1,
+            "url": "https://github.com/MaoSong2022/vrdu_data_process",
+            "date_created": f"{datetime.datetime.now()}",
         },
-        "licenses": [],  # TODO: modify this
+        "licenses": [  # TODO: modify this
+            {
+                "url": "http://creativecommons.org/licenses/by/2.0/",
+                "id": 4,
+                "name": "Attribution License",
+            }
+        ],
         "images": [],
         "annotations": [],
         "categories": [
@@ -133,7 +145,6 @@ def export_to_coco(elements: Dict[int, List],
             {"id": 10, "name": "Title"},
         ],
     }
-    # FIXME: the width and height computation error
     for page_index, page_elements in elements.items():
         log.debug(f"page_index: {page_index}, page_elements: {page_elements}")
         for index, element in enumerate(page_elements):
@@ -146,7 +157,7 @@ def export_to_coco(elements: Dict[int, List],
                     "coco_url": "",  # TODO: modify this
                     "date_captured": "",  # TODO: modify this
                     "flickr_url": "",  # TODO: modify this
-                    "license": 0,   # TODO: modify this
+                    "license": 0,  # TODO: modify this
                 }
                 result["images"].append(image)
             else:
@@ -159,7 +170,7 @@ def export_to_coco(elements: Dict[int, List],
                     "segmentation": [],
                     "bbox": [element.bbox[0], element.bbox[1], width, height],
                     "area": width * height,
-                    "iscrowd": 0
+                    "iscrowd": 0,
                 }
                 result["annotations"].append(annotation)
 
@@ -174,8 +185,6 @@ def main():
     args = parser.parse_args()
     main_directory = args.path
     filename = args.file_name
-    log.debug(f"file: {main_directory}")
-    log.debug(f"filename: {filename}")
 
     rendered_path = os.path.join(main_directory, "rendered")
     result_path = os.path.join(main_directory, "result")
