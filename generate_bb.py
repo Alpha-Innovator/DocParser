@@ -2,6 +2,7 @@ import os
 from PIL import Image, ImageDraw
 from typing import Dict, List, Tuple
 import json
+import argparse
 
 from pdfminer.high_level import extract_pages
 from pdfminer.layout import LAParams, LTPage
@@ -103,7 +104,9 @@ def color_to_category(element):
     return 0
 
 
-def export_to_coco(elements: Dict[int, List], filename: str):
+def export_to_coco(elements: Dict[int, List],
+                   image_infos: Dict[int, str],
+                   filename: str) -> None:
     result = {
         "info": {  # TODO: modify this
             "year": 2023,
@@ -139,7 +142,7 @@ def export_to_coco(elements: Dict[int, List], filename: str):
                     "id": page_index,
                     "width": element.bbox[2] - element.bbox[0],
                     "height": element.bbox[3] - element.bbox[1],
-                    "file_name": os.path.basename(f"~/icml2022/output/result/example_paper_page_{page_index}.jpg"),
+                    "file_name": image_infos[page_index],
                     "coco_url": "",  # TODO: modify this
                     "date_captured": "",  # TODO: modify this
                     "flickr_url": "",  # TODO: modify this
@@ -165,25 +168,35 @@ def export_to_coco(elements: Dict[int, List], filename: str):
 
 
 def main():
-    filename = os.path.expanduser("~/icml2022/example_paper.pdf")
-    elements = generate_bb(filename)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--pdf", type=str, required=True)
+    args = parser.parse_args()
+    file = args.pdf
+    log.debug(f"file: {file}")
+    directory = os.path.dirname(file)
+    filename = os.path.splitext(os.path.basename(file))[0]
+    log.debug(f"filename: {filename}")
+
+    rendered_path = os.path.join(directory, "output/original")
+    result_path = os.path.join(directory, "output/result")
+
+    elements = generate_bb(file)
     merge_bb()
 
     annotation_infos = {}
+    image_infos = {}
     for page_index, page_elements in elements.items():
-        page = os.path.expanduser(
-            f"~/icml2022/output/original/example_paper_page_{page_index}.jpg"
-        )
-        image, transformed_elements = generate_annotation(page, elements[page_index])
-        output = os.path.expanduser(
-            f"~/icml2022/output/result/example_paper_page_{page_index}.jpg"
-        )
+        page = os.path.join(rendered_path, f"{filename}_page_{page_index}.jpg")
+        image, transformed_elements = generate_annotation(page, page_elements)
 
-        image.save(output, "JPEG")
+        image_name = f"{filename}_annotation_page_{page_index}.jpg"
+        annotated_image = os.path.join(result_path, image_name)
+        image_infos[page_index] = annotated_image
+        image.save(annotated_image, "JPEG")
         annotation_infos[page_index] = transformed_elements
 
-    json_file = os.path.expanduser("~/icml2022/output/result/annotation.json")
-    export_to_coco(annotation_infos, filename=json_file)
+    json_file = os.path.join(result_path, "annotation.json")
+    export_to_coco(annotation_infos, image_infos, filename=json_file)
 
 
 if __name__ == "__main__":
