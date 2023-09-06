@@ -169,24 +169,25 @@ def export_to_coco(elements: Dict[int, List],
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--pdf", type=str, required=True)
+    parser.add_argument("--path", type=str, required=True)
+    parser.add_argument("--file_name", type=str, required=True)
     args = parser.parse_args()
-    file = args.pdf
-    log.debug(f"file: {file}")
-    directory = os.path.dirname(file)
-    filename = os.path.splitext(os.path.basename(file))[0]
+    main_directory = args.path
+    filename = args.file_name
+    log.debug(f"file: {main_directory}")
     log.debug(f"filename: {filename}")
 
-    rendered_path = os.path.join(directory, "output/original")
-    result_path = os.path.join(directory, "output/result")
+    rendered_path = os.path.join(main_directory, "rendered")
+    result_path = os.path.join(main_directory, "result")
 
-    elements = generate_bb(file)
+    rendered_pdf = os.path.join(rendered_path, f"{filename}_rendered.pdf")
+    elements = generate_bb(rendered_pdf)
     merge_bb()
 
     annotation_infos = {}
     image_infos = {}
     for page_index, page_elements in elements.items():
-        page = os.path.join(rendered_path, f"{filename}_page_{page_index}.jpg")
+        page = os.path.join(rendered_path, f"{filename}_rendered_page_{page_index}.jpg")
         image, transformed_elements = generate_annotation(page, page_elements)
 
         image_name = f"{filename}_annotation_page_{page_index}.jpg"
