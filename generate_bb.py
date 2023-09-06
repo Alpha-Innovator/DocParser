@@ -88,7 +88,7 @@ def on_same_side(element1, element2, page_width) -> bool:
         page_width (float): The width of the page.
 
     Returns:
-        bool: True if the elements are on the same side of the page, 
+        bool: True if the elements are on the same side of the page,
             False otherwise.
     """
     if element1.bbox[0] > page_width / 2 and element2.bbox[2] < page_width / 2:
@@ -99,8 +99,7 @@ def on_same_side(element1, element2, page_width) -> bool:
     return True
 
 
-def overlap_in_y_axis(element1, element2,
-                      is_two_column: bool, page_width) -> bool:
+def overlap_in_y_axis(element1, element2, is_two_column: bool, page_width) -> bool:
     """
     Check if two elements overlap in the y-axis.
 
@@ -114,10 +113,7 @@ def overlap_in_y_axis(element1, element2,
     Returns:
         bool: True if the elements overlap in the y-axis, False otherwise.
     """
-    log.debug(f"element1: {element1}")
-    log.debug(f"element2: {element2}")
     if is_two_column and not on_same_side(element1, element2, page_width):
-        log.debug("not on same side")
         return False
 
     # overlap on y_axis
@@ -160,6 +156,23 @@ def is_two_column(page_elements: List, threshold: float) -> bool:
 
 
 def merge_bb(elements: Dict[int, List]):
+    """
+    Merge bounding boxes in the given elements dictionary.
+
+    Parameters:
+    - elements: A dictionary where the keys are page indices
+        and the values are lists of elements.
+
+    Method:
+    - delete one bb if it is inside another bb
+    - merge two bb if they intersect
+    - merge two bb if they are on the same side of the page and
+        overlap in y axis
+
+    Returns:
+    - result: A dictionary where the keys are page indices and
+        the values are lists of merged elements.
+    """
     result = {}
     threshold = 0.1  # TODO: move this to config
     for page_index, page_elements in elements.items():
@@ -173,32 +186,15 @@ def merge_bb(elements: Dict[int, List]):
             if index <= 1:
                 continue
 
-            log.debug(f"current_element: {result[page_index][-1]}")
-            log.debug(f"element: {element}")
-
             should_merge = False
             for i, p_e in enumerate(result[page_index]):
                 if i == 0:
                     continue
                 if inside_bb(element, p_e):
-                    log.debug("inside")
                     should_merge = True
                     break
 
                 if intersects_bb(element, p_e):
-                    log.debug("intersects")
-                    result[page_index][i].bbox = (
-                        min(p_e.bbox[0], element.bbox[0]),
-                        min(p_e.bbox[1], element.bbox[1]),
-                        max(p_e.bbox[2], element.bbox[2]),
-                        max(p_e.bbox[3], element.bbox[3]),
-                    )
-                    should_merge = True
-                    log.debug(f"merged: {result[page_index][-1]}")
-
-                if overlap_in_y_axis(element, p_e, is_two_column,
-                                     sorted_elements[0].bbox[2]):
-                    log.debug("overlap in y axis")
                     result[page_index][i].bbox = (
                         min(p_e.bbox[0], element.bbox[0]),
                         min(p_e.bbox[1], element.bbox[1]),
@@ -207,11 +203,19 @@ def merge_bb(elements: Dict[int, List]):
                     )
                     should_merge = True
 
+                if overlap_in_y_axis(
+                    element, p_e, two_column_flag, sorted_elements[0].bbox[2]
+                ):
+                    result[page_index][i].bbox = (
+                        min(p_e.bbox[0], element.bbox[0]),
+                        min(p_e.bbox[1], element.bbox[1]),
+                        max(p_e.bbox[2], element.bbox[2]),
+                        max(p_e.bbox[3], element.bbox[3]),
+                    )
+                    should_merge = True
 
             if not should_merge:
                 result[page_index].append(element)
-
-        log.debug(f"page_index:{page_index}, result: {len(result[page_index])}")
 
     # 1. delete an element if this element is inside another element
     # 2. merge two elements if there is an overlap
