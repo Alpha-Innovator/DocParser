@@ -40,12 +40,158 @@ def generate_bb(filename: str, laparams=None) -> Dict[int, List]:
     return elements
 
 
-def merge_bb():
-    pass
+def intersects_bb(element1, element2) -> bool:
+    """
+    Check if two elements with bounding boxes intersect.
+
+    Args:
+        element1 (Element): The first element with a bounding box.
+        element2 (Element): The second element with a bounding box.
+
+    Returns:
+        bool: True if the two elements intersect, False otherwise.
+    """
+    if element1.bbox[0] > element2.bbox[2] or element1.bbox[2] < element2.bbox[0]:
+        return False
+    if element1.bbox[1] > element2.bbox[3] or element1.bbox[3] < element2.bbox[1]:
+        return False
+    return True
+
+
+def inside_bb(element1, element2) -> bool:
+    """
+    Check if element1 is completely inside element2's bounding box.
+
+    Parameters:
+        element1 (Element): The first element to check.
+        element2 (Element): The second element to check against.
+
+    Returns:
+        bool: True if element1 is completely inside element2's bounding box,
+            False otherwise.
+    """
+    return (
+        element1.bbox[0] >= element2.bbox[0]
+        and element1.bbox[1] >= element2.bbox[1]
+        and element1.bbox[2] <= element2.bbox[2]
+        and element1.bbox[3] <= element2.bbox[3]
+    )
+
+
+def on_same_side(element1, element2, page_width) -> bool:
+    """
+    Check if two elements are on the same side of the page.
+
+    Args:
+        element1 (object): The first element.
+        element2 (object): The second element.
+        page_width (float): The width of the page.
+
+    Returns:
+        bool: True if the elements are on the same side of the page, 
+            False otherwise.
+    """
+    if element1.bbox[0] > page_width / 2 and element2.bbox[2] < page_width / 2:
+        return False
+    if element2.bbox[0] > page_width / 2 and element1.bbox[2] < page_width / 2:
+        return False
+
+    return True
+
+
+def overlap_in_y_axis(element1, element2,
+                      is_two_column: bool, page_width) -> bool:
+    """
+    Check if two elements overlap in the y-axis.
+
+    Args:
+        element1: The first element.
+        element2: The second element.
+        is_two_column (bool): Indicates if the elements are
+                              in a two-column layout.
+        page_width: The width of the page.
+
+    Returns:
+        bool: True if the elements overlap in the y-axis, False otherwise.
+    """
+    log.debug(f"element1: {element1}")
+    log.debug(f"element2: {element2}")
+    if is_two_column and not on_same_side(element1, element2, page_width):
+        log.debug("not on same side")
+        return False
+
+    # overlap on y_axis
+    if element1.bbox[3] < element2.bbox[1]:
+        return False
+    if element2.bbox[3] < element1.bbox[1]:
+        return False
+
+    # not too far in x axis
+    # if abs(element1.bbox[0] - element2.bbox[0]) > page_width / 4:
+    #     return False
+
+    return True
+
+
+def merge_bb(elements: Dict[int, List]):
+    result = {}
+    is_two_column = True
+    for page_index, page_elements in elements.items():
+        log.debug(f"page_index: {page_index}, page_elements: {len(page_elements)}")
+        # sort the elements by y coordinate then by x coordinate
+        sorted_elements = sorted(
+            page_elements, key=lambda element: (element.bbox[1], element.bbox[0])
+        )
+        result[page_index] = [sorted_elements[0], sorted_elements[1]]
+        for index, element in enumerate(sorted_elements):
+            if index <= 1:
+                continue
+
+            log.debug(f"current_element: {result[page_index][-1]}")
+            log.debug(f"element: {element}")
+
+            should_merge = False
+            for i, p_e in enumerate(result[page_index]):
+                if i == 0:
+                    continue
+                if inside_bb(element, p_e):
+                    log.debug("inside")
+                    should_merge = True
+                    break
+
+                if intersects_bb(element, p_e):
+                    log.debug("intersects")
+                    result[page_index][i].bbox = (
+                        min(p_e.bbox[0], element.bbox[0]),
+                        min(p_e.bbox[1], element.bbox[1]),
+                        max(p_e.bbox[2], element.bbox[2]),
+                        max(p_e.bbox[3], element.bbox[3]),
+                    )
+                    should_merge = True
+                    log.debug(f"merged: {result[page_index][-1]}")
+
+                if overlap_in_y_axis(element, p_e, is_two_column,
+                                     sorted_elements[0].bbox[2]):
+                    log.debug("overlap in y axis")
+                    result[page_index][i].bbox = (
+                        min(p_e.bbox[0], element.bbox[0]),
+                        min(p_e.bbox[1], element.bbox[1]),
+                        max(p_e.bbox[2], element.bbox[2]),
+                        max(p_e.bbox[3], element.bbox[3]),
+                    )
+                    should_merge = True
+
+
+            if not should_merge:
+                result[page_index].append(element)
+
+        log.debug(f"page_index:{page_index}, result: {len(result[page_index])}")
+
     # 1. delete an element if this element is inside another element
     # 2. merge two elements if there is an overlap
     # 3. merge two elements if they lie on the same side
     #    and horizontally overlap
+    return result
 
 
 def transform(elements: List, image: Image.Image):
@@ -83,8 +229,7 @@ def transform(elements: List, image: Image.Image):
     return elements
 
 
-def generate_annotation(image_path: str,
-                        elements: List) -> Tuple[Image.Image, List]:
+def generate_annotation(image_path: str, elements: List) -> Tuple[Image.Image, List]:
     """
     Generate an annotation for an image.
 
@@ -190,8 +335,10 @@ def main():
     result_path = os.path.join(main_directory, "result")
 
     rendered_pdf = os.path.join(rendered_path, f"{filename}_rendered.pdf")
-    elements = generate_bb(rendered_pdf)
-    merge_bb()
+
+    laparams = LAParams(line_margin=0.4, word_margin=0.3)
+    elements = generate_bb(rendered_pdf, laparams)
+    elements = merge_bb(elements)
 
     annotation_infos = {}
     image_infos = {}
