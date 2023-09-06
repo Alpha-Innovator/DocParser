@@ -52,7 +52,7 @@ fi
 
 # copy the original PDF file to the output directory
 mkdir -p "output/original"
-original_pdf = "output/original/$input_filename.pdf"
+original_pdf="output/original/$input_filename.pdf"
 cp "$input_directory/$input_filename.pdf" "$original_pdf"
 
 ############# compile the rendered .tex file into a PDF###########################
@@ -66,7 +66,7 @@ if [ "$?" -ne 0 ]; then
 fi
 
 mkdir -p "output/rendered/"
-rendered_pdf = "$input_directory/output/rendered/$output_tex.pdf"
+rendered_pdf="$input_directory/output/rendered/$output_tex.pdf"
 mv "$input_directory/$output_tex.pdf" "$rendered_pdf"
 
 ############# converting the original PDF and output PDF into images ################
