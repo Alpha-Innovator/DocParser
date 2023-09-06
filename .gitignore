@@ -161,8 +161,6 @@ cython_debug/
 
 # tex
 *.tex
-*.pdf
-*.jpg
 *.bib
 *.svg
 *.rst
@@ -170,7 +168,6 @@ cython_debug/
 *.xml
 *.css
 *.html
-*.json
 
 Texsoup/docs/
 TexSoup/docs/
