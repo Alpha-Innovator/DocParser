@@ -26,32 +26,39 @@ def main():
     # Read tex file and convert to texSoup
     data = utils.data_from_tex_file(origin_tex_file, debug_mode)
 
-    rendering.add_usepackage_command(data, 'xcolor')
-    rendering.add_usepackage_command(data, 'mdframed')  # used for figure
+    config = utils.load_json("config.json")
+    name2category = {name: category for category, name in config["category_name"]}
+    category2rgbcolor = {
+        category: tuple(color) for category, color in config["category_color"]
+    }
+    name2rgbcolor = {
+        name: category2rgbcolor[category] for name, category in name2category.items()
+    }
+    name2color = rendering.add_color_definition(data, name2rgbcolor)
 
     # render title
-    rendering.enclose_title(data)
+    rendering.enclose_title(data, color=name2color['Title'])
 
     main_content = utils.get_main_content(data)
 
-    rendering.enclose_section(main_content)
+    rendering.enclose_section(main_content, color=name2color['Title'])
 
-    rendering.enclose_list(main_content)
+    rendering.enclose_list(main_content, color=name2color['List'])
 
-    rendering.enclose_caption(main_content)
+    rendering.enclose_caption(main_content, color=name2color['Caption'])
 
-    rendering.enclose_equation(main_content)
+    rendering.enclose_equation(main_content, color=name2color['Equation'])
 
-    rendering.enclosed_table(main_content)
+    rendering.enclosed_table(main_content, color=name2color['Table'])
 
     # very first version, need to be improved
-    rendering.enclose_text(main_content)
+    rendering.enclose_text(main_content, color=name2color['Text'])
 
-    rendering.enclose_reference(main_content)
+    rendering.enclose_reference(main_content, color=name2color['Text'])
 
-    rendering.enclose_figure(main_content)
+    rendering.enclose_figure(main_content, color=name2color['Figure'])
 
-    rendering.enclose_algorithm(main_content)
+    rendering.enclose_algorithm(main_content, color=name2color['Algorithm'])
 
     # output tex file
     utils.tex_file_from_data(data, rendered_tex_file, debug_mode)
