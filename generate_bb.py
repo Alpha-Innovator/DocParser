@@ -264,27 +264,24 @@ def transform(elements: List[LTComponent], image: Image.Image) -> List[LTCompone
 
 
 def generate_annotation(
-    image_path: str, elements: List[LTComponent]
-) -> Tuple[Image.Image, List[LTComponent]]:
+    image: Image.Image, elements: List[LTComponent],
+) -> Image.Image:
     """
     Generate an annotation for an image.
 
     Args:
-        image_path (str): The path to the image file.
+        image (Image.Image): The image to annotate.
         elements (List[LTComponent]): A list of elements to be annotated.
 
     Returns:
-        Tuple[Image.Image, List[LTComponent]]: A tuple containing the annotated
-            image and the list of annotated elements.
+        Image.Image: The annotated image.
     """
-    image = Image.open(image_path)
     draw = ImageDraw.Draw(image)
 
-    elements = transform(elements, image)
     for element in elements:
         draw.rectangle(element.bbox, outline="red")
 
-    return image, elements
+    return image
 
 
 def color_to_category(element: LTComponent) -> int:
@@ -379,8 +376,11 @@ def main():
     annotation_infos = {}
     image_infos = {}
     for page_index, page_elements in elements.items():
-        page = os.path.join(rendered_path, f"{filename}_rendered_page_{page_index}.jpg")
-        image, transformed_elements = generate_annotation(page, page_elements)
+        image_path = os.path.join(rendered_path, f"{filename}_rendered_page_{page_index}.jpg")
+        image = Image.open(image_path)
+
+        transformed_page_elements = transform(page_elements, image)
+        annotated_image = generate_annotation(image, transformed_page_elements)
 
         image_name = f"{filename}_annotation_page_{page_index}.jpg"
         annotated_image = os.path.join(result_path, image_name)
