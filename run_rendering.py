@@ -11,12 +11,15 @@ log = logger.setup_app_level_logger(file_name="app_debug.log")
 def main():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--input_tex_file', type=str, required=True,
-                        help='Path to the input tex file')
-    parser.add_argument('--output_tex_file', type=str, required=True,
-                        help='Path to the output tex file')
-    parser.add_argument('--debug_mode', action='store_true', default=False,
-                        help='Debug mode')
+    parser.add_argument(
+        "--input_tex_file", type=str, required=True, help="Path to the input tex file"
+    )
+    parser.add_argument(
+        "--output_tex_file", type=str, required=True, help="Path to the output tex file"
+    )
+    parser.add_argument(
+        "--debug_mode", action="store_true", default=False, help="Debug mode"
+    )
 
     args = parser.parse_args()
     origin_tex_file = args.input_tex_file
@@ -25,6 +28,9 @@ def main():
 
     # Read tex file and convert to texSoup
     data = utils.data_from_tex_file(origin_tex_file, debug_mode)
+
+    rendering.add_usepackage_command(data, "xcolor")
+    rendering.add_usepackage_command(data, "mdframed")  # used for figure
 
     config = utils.load_json("config.json")
     name2category = {name: category for category, name in config["category_name"]}
@@ -37,32 +43,32 @@ def main():
     name2color = rendering.add_color_definition(data, name2rgbcolor)
 
     # render title
-    rendering.enclose_title(data, color=name2color['Title'])
+    rendering.enclose_title(data, color=name2color["Title"])
 
     main_content = utils.get_main_content(data)
 
-    rendering.enclose_section(main_content, color=name2color['Title'])
+    rendering.enclose_section(main_content, color=name2color["Title"])
 
-    rendering.enclose_list(main_content, color=name2color['List'])
+    rendering.enclose_list(main_content, color=name2color["List"])
 
-    rendering.enclose_caption(main_content, color=name2color['Caption'])
+    rendering.enclose_caption(main_content, color=name2color["Caption"])
 
-    rendering.enclose_equation(main_content, color=name2color['Equation'])
+    rendering.enclose_equation(main_content, color=name2color["Equation"])
 
-    rendering.enclosed_table(main_content, color=name2color['Table'])
+    rendering.enclosed_table(main_content, color=name2color["Table"])
 
     # very first version, need to be improved
-    rendering.enclose_text(main_content, color=name2color['Text'])
+    rendering.enclose_text(main_content, color=name2color["Text"])
 
-    rendering.enclose_reference(main_content, color=name2color['Text'])
+    rendering.enclose_reference(main_content, color=name2color["Text"])
 
-    rendering.enclose_figure(main_content, color=name2color['Figure'])
+    rendering.enclose_figure(main_content, color=name2color["Figure"])
 
-    rendering.enclose_algorithm(main_content, color=name2color['Algorithm'])
+    rendering.enclose_algorithm(main_content, color=name2color["Algorithm"])
 
     # output tex file
     utils.tex_file_from_data(data, rendered_tex_file, debug_mode)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
