@@ -366,7 +366,7 @@ def color_to_category(
     """
     result = {}
     category_color = config["category_color"]
-    color2category = {v: k for k, v in category_color}
+    color2category = {tuple(v): k for k, v in category_color}
     name2category = {v: k for k, v in config["category_name"]}
     for index, element in enumerate(page_elements):
         if index == 0:  # skip the LTPage element
@@ -376,8 +376,10 @@ def color_to_category(
             continue
         dominant_color = get_dominant_color(image, element)
         # TODO: remember the color-to-category map, needs to be updated
-        category = color2category[dominant_color]
-        result[index] = category
+        if dominant_color not in color2category:
+            result[index] = 0
+        else:
+            result[index] = color2category[dominant_color]
     return result
 
 
