@@ -351,7 +351,19 @@ def get_dominant_color(
 
 def color_to_category(
     image: Image.Image, page_elements: List[LTComponent]
-) -> Dict[int, str]:
+) -> Dict[int, int]:
+    """
+    Generate a dictionary mapping the index of each element
+    in the page_elements list to its corresponding category index.
+
+    Args:
+        image (PIL.Image.Image): The image object representing the page.
+        page_elements (List[LTComponent]): A list of page elements.
+
+    Returns:
+        Dict[int, int]: A dictionary mapping the index of
+        each element to its corresponding category index.
+    """
     result = {}
     category_color = config["category_color"]
     color2category = {v: k for k, v in category_color}
