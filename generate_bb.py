@@ -25,6 +25,16 @@ def generate_bb(filename: str, laparams=None) -> Dict[int, List[LTComponent]]:
     Returns:
         Dict[int, List[LTComponent]]: A dictionary where the keys are the page
             indices and the values are lists of bounding boxes.
+
+    Note:
+        the bounding boxes are in the form of (x0, y0, x1, y1), where (x0, y0)
+        is the lower_left corner and (x1, y1) is the upper_right corner.
+
+        The origin of the coordinate system is the lower-left corner 
+        of the each page.
+
+    See:
+        https://pdfminersix.readthedocs.io/en/latest/topic/converting_pdf_to_text.html#layout-analysis-algorithm
     """
     elements = {}
     if laparams is None:
