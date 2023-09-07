@@ -12,7 +12,7 @@ from pdfminer.layout import LAParams, LTPage, LTComponent, LTFigure, LTLine
 from logger import logger
 from rendering.utils import load_json
 
-log = logger.setup_app_level_logger(file_name="app_debug.log")
+log = logger.setup_app_level_logger(file_name="app_debug.log", mode="a")
 
 config = load_json("config.json")
 
