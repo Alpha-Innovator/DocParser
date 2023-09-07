@@ -338,17 +338,8 @@ def export_to_coco(
         "images": [],
         "annotations": [],
         "categories": [
-            {"id": 0, "name": "Algorithm"},
-            {"id": 1, "name": "Caption"},
-            {"id": 2, "name": "Equation"},
-            {"id": 3, "name": "Figure"},
-            {"id": 4, "name": "Footnote"},
-            {"id": 5, "name": "List"},
-            {"id": 6, "name": "Others"},
-            {"id": 7, "name": "Table"},
-            {"id": 8, "name": "Text"},
-            {"id": 9, "name": "Text-EQ", "supercategory": "Text"},
-            {"id": 10, "name": "Title"},
+            {"id": index, "name": category}
+            for index, category in config["category_name"]
         ],
     }
     for page_index, page_elements in file_elements.items():
