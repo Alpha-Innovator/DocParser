@@ -413,7 +413,6 @@ def export_to_coco(
         ],
     }
     for page_index, page_elements in file_elements.items():
-        log.debug(f"page_index: {page_index}, page_elements: {page_elements}")
         for index, element in enumerate(page_elements):
             if isinstance(element, LTPage):
                 image = {

@@ -233,12 +233,10 @@ def enclose_caption_inside_env(data, color="orange") -> None:
 
         if "caption" not in element:
             for key, value in element.items():
-                log.debug(f"key: {key}, value: {value}")
                 if isinstance(value, list):
                     enclose_caption(value[CONTENT_INDEX], color)
             continue
 
-        log.debug(f"element: {element}")
         data[index] = {
             "BraceGroup": [
                 {"begin": "{"},
