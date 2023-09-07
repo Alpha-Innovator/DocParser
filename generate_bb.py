@@ -4,6 +4,7 @@ from typing import Dict, List, Tuple
 import json
 import argparse
 import datetime
+import numpy as np
 
 from pdfminer.high_level import extract_pages
 from pdfminer.layout import LAParams, LTPage, LTComponent
@@ -310,8 +311,60 @@ def generate_annotation(
     return page_image
 
 
-def color_to_category(element: LTComponent) -> int:
-    return 0
+def get_dominant_color(
+    image: Image.Image, element: LTComponent
+) -> Tuple[int, int, int]:
+    """
+    Calculate the dominant color in a given region of an image.
+
+    Args:
+        image (Image.Image): The image from which to extract the dominant color.
+        element (LTComponent): The region of interest (ROI) within the image.
+
+    Returns:
+        Tuple[int, int, int]: The RGB value of the dominant color in the ROI.
+    """
+    x0, y0, x1, y1 = element.bbox
+    roi = image.crop((x0, y0, x1, y1))
+
+    # Convert ROI to numpy array
+    roi_array = np.array(roi)
+
+    # Flatten the ROI into a 2D array
+    pixels = roi_array.reshape(-1, 3)
+
+    # Calculate the histogram of colors in the ROI
+    hist, _ = np.histogramdd(
+        pixels, bins=(8, 8, 8), range=[(0, 256), (0, 256), (0, 256)]
+    )
+
+    # Find the bin with the highest frequency (excluding the background color)
+    dominant_bin = np.unravel_index(np.argmax(hist[1:]) + 1, hist.shape)
+
+    # Calculate the RGB value of the dominant color
+    r = dominant_bin[0] * 32
+    g = dominant_bin[1] * 32
+    b = dominant_bin[2] * 32
+
+    return (r, g, b)
+
+
+def color_to_category(
+    image: Image.Image, page_elements: List[LTComponent]
+) -> Dict[int, str]:
+    result = {}
+    category_color = config["category_color"]
+    color2category = {v: k for k, v in category_color}
+    for index, element in enumerate(page_elements):
+        if index == 0:  # skip the LTPage element
+            continue
+        if isinstance(element, LTFigure):  # skip the Image
+            continue
+        dominant_color = get_dominant_color(image, element)
+        # TODO: remember the color-to-category map, needs to be updated
+        category = color2category[dominant_color]
+        result[index] = category
+    return result
 
 
 def export_to_coco(
