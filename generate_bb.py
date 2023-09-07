@@ -34,7 +34,7 @@ def generate_bb(filename: str, laparams=None) -> Dict[int, List[LTComponent]]:
         the bounding boxes are in the form of (x0, y0, x1, y1), where (x0, y0)
         is the lower_left corner and (x1, y1) is the upper_right corner.
 
-        The origin of the coordinate system is the lower-left corner 
+        The origin of the coordinate system is the lower-left corner
         of the each page.
 
     See:
@@ -384,6 +384,7 @@ def color_to_category(
 def export_to_coco(
     file_elements: Dict[int, List[LTComponent]],
     image_infos: Dict[int, str],
+    category_infos: Dict[int, Dict[int, int]],
     filename: str,
 ) -> None:
     result = {
@@ -430,7 +431,7 @@ def export_to_coco(
                 annotation = {
                     "id": index,
                     "image_id": page_index,
-                    "category_id": color_to_category(element),  # TODO: modify this
+                    "category_id": category_infos[page_index][index],
                     "segmentation": [],
                     "bbox": [element.bbox[0], element.bbox[1], width, height],
                     "area": width * height,
@@ -461,6 +462,7 @@ def main():
 
     annotation_infos = {}
     image_infos = {}
+    category_infos = {}
     for page_index, page_elements in file_elements.items():
         page_image_path = os.path.join(
             rendered_path, f"{filename}_rendered_page_{page_index}.jpg"
@@ -476,8 +478,12 @@ def main():
         annotated_image.save(annotated_image_path, "JPEG")
         annotation_infos[page_index] = transformed_page_elements
 
+        category_infos[page_index] = color_to_category(
+            page_image, transformed_page_elements
+        )
+
     json_file = os.path.join(result_path, "annotation.json")
-    export_to_coco(annotation_infos, image_infos, filename=json_file)
+    export_to_coco(annotation_infos, image_infos, category_infos, filename=json_file)
 
 
 if __name__ == "__main__":
