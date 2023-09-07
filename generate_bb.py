@@ -6,14 +6,14 @@ import argparse
 import datetime
 
 from pdfminer.high_level import extract_pages
-from pdfminer.layout import LAParams, LTPage
+from pdfminer.layout import LAParams, LTPage, LTComponent
 
 from logger import logger
 
 log = logger.setup_app_level_logger(file_name="app_debug.log")
 
 
-def generate_bb(filename: str, laparams=None) -> Dict[int, List]:
+def generate_bb(filename: str, laparams=None) -> Dict[int, List[LTComponent]]:
     """
     Generate a bounding box dictionary for each page in a PDF file.
 
@@ -23,8 +23,8 @@ def generate_bb(filename: str, laparams=None) -> Dict[int, List]:
             Defaults to None.
 
     Returns:
-        Dict[int, List]: A dictionary where the keys are the page indices
-            and the values are lists of bounding boxes.
+        Dict[int, List[LTComponent]]: A dictionary where the keys are the page
+            indices and the values are lists of bounding boxes.
     """
     elements = {}
     if laparams is None:
@@ -40,13 +40,13 @@ def generate_bb(filename: str, laparams=None) -> Dict[int, List]:
     return elements
 
 
-def intersects_bb(element1, element2) -> bool:
+def intersects_bb(element1: LTComponent, element2: LTComponent) -> bool:
     """
     Check if two elements with bounding boxes intersect.
 
     Args:
-        element1 (Element): The first element with a bounding box.
-        element2 (Element): The second element with a bounding box.
+        element1 (LTComponent): The first element with a bounding box.
+        element2 (LTComponent): The second element with a bounding box.
 
     Returns:
         bool: True if the two elements intersect, False otherwise.
@@ -58,13 +58,13 @@ def intersects_bb(element1, element2) -> bool:
     return True
 
 
-def inside_bb(element1, element2) -> bool:
+def inside_bb(element1: LTComponent, element2: LTComponent) -> bool:
     """
     Check if element1 is completely inside element2's bounding box.
 
     Parameters:
-        element1 (Element): The first element to check.
-        element2 (Element): The second element to check against.
+        element1 (LTComponent): The first element to check.
+        element2 (LTComponent): The second element to check against.
 
     Returns:
         bool: True if element1 is completely inside element2's bounding box,
@@ -78,13 +78,15 @@ def inside_bb(element1, element2) -> bool:
     )
 
 
-def on_same_side(element1, element2, page_width) -> bool:
+def on_same_side(
+    element1: LTComponent, element2: LTComponent, page_width: float
+) -> bool:
     """
     Check if two elements are on the same side of the page.
 
     Args:
-        element1 (object): The first element.
-        element2 (object): The second element.
+        element1 (LTComponent): The first element.
+        element2 (LTComponent): The second element.
         page_width (float): The width of the page.
 
     Returns:
@@ -99,16 +101,18 @@ def on_same_side(element1, element2, page_width) -> bool:
     return True
 
 
-def overlap_in_y_axis(element1, element2, is_two_column: bool, page_width) -> bool:
+def overlap_in_y_axis(
+    element1: LTComponent, element2: LTComponent, is_two_column: bool, page_width: float
+) -> bool:
     """
     Check if two elements overlap in the y-axis.
 
     Args:
-        element1: The first element.
-        element2: The second element.
+        element1 (LTComponent): The first element.
+        element2 (LTComponent): The second element.
         is_two_column (bool): Indicates if the elements are
                               in a two-column layout.
-        page_width: The width of the page.
+        page_width (float): The width of the page.
 
     Returns:
         bool: True if the elements overlap in the y-axis, False otherwise.
@@ -129,12 +133,12 @@ def overlap_in_y_axis(element1, element2, is_two_column: bool, page_width) -> bo
     return True
 
 
-def is_two_column(page_elements: List, threshold: float) -> bool:
+def is_two_column(page_elements: List[LTComponent], threshold: float) -> bool:
     """
     Determines if the given page elements are arranged in a two-column layout.
 
     Args:
-        page_elements (List): A list of page elements.
+        page_elements (List[LTComponent]): A list of page elements.
         threshold (float): The threshold used to determine if an
             element belongs to a column.
 
@@ -155,13 +159,13 @@ def is_two_column(page_elements: List, threshold: float) -> bool:
     return len(one_side_elements) > len(page_elements) / 2
 
 
-def merge_bb(elements: Dict[int, List]):
+def merge_bb(elements: Dict[int, List[LTComponent]]) -> Dict[int, List[LTComponent]]:
     """
     Merge bounding boxes in the given elements dictionary.
 
     Parameters:
-    - elements: A dictionary where the keys are page indices
-        and the values are lists of elements.
+    - elements (Dict[int, List[LTComponent]]): A dictionary where the keys
+        are page indices and the values are lists of elements.
 
     Method:
     - delete one bb if it is inside another bb
@@ -170,8 +174,8 @@ def merge_bb(elements: Dict[int, List]):
         overlap in y axis
 
     Returns:
-    - result: A dictionary where the keys are page indices and
-        the values are lists of merged elements.
+    - result (Dict[int, List[LTComponent]]): A dictionary where the keys are
+        page indices and the values are lists of merged elements.
     """
     result = {}
     threshold = 0.1  # TODO: move this to config
@@ -224,14 +228,14 @@ def merge_bb(elements: Dict[int, List]):
     return result
 
 
-def transform(elements: List, image: Image.Image):
+def transform(elements: List[LTComponent], image: Image.Image) -> List[LTComponent]:
     """
     Transform the coordinates of elements based on the size of an image.
     It first flip the y-axis, then scale the width and height of the page
     to match the image
 
     Args:
-        elements (List): A list of elements representing bounding boxes.
+        elements (List[LTComponent]): A list of elements representing bounding boxes.
         image (Image.Image): The image to use for scaling.
 
     Returns:
@@ -259,16 +263,18 @@ def transform(elements: List, image: Image.Image):
     return elements
 
 
-def generate_annotation(image_path: str, elements: List) -> Tuple[Image.Image, List]:
+def generate_annotation(
+    image_path: str, elements: List[LTComponent]
+) -> Tuple[Image.Image, List[LTComponent]]:
     """
     Generate an annotation for an image.
 
     Args:
         image_path (str): The path to the image file.
-        elements (List): A list of elements to be annotated.
+        elements (List[LTComponent]): A list of elements to be annotated.
 
     Returns:
-        Tuple[Image.Image, List]: A tuple containing the annotated
+        Tuple[Image.Image, List[LTComponent]]: A tuple containing the annotated
             image and the list of annotated elements.
     """
     image = Image.open(image_path)
@@ -281,12 +287,12 @@ def generate_annotation(image_path: str, elements: List) -> Tuple[Image.Image, L
     return image, elements
 
 
-def color_to_category(element):
+def color_to_category(element: LTComponent) -> int:
     return 0
 
 
 def export_to_coco(
-    elements: Dict[int, List], image_infos: Dict[int, str], filename: str
+    elements: Dict[int, List[LTComponent]], image_infos: Dict[int, str], filename: str
 ) -> None:
     result = {
         "info": {
