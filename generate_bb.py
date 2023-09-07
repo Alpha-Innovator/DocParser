@@ -36,18 +36,18 @@ def generate_bb(filename: str, laparams=None) -> Dict[int, List[LTComponent]]:
     See:
         https://pdfminersix.readthedocs.io/en/latest/topic/converting_pdf_to_text.html#layout-analysis-algorithm
     """
-    elements = {}
+    file_elements = {}
     if laparams is None:
         laparams = LAParams()
     page_layouts = extract_pages(filename, laparams=laparams)
     for page_index, page_layout in enumerate(page_layouts):
-        elements[page_index] = []
-        elements[page_index].append(page_layout)
+        file_elements[page_index] = []
+        file_elements[page_index].append(page_layout)
         # TODO: extract te color
         for element in page_layout:
-            elements[page_index].append(element)
+            file_elements[page_index].append(element)
 
-    return elements
+    return file_elements
 
 
 def intersects_bb(element1: LTComponent, element2: LTComponent) -> bool:
@@ -169,12 +169,14 @@ def is_two_column(page_elements: List[LTComponent], threshold: float) -> bool:
     return len(one_side_elements) > len(page_elements) / 2
 
 
-def merge_bb(elements: Dict[int, List[LTComponent]]) -> Dict[int, List[LTComponent]]:
+def merge_bb(
+    file_elements: Dict[int, List[LTComponent]]
+) -> Dict[int, List[LTComponent]]:
     """
     Merge bounding boxes in the given elements dictionary.
 
     Parameters:
-    - elements (Dict[int, List[LTComponent]]): A dictionary where the keys
+    - file_elements (Dict[int, List[LTComponent]]): A dictionary where the keys
         are page indices and the values are lists of elements.
 
     Method:
@@ -189,7 +191,7 @@ def merge_bb(elements: Dict[int, List[LTComponent]]) -> Dict[int, List[LTCompone
     """
     result = {}
     threshold = 0.1  # TODO: move this to config
-    for page_index, page_elements in elements.items():
+    for page_index, page_elements in file_elements.items():
         two_column_flag = is_two_column(page_elements, threshold)
         # sort the elements by y coordinate then by x coordinate
         sorted_elements = sorted(
@@ -276,24 +278,25 @@ def transform(elements: List[LTComponent], image: Image.Image) -> List[LTCompone
 
 
 def generate_annotation(
-    image: Image.Image, elements: List[LTComponent],
+    page_image: Image.Image,
+    page_elements: List[LTComponent],
 ) -> Image.Image:
     """
     Generate an annotation for an image.
 
     Args:
-        image (Image.Image): The image to annotate.
-        elements (List[LTComponent]): A list of elements to be annotated.
+        page_image (Image.Image): The image to annotate.
+        page_elements (List[LTComponent]): A list of elements to be annotated.
 
     Returns:
         Image.Image: The annotated image.
     """
-    draw = ImageDraw.Draw(image)
+    draw = ImageDraw.Draw(page_image)
 
-    for element in elements:
+    for element in page_elements:
         draw.rectangle(element.bbox, outline="red")
 
-    return image
+    return page_image
 
 
 def color_to_category(element: LTComponent) -> int:
@@ -301,7 +304,9 @@ def color_to_category(element: LTComponent) -> int:
 
 
 def export_to_coco(
-    elements: Dict[int, List[LTComponent]], image_infos: Dict[int, str], filename: str
+    file_elements: Dict[int, List[LTComponent]],
+    image_infos: Dict[int, str],
+    filename: str,
 ) -> None:
     result = {
         "info": {
@@ -335,7 +340,7 @@ def export_to_coco(
             {"id": 10, "name": "Title"},
         ],
     }
-    for page_index, page_elements in elements.items():
+    for page_index, page_elements in file_elements.items():
         log.debug(f"page_index: {page_index}, page_elements: {page_elements}")
         for index, element in enumerate(page_elements):
             if isinstance(element, LTPage):
@@ -382,17 +387,19 @@ def main():
     rendered_pdf = os.path.join(rendered_path, f"{filename}_rendered.pdf")
 
     laparams = LAParams(line_margin=0.4, word_margin=0.3)
-    elements = generate_bb(rendered_pdf, laparams)
-    elements = merge_bb(elements)
+    file_elements = generate_bb(rendered_pdf, laparams)
+    file_elements = merge_bb(file_elements)
 
     annotation_infos = {}
     image_infos = {}
-    for page_index, page_elements in elements.items():
-        image_path = os.path.join(rendered_path, f"{filename}_rendered_page_{page_index}.jpg")
-        image = Image.open(image_path)
+    for page_index, page_elements in file_elements.items():
+        page_image_path = os.path.join(
+            rendered_path, f"{filename}_rendered_page_{page_index}.jpg"
+        )
+        page_image = Image.open(page_image_path)
 
-        transformed_page_elements = transform(page_elements, image)
-        annotated_image = generate_annotation(image, transformed_page_elements)
+        transformed_page_elements = transform(page_elements, page_image)
+        annotated_image = generate_annotation(page_image, transformed_page_elements)
 
         image_name = f"{filename}_annotation_page_{page_index}.jpg"
         annotated_image_path = os.path.join(result_path, image_name)
