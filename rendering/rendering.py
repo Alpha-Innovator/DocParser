@@ -117,9 +117,10 @@ def add_color_definition(
     for name, rgb_color in name2rgbcolor.items():
         color_name = name + "_color"
         data.insert(documentclass_index + 1, "\n")  # for clarity
+        r, g, b = rgb_color
         data.insert(
             documentclass_index + 2,
-            {"definecolor": f"\\definecolor{{{color_name}}}{rgb_color}"},
+            {"definecolor": f"\\definecolor{{{color_name}}}{{RGB}}{{{r}, {g}, {b}}}"},
         )
         data.insert(documentclass_index + 3, "\n")  # for clarity
         name2color[name] = color_name
