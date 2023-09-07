@@ -9,8 +9,11 @@ from pdfminer.high_level import extract_pages
 from pdfminer.layout import LAParams, LTPage, LTComponent
 
 from logger import logger
+from rendering.utils import load_json
 
 log = logger.setup_app_level_logger(file_name="app_debug.log")
+
+config = load_json("config.json")
 
 
 def generate_bb(filename: str, laparams=None) -> Dict[int, List[LTComponent]]:
