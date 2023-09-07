@@ -1,17 +1,25 @@
 import logging
 
-APP_LOGGER_NAME: str = 'APP'
+APP_LOGGER_NAME: str = "APP"
 
 
-def setup_app_level_logger(logger_name: str=APP_LOGGER_NAME, 
-                           level: str='DEBUG',
-                           file_name: str="app_debug.log"):
+def setup_app_level_logger(
+    logger_name: str = APP_LOGGER_NAME,
+    level: str = "DEBUG",
+    file_name: str = "app_debug.log",
+    mode: str = "w",
+):
     """create a logger
 
     Args:
-        logger_name (str, optional): name of the logger. Defaults to APP_LOGGER_NAME.
-        level (str, optional): controls the output level. Defaults to 'DEBUG'.
-        file_name (str, optional): path where the log is saved. Defaults to "app_debug.log".
+        logger_name (str, optional): name of the logger. 
+            Defaults to APP_LOGGER_NAME.
+        level (str, optional): controls the output level. 
+            Defaults to 'DEBUG'.
+        file_name (str, optional): path where the log is saved. 
+            Defaults to "app_debug.log".
+        mode (str, optional): mode of the file. 
+            Defaults to 'w'.
 
         level option: {
             'CRITICAL': CRITICAL,
@@ -28,9 +36,10 @@ def setup_app_level_logger(logger_name: str=APP_LOGGER_NAME,
     logger = logging.getLogger(logger_name)
     logger.setLevel(level)
     formatter = logging.Formatter(
-        "[%(levelname)-s]:%(filename)s %(funcName)s [Line %(lineno)s] - %(message)s")
+        "[%(levelname)-s]:%(filename)s %(funcName)s [Line %(lineno)s] - %(message)s"
+    )
 
-    fh = logging.FileHandler(file_name, mode='w')
+    fh = logging.FileHandler(file_name, mode=mode)
     fh.setFormatter(formatter)
     logger.addHandler(fh)
 
