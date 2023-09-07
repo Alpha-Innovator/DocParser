@@ -1,5 +1,5 @@
-
-from typing import Union, List
+from ast import Dict
+from typing import Union, List, Dict, Tuple
 import logger.logger as logger
 
 log = logger.get_logger(__name__)
@@ -15,13 +15,18 @@ CONTENT_INDEX = 1
 # purple, teal, violet.]
 
 
-math_envs = ['equation', 'align', 'equation*', 'align*', '$$']
-table_envs = ['table', 'table*']
-figure_envs = ['figure', 'minipage', 'subfigure']
-algorithm_envs = ['algorithm', 'algorithm*',
-                  'algorithmic', 'algorithmic*', 'algorithm2e']
-list_envs = ['itemize', 'enumerate']
-reference_envs = ['bibliography']
+math_envs = ["equation", "align", "equation*", "align*", "$$"]
+table_envs = ["table", "table*"]
+figure_envs = ["figure", "minipage", "subfigure"]
+algorithm_envs = [
+    "algorithm",
+    "algorithm*",
+    "algorithmic",
+    "algorithmic*",
+    "algorithm2e",
+]
+list_envs = ["itemize", "enumerate"]
+reference_envs = ["bibliography"]
 caption_envs = table_envs + figure_envs
 
 
@@ -58,7 +63,7 @@ def add_usepackage_command(data, package: str) -> None:
     # find the index of documentclass
     documentclass_index = -1
     for index, item in enumerate(data):
-        if isinstance(item, dict) and 'documentclass' in item:
+        if isinstance(item, dict) and "documentclass" in item:
             documentclass_index = index
             break
 
@@ -67,6 +72,12 @@ def add_usepackage_command(data, package: str) -> None:
 
     # add usepackage in rendered document
     # notice: multiple inclusion will be ignored, so this addition is safe
+    data.insert(documentclass_index + 1, "\n")  # for clarity
+    data.insert(
+        documentclass_index + 2, {"usepackage": "\\usepackage{" + package + "}"}
+    )
+    data.insert(documentclass_index + 3, "\n")  # for clarity
+
 
 def add_color_definition(
     data, name2rgbcolor: Dict[str, Tuple[int, int, int]]
@@ -116,7 +127,7 @@ def add_color_definition(
     return name2color
 
 
-def enclose_title(data, color='red') -> None:
+def enclose_title(data, color="red") -> None:
     """
     Encloses the title of each dictionary item in the given data list with LaTeX formatting and a specified color.
 
@@ -134,16 +145,17 @@ def enclose_title(data, color='red') -> None:
             The format of the enclosed title is "\\title{{\\textcolor{{{}}}{{{}}}}}".format(color, title_text).
     """
     for item in data:
-        if isinstance(item, dict) and 'title' in item:
-            index = item["title"].find('\\title{')
+        if isinstance(item, dict) and "title" in item:
+            index = item["title"].find("\\title{")
             # 9 is the length of prefix of title text
-            title_text = item["title"][index + 9:-1]
+            title_text = item["title"][index + 9 : -1]
             rendered_title = "\\title{{\\textcolor{{{}}}{{{}}}}}".format(
-                color, title_text)
-            item['title'] = rendered_title
+                color, title_text
+            )
+            item["title"] = rendered_title
 
 
-def enclose_section(data, color='red') -> None:
+def enclose_section(data, color="red") -> None:
     """
     Encloses a section of data in curly braces with a specified color.
 
@@ -157,7 +169,7 @@ def enclose_section(data, color='red') -> None:
     Raises:
         Exception: If a 'section' or 'subsection' key is not found in the data.
     """
-    section_lists = ['section', 'subsection', 'section*', 'subsection*']
+    section_lists = ["section", "subsection", "section*", "subsection*"]
     for index, item in enumerate(data):
         if not isinstance(item, dict):
             continue
@@ -166,13 +178,14 @@ def enclose_section(data, color='red') -> None:
         if env is None:
             continue
 
-        section_text = item[env][len(env) + 2:-1]
+        section_text = item[env][len(env) + 2 : -1]
         rendered_section = "\\{}{{\\textcolor{{{}}}{{{}}}}}".format(
-            env, color, section_text)
+            env, color, section_text
+        )
         item[env] = rendered_section
 
 
-def enclose_list(data, color='yellow') -> None:
+def enclose_list(data, color="yellow") -> None:
     """
     Generate a brace group dictionary that encloses a list with a specified color.
 
@@ -191,26 +204,14 @@ def enclose_list(data, color='yellow') -> None:
 
         data[index] = {
             "BraceGroup": [
-                {
-                    "begin": "{"
-                },
-                [
-                    {
-                        "color": [
-                            "\\color{{{}}}\n".format(color),
-                            *item[env],
-                            "\n"
-                        ]
-                    }
-                ],
-                {
-                    "end": "}"
-                }
+                {"begin": "{"},
+                [{"color": ["\\color{{{}}}\n".format(color), *item[env], "\n"]}],
+                {"end": "}"},
             ]
         }
 
 
-def enclose_caption_inside_env(data, color='orange') -> None:
+def enclose_caption_inside_env(data, color="orange") -> None:
     """
     Encloses the caption of each item in the given data with color formatting.
 
@@ -229,7 +230,7 @@ def enclose_caption_inside_env(data, color='orange') -> None:
         if not isinstance(element, dict):
             continue
 
-        if 'caption' not in element:
+        if "caption" not in element:
             for key, value in element.items():
                 log.debug(f"key: {key}, value: {value}")
                 if isinstance(value, list):
@@ -239,24 +240,18 @@ def enclose_caption_inside_env(data, color='orange') -> None:
         log.debug(f"element: {element}")
         data[index] = {
             "BraceGroup": [
-                {
-                    "begin": "{"
-                },
+                {"begin": "{"},
                 [
                     "\n",
-                    {
-                        "color": "\\color{{{}}}{{{}}}".format(color, element['caption'])
-                    },
-                    "\n"
+                    {"color": "\\color{{{}}}{{{}}}".format(color, element["caption"])},
+                    "\n",
                 ],
-                {
-                    "end": "}"
-                }
+                {"end": "}"},
             ]
         }
 
 
-def enclose_caption(data, color='orange') -> None:
+def enclose_caption(data, color="orange") -> None:
     """
     Encloses the caption of each item in the given data with color formatting.
 
@@ -283,7 +278,7 @@ def enclose_caption(data, color='orange') -> None:
         enclose_caption_inside_env(item[env][CONTENT_INDEX], color)
 
 
-def enclose_equation(data, color='green') -> None:
+def enclose_equation(data, color="green") -> None:
     """
     Encloses equations in the given data with a specified color.
 
@@ -306,12 +301,10 @@ def enclose_equation(data, color='green') -> None:
                     enclose_equation(value[CONTENT_INDEX], color)
             continue
 
-        item[env][1].insert(0, {
-            "color": "\\color{{{}}}".format(color)
-        })
+        item[env][1].insert(0, {"color": "\\color{{{}}}".format(color)})
 
 
-def enclosed_table(data, color='cyan') -> None:
+def enclosed_table(data, color="cyan") -> None:
     for item in data:
         if not isinstance(item, dict):
             continue
@@ -324,7 +317,7 @@ def enclosed_table(data, color='cyan') -> None:
             if not isinstance(element, dict):
                 continue
 
-            if 'tabular' not in element:
+            if "tabular" not in element:
                 for key, value in item.items():
                     if isinstance(value, list):
                         enclosed_table(value[CONTENT_INDEX], color)
@@ -332,32 +325,26 @@ def enclosed_table(data, color='cyan') -> None:
 
             item[env][CONTENT_INDEX][index] = {
                 "BraceGroup": [
-                    {
-                        "begin": "{"
-                    },
+                    {"begin": "{"},
                     [
                         {
                             "color": [
                                 "\\color{{{}}}\n".format(color),
-                                *element['tabular'],
-                                "\n"
+                                *element["tabular"],
+                                "\n",
                             ]
                         }
                     ],
-                    {
-                        "end": "}"
-                    }
+                    {"end": "}"},
                 ]
             }
 
 
-def enclose_text(data, color='olive') -> None:
-    data.insert(0, {
-        "color": "\\color{{{}}}".format(color)
-    })
+def enclose_text(data, color="olive") -> None:
+    data.insert(0, {"color": "\\color{{{}}}".format(color)})
 
 
-def enclose_reference(data, color='violet') -> None:
+def enclose_reference(data, color="violet") -> None:
     for index, item in enumerate(data):
         if not isinstance(item, dict):
             continue
@@ -366,25 +353,20 @@ def enclose_reference(data, color='violet') -> None:
         if env is None:
             continue
 
-        data[index] = {"BraceGroup": [
-            {
-                "begin": "{"
-            },
-            [
-                "\n",
-                {
-                    "color": "\\color{{{}}}{{{}}}\n".format(color, item[env])
-                },
-                "\n"
-            ],
-            {
-                "end": "}"
-            }
-        ]
+        data[index] = {
+            "BraceGroup": [
+                {"begin": "{"},
+                [
+                    "\n",
+                    {"color": "\\color{{{}}}{{{}}}\n".format(color, item[env])},
+                    "\n",
+                ],
+                {"end": "}"},
+            ]
         }
 
 
-def enclose_figure(data, color='black'):
+def enclose_figure(data, color="black"):
     """
     Encloses a figure in an `mdframed` environment with a specified background color.
 
@@ -413,27 +395,23 @@ def enclose_figure(data, color='black'):
             if not isinstance(element, dict):
                 continue
 
-            if 'includegraphics' not in element:
+            if "includegraphics" not in element:
                 continue
 
             item[env][CONTENT_INDEX][index] = {
                 "mdframed": [
-                    {
-                        "begin": "\\begin{{mdframed}}[backgroundcolor={}]".format(color)
-                    },
+                    {"begin": "\\begin{{mdframed}}[backgroundcolor={}]".format(color)},
                     "\n",
                     [
                         item[env][CONTENT_INDEX][index],
                     ],
                     "\n",
-                    {
-                        "end": "\\end{mdframed}"
-                    }
+                    {"end": "\\end{mdframed}"},
                 ]
             }
 
 
-def enclose_algorithm(data, color='pink'):
+def enclose_algorithm(data, color="pink"):
     for item in data:
         if not isinstance(item, dict):
             continue
@@ -446,6 +424,4 @@ def enclose_algorithm(data, color='pink'):
                     enclose_equation(value[CONTENT_INDEX], color)
             continue
 
-        item[env][1].insert(0, {
-            "color": "\n\\color{{{}}}".format(color)
-        })
+        item[env][1].insert(0, {"color": "\n\\color{{{}}}".format(color)})
