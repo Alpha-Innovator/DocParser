@@ -254,6 +254,14 @@ def transform(elements: List[LTComponent], image: Image.Image) -> List[LTCompone
 
     Returns:
         List: A list of elements with transformed coordinates.
+
+    Note:
+        The origin of the coordinate system is the lower-left corner of the page
+
+        However the COCO-format is the upper-left corner, so we need to flip the y-axis.
+
+    See:
+        https://cocodataset.org/#format-data (Section 1 Object detection)
     """
     image_width, image_height = image.size
     page_width, page_height = elements[0].bbox[2], elements[0].bbox[3]
