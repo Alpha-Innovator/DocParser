@@ -231,8 +231,10 @@ def merge_bb(elements: Dict[int, List[LTComponent]]) -> Dict[int, List[LTCompone
 def transform(elements: List[LTComponent], image: Image.Image) -> List[LTComponent]:
     """
     Transform the coordinates of elements based on the size of an image.
-    It first flip the y-axis, then scale the width and height of the page
-    to match the image
+
+    Method:
+        It first flip the y-axis, then scale the width and height of the page
+        to match the image
 
     Args:
         elements (List[LTComponent]): A list of elements representing bounding boxes.
@@ -383,10 +385,10 @@ def main():
         annotated_image = generate_annotation(image, transformed_page_elements)
 
         image_name = f"{filename}_annotation_page_{page_index}.jpg"
-        annotated_image = os.path.join(result_path, image_name)
-        image_infos[page_index] = annotated_image
-        image.save(annotated_image, "JPEG")
-        annotation_infos[page_index] = transformed_elements
+        annotated_image_path = os.path.join(result_path, image_name)
+        image_infos[page_index] = annotated_image_path
+        annotated_image.save(annotated_image_path, "JPEG")
+        annotation_infos[page_index] = transformed_page_elements
 
     json_file = os.path.join(result_path, "annotation.json")
     export_to_coco(annotation_infos, image_infos, filename=json_file)
