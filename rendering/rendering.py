@@ -67,11 +67,53 @@ def add_usepackage_command(data, package: str) -> None:
 
     # add usepackage in rendered document
     # notice: multiple inclusion will be ignored, so this addition is safe
-    data.insert(documentclass_index + 1, '\n')  # for clarity
-    data.insert(documentclass_index + 2, {
-        "usepackage": "\\usepackage{" + package + "}"
-    })
-    data.insert(documentclass_index + 3, '\n')  # for clarity
+
+def add_color_definition(
+    data, name2rgbcolor: Dict[str, Tuple[int, int, int]]
+) -> Dict[str, str]:
+    """
+    Adds color definitions to the given data based on the
+    provided name-to-RGB color mapping.
+
+    Args:
+        data: The data to modify, typically a list of dictionaries.
+        name2rgbcolor (Dict[str, Tuple[int, int, int]]):
+            A dictionary mapping color names to RGB values.
+
+    Returns:
+        Dict[str, str]: A dictionary mapping color names
+            to the corresponding color definitions.
+
+    Raises:
+        Exception: If the 'documentclass' item is not found in the data.
+
+    """
+
+    # find the index of documentclass
+    documentclass_index = -1
+    for index, item in enumerate(data):
+        if isinstance(item, dict) and "documentclass" in item:
+            documentclass_index = index
+            break
+
+    if documentclass_index == -1:
+        raise Exception("documentclass not found")
+
+    add_usepackage_command(data, "xcolor")
+    documentclass_index += 3
+
+    name2color = {}
+    for name, rgb_color in name2rgbcolor.items():
+        color_name = name + "_color"
+        data.insert(documentclass_index + 1, "\n")  # for clarity
+        data.insert(
+            documentclass_index + 2,
+            {"definecolor": f"\\definecolor{{{color_name}}}{rgb_color}"},
+        )
+        data.insert(documentclass_index + 3, "\n")  # for clarity
+        name2color[name] = color_name
+
+    return name2color
 
 
 def enclose_title(data, color='red') -> None:
