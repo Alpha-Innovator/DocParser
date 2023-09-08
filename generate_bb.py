@@ -466,7 +466,7 @@ def main():
 
     rendered_pdf = os.path.join(rendered_path, f"{filename}_rendered.pdf")
 
-    laparams = LAParams(line_margin=0.4, word_margin=0.3)
+    laparams = LAParams(**config["laparams"])
     file_elements = generate_bb(rendered_pdf, laparams)
     file_elements = merge_bb(file_elements)
 
