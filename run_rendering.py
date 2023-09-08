@@ -58,7 +58,7 @@ def main():
     rendering.enclosed_table(main_content, color=name2color["Table"])
 
     # very first version, need to be improved
-    rendering.enclose_text(main_content, color=name2color["Text"])
+    # rendering.enclose_text(main_content, color=name2color["Text"])
 
     rendering.enclose_reference(main_content, color=name2color["Text"])
 
