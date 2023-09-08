@@ -5,6 +5,7 @@ import json
 import argparse
 import datetime
 import numpy as np
+import cv2
 
 from pdfminer.high_level import extract_pages
 from pdfminer.layout import LAParams, LTPage, LTComponent, LTFigure, LTLine
@@ -15,6 +16,31 @@ from rendering.utils import load_json
 log = logger.setup_app_level_logger(file_name="app_debug.log", mode="a")
 
 config = load_json("config.json")
+category2color = {k: v for k, v in config["category_color"]}
+
+category2hsv_bound = {}  # category: (lower_bound, upper_bound)
+for k, v in category2color.items():
+    rgb_color = tuple(v)
+
+    # Convert RGB to HSV
+    hsv_color = cv2.cvtColor(np.uint8([[rgb_color]]), cv2.COLOR_RGB2HSV)[0][0]
+
+    lower_bound = np.array(
+        [
+            hsv_color[0] - config["hue_range"],
+            hsv_color[1] - config["saturation_range"],
+            hsv_color[2] - config["value_range"],
+        ]
+    )
+    upper_bound = np.array(
+        [
+            hsv_color[0] + config["hue_range"],
+            hsv_color[1] + config["saturation_range"],
+            hsv_color[2] + config["value_range"],
+        ]
+    )
+
+    category2hsv_bound[k] = (lower_bound, upper_bound)
 
 
 def generate_bb(filename: str, laparams=None) -> Dict[int, List[LTComponent]]:
