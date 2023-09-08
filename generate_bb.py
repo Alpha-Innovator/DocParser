@@ -386,12 +386,9 @@ def color_to_category(
         if isinstance(element, LTFigure):
             result[index] = name2category["Figure"]
             continue
-        dominant_color = get_dominant_color(image, element)
-        # TODO: remember the color-to-category map, needs to be updated
-        if dominant_color not in color2category:
-            result[index] = 0
-        else:
-            result[index] = color2category[dominant_color]
+
+        result[index] = get_category(image, element)
+
     return result
 
 
