@@ -146,5 +146,6 @@
     ],
     "hue_range": 10,
     "saturation_range": 10,
-    "value_range": 40
+    "value_range": 40,
+    "annotation_image_font_size": 20
 }
