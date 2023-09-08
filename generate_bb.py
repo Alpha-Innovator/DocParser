@@ -1,5 +1,5 @@
 import os
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFont
 from typing import Dict, List, Tuple
 import json
 import argparse
@@ -17,6 +17,7 @@ log = logger.setup_app_level_logger(file_name="app_debug.log", mode="a")
 
 config = load_json("config.json")
 name2category = {v: k for k, v in config["category_name"]}
+category2name = {k: v for k, v in config["category_name"]}
 category2color = {k: v for k, v in config["category_color"]}
 
 category2hsv_bound = {}  # category: (lower_bound, upper_bound)
@@ -319,6 +320,7 @@ def transform(elements: List[LTComponent], image: Image.Image) -> List[LTCompone
 def generate_annotation(
     page_image: Image.Image,
     page_elements: List[LTComponent],
+    category_info: Dict[int, int],
 ) -> Image.Image:
     """
     Generate an annotation for an image.
@@ -331,9 +333,18 @@ def generate_annotation(
         Image.Image: The annotated image.
     """
     draw = ImageDraw.Draw(page_image)
+    # use `locate .ttf` to find the available fonts
+    font = ImageFont.truetype("DejaVuSans.ttf", config["annotation_image_font_size"])
 
-    for element in page_elements:
+    for index, element in enumerate(page_elements):
+        category = category_info[index]
         draw.rectangle(element.bbox, outline="red")
+        draw.text(
+            (element.bbox[0], element.bbox[1]),
+            category2name[category],
+            fill=(255, 0, 0),
+            font=font,
+        )
 
     return page_image
 
@@ -481,17 +492,18 @@ def main():
         page_image = Image.open(page_image_path)
 
         transformed_page_elements = transform(page_elements, page_image)
-        annotated_image = generate_annotation(page_image, transformed_page_elements)
+        category_infos[page_index] = color_to_category(
+            page_image, transformed_page_elements
+        )
+        annotated_image = generate_annotation(
+            page_image, transformed_page_elements, category_infos[page_index]
+        )
 
         image_name = f"{filename}_annotation_page_{page_index}.jpg"
         annotated_image_path = os.path.join(result_path, image_name)
         image_infos[page_index] = annotated_image_path
         annotated_image.save(annotated_image_path, "JPEG")
         annotation_infos[page_index] = transformed_page_elements
-
-        category_infos[page_index] = color_to_category(
-            page_image, transformed_page_elements
-        )
 
     json_file = os.path.join(result_path, "annotation.json")
     export_to_coco(annotation_infos, image_infos, category_infos, filename=json_file)
