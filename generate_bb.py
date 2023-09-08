@@ -152,8 +152,7 @@ def overlap_in_y_axis(
     Args:
         element1 (LTComponent): The first element.
         element2 (LTComponent): The second element.
-        is_two_column (bool): Indicates if the elements are
-                              in a two-column layout.
+        is_two_column (bool): Indicates if the elements are in a two-column layout.
         page_width (float): The width of the page.
 
     Returns:
@@ -375,7 +374,8 @@ def get_category(image: Image.Image, element: LTComponent) -> int:
 
 
 def color_to_category(
-    image: Image.Image, page_elements: List[LTComponent]
+    image: Image.Image,
+    page_elements: List[LTComponent],
 ) -> Dict[int, int]:
     """
     Generate a dictionary mapping the index of each element
