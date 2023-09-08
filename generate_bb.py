@@ -16,6 +16,7 @@ from rendering.utils import load_json
 log = logger.setup_app_level_logger(file_name="app_debug.log", mode="a")
 
 config = load_json("config.json")
+name2category = {v: k for k, v in config["category_name"]}
 category2color = {k: v for k, v in config["category_color"]}
 
 category2hsv_bound = {}  # category: (lower_bound, upper_bound)
@@ -391,9 +392,7 @@ def color_to_category(
         each element to its corresponding category index.
     """
     result = {}
-    category_color = config["category_color"]
-    color2category = {tuple(v): k for k, v in category_color}
-    name2category = {v: k for k, v in config["category_name"]}
+
     for index, element in enumerate(page_elements):
         if index == 0:  # skip the LTPage element
             continue
