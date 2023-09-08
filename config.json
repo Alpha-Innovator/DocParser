@@ -143,5 +143,8 @@
             10,
             "Title"
         ]
-    ]
+    ],
+    "hue_range": 10,
+    "saturation_range": 10,
+    "value_range": 40
 }
