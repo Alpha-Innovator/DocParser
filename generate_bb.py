@@ -338,42 +338,29 @@ def generate_annotation(
     return page_image
 
 
-def get_dominant_color(
-    image: Image.Image, element: LTComponent
-) -> Tuple[int, int, int]:
-    """
-    Calculate the dominant color in a given region of an image.
-
-    Args:
-        image (Image.Image): The image from which to extract the dominant color.
-        element (LTComponent): The region of interest (ROI) within the image.
-
-    Returns:
-        Tuple[int, int, int]: The RGB value of the dominant color in the ROI.
-    """
+def get_category(image: Image.Image, element: LTComponent) -> int:
     x0, y0, x1, y1 = element.bbox
     roi = image.crop((x0, y0, x1, y1))
 
-    # Convert ROI to numpy array
+    width, height = roi.size
+    if width == 0 or height == 0:
+        return name2category["Others"]
+
+    # roi = cv2.resize(roi, (700, 600))
+    log.debug(f"size={roi.size}")
     roi_array = np.array(roi)
+    hsv_roi = cv2.cvtColor(roi_array, cv2.COLOR_RGB2HSV)
 
-    # Flatten the ROI into a 2D array
-    pixels = roi_array.reshape(-1, 3)
+    count = 0
+    category = name2category["Others"]
+    for key, value in category2hsv_bound.items():
+        lower, upper = value
+        mask = cv2.inRange(hsv_roi, lower, upper)
+        if np.sum(mask) > count:
+            count = np.sum(mask)
+            category = key
 
-    # Calculate the histogram of colors in the ROI
-    hist, _ = np.histogramdd(
-        pixels, bins=(8, 8, 8), range=[(0, 256), (0, 256), (0, 256)]
-    )
-
-    # Find the bin with the highest frequency (excluding the background color)
-    dominant_bin = np.unravel_index(np.argmax(hist[1:]) + 1, hist.shape)
-
-    # Calculate the RGB value of the dominant color
-    r = dominant_bin[0] * 32
-    g = dominant_bin[1] * 32
-    b = dominant_bin[2] * 32
-
-    return (r, g, b)
+    return category
 
 
 def color_to_category(
