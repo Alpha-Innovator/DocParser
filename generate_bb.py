@@ -382,6 +382,7 @@ def color_to_category(
 
     for index, element in enumerate(page_elements):
         if index == 0:  # skip the LTPage element
+            result[index] = name2category["Others"]
             continue
         if isinstance(element, LTFigure):
             result[index] = name2category["Figure"]
