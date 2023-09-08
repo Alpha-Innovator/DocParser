@@ -1,10 +1,10 @@
 {
     "laparams": {
-        "line_overlap": 0.5,
+        "line_overlap": 0.3,
         "char_margin": 2.0,
         "line_margin": 0.5,
         "word_margin": 0.1,
-        "boxes_flow": 0.5,
+        "boxes_flow": -0.5,
         "detect_vertical": false,
         "all_texts": false
     },
