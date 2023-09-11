@@ -339,6 +339,24 @@ def enclosed_table(data, color="cyan") -> None:
             }
 
 
+def enclose_footnote(data, color="red") -> None:
+    footnote_lists = ["footnote", "footnote*", "footnote**"]
+    for item in data:
+        if not isinstance(item, dict):
+            continue
+        env = find_env(item, footnote_lists)
+        if env is None:
+            continue
+        log.debug(f"item={item}, env={env}")
+
+        footenote_text = item[env][len(env) + 2 : -1]
+        rendered_footnote = "\\{}{{\\color{{{}}}{{{}}}}}".format(
+            env, color, footenote_text
+        )
+        item[env] = rendered_footnote
+        log.debug(f"item={item}, env={env}")
+
+
 def enclose_text(data, color="olive") -> None:
     data.insert(0, {"color": "\\color{{{}}}".format(color)})
 
