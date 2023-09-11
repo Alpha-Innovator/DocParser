@@ -1,6 +1,17 @@
 # vrdu_data_process
 This repository is used to process paper with `.tex` source files.
 
+# Roadmap
+- [ ] text,text-eq rendering
+- [ ] table rendering (recursive)
+- [ ] text-bb matching
+- [ ] improved merge_bb
+- [ ] `text.json` output
+
+
+# Install
+[TODO]
+
 # Usage
 ```shell
 ./pipeline.sh path_to_paper
