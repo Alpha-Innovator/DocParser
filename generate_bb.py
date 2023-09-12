@@ -233,6 +233,10 @@ def merge_bb(
             if index <= 1:
                 continue
 
+            if isinstance(element, LTFigure):
+                result[page_index].append(element)
+                continue
+
             should_merge = False
             for i, p_e in enumerate(result[page_index]):
                 if i == 0:
