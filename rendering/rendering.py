@@ -303,6 +303,45 @@ def enclose_equation(data, color="green") -> None:
         item[env][1].insert(0, {"color": "\\color{{{}}}".format(color)})
 
 
+def enclose_tabular(data: List, color="cyan"):
+    """
+    Generate a color brace group that encloses a tabular
+    environment with a specified color
+
+    Args:
+        data (list): The data to be processed.
+        color (str, optional): The color to be used. Defaults to "cyan".
+
+    Returns:
+        None
+    """
+    for index, element in enumerate(data):
+        if not isinstance(element, dict):
+            continue
+
+        if "tabular" not in element:
+            for key, value in element.items():
+                if isinstance(value, list):
+                    enclose_tabular(value[CONTENT_INDEX], color)
+            continue
+
+        data[index] = {
+            "BraceGroup": [
+                {"begin": "{"},
+                [
+                    {
+                        "color": [
+                            "\\color{{{}}}\n".format(color),
+                            *element["tabular"],
+                            "\n",
+                        ]
+                    }
+                ],
+                {"end": "}"},
+            ]
+        }
+
+
 def enclosed_table(data, color="cyan") -> None:
     for item in data:
         if not isinstance(item, dict):
@@ -312,31 +351,9 @@ def enclosed_table(data, color="cyan") -> None:
         if env is None:
             continue
 
-        for index, element in enumerate(item[env][CONTENT_INDEX]):
-            if not isinstance(element, dict):
-                continue
+        log.debug(f"item={item}, env={env}")
 
-            if "tabular" not in element:
-                for key, value in item.items():
-                    if isinstance(value, list):
-                        enclosed_table(value[CONTENT_INDEX], color)
-                continue
-
-            item[env][CONTENT_INDEX][index] = {
-                "BraceGroup": [
-                    {"begin": "{"},
-                    [
-                        {
-                            "color": [
-                                "\\color{{{}}}\n".format(color),
-                                *element["tabular"],
-                                "\n",
-                            ]
-                        }
-                    ],
-                    {"end": "}"},
-                ]
-            }
+        enclose_tabular(item[env][CONTENT_INDEX], color)
 
 
 def enclose_footnote(data, color="red") -> None:
