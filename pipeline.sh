@@ -57,7 +57,7 @@ else
 fi
 
 # copy the original PDF file to the output directory
-mkdir -p "output/original"
+mkdir -p "$input_directory/output/original"
 original_pdf="$input_directory/output/original/$input_filename.pdf"
 cp "$input_directory/$input_filename.pdf" "$original_pdf"
 
@@ -73,7 +73,7 @@ else
     echo "Successfully compiled the output .tex file into a PDF."
 fi
 
-mkdir -p "output/rendered/"
+mkdir -p "$input_directory/output/rendered/"
 rendered_pdf="$input_directory/output/rendered/$output_filename.pdf"
 mv "$input_directory/$output_filename.pdf" "$rendered_pdf"
 
@@ -100,6 +100,7 @@ else
 fi
 
 ############## generate the bounding box with original and rendered PDF ##########
+mkdir -p "$input_directory/output/result/"
 python generate_bb.py --path "$input_directory/output" --file_name "$input_filename"
 
 # Check if the shell script execution was successful
