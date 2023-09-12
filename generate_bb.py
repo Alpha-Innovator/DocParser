@@ -353,6 +353,10 @@ def generate_annotation(
 
 
 def get_category(image: Image.Image, element: LTComponent) -> int:
+    if isinstance(element, LTLine):
+        # TODO: add log to check if line is table or algorithm
+        return name2category["Others"]
+
     x0, y0, x1, y1 = element.bbox
     roi = image.crop((x0, y0, x1, y1))
 
