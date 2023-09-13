@@ -37,6 +37,7 @@ non_text_envs = (
     + caption_envs
     + algorithm_envs
     + list_envs
+    + ["section", "subsection", "section*", "subsection*"]
     + ["abstract"]
     + ["bibliography"]
 )
@@ -448,18 +449,19 @@ def enclose_text(data, color="olive"):
                 current_group.append(item)
         elif isinstance(item, str):
             if item == "\n":
-                result.append(current_group)
-                result.append(item)
-                current_group = []
+                if current_group:
+                    result.append(current_group)
+                    current_group = []
             else:
                 index = item.find("\n\n")
-                # contains two paragraphs
+                # break two paragraphs
                 if index != -1:
                     current_group.append(item[:index])
                     result.append(current_group)
-                    result.append("\n\n")
-                    result.append(item[index + 4 :])
                     current_group = []
+                    result.append("\n")
+                    result.append("\n")
+                    current_group.append(item[index + 2:])
                 else:
                     current_group.append(item)
         else:
