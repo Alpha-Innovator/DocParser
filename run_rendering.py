@@ -45,7 +45,7 @@ def main():
     # render title
     rendering.enclose_title(data, color=name2color["Title"])
 
-    main_content = utils.get_main_content(data)
+    main_content, index = utils.get_main_content(data)
 
     rendering.enclose_section(main_content, color=name2color["Title"])
 

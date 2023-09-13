@@ -48,16 +48,17 @@ def get_main_content(data):
 
     """
     main_content = None
-    for item in data:
+    main_content_index = None
+    for index, item in enumerate(data):
         if isinstance(item, dict) and 'document' in item:
-            # first element and last element are \begin{document} and \end{document}
             main_content = item['document'][1]
+            main_content_index = index
             break
 
     if main_content is None:
         raise Exception("document not found")
 
-    return main_content
+    return main_content, main_content_index
 
 
 def data_from_tex_file(tex_file, debug_mode: bool = False) -> list:
