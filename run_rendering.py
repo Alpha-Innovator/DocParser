@@ -68,7 +68,6 @@ def main():
 
     rendering.enclose_reference(main_content, color=name2color["Text"])
 
-    rendering.enclose_figure(main_content, color=name2color["Figure"])
 
     rendering.enclose_algorithm(main_content, color=name2color["Algorithm"])
 
