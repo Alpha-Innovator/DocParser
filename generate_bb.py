@@ -365,7 +365,6 @@ def get_category(image: Image.Image, element: LTComponent) -> int:
         return name2category["Others"]
 
     # roi = cv2.resize(roi, (700, 600))
-    log.debug(f"size={roi.size}")
     roi_array = np.array(roi)
     hsv_roi = cv2.cvtColor(roi_array, cv2.COLOR_RGB2HSV)
 
