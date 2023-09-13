@@ -29,6 +29,17 @@ algorithm_envs = [
 list_envs = ["itemize", "enumerate"]
 reference_envs = ["bibliography"]
 caption_envs = table_envs + figure_envs
+non_text_envs = (
+    math_envs
+    + table_envs
+    + figure_envs
+    + reference_envs
+    + caption_envs
+    + algorithm_envs
+    + list_envs
+    + ["abstract"]
+    + ["bibliography"]
+)
 
 
 def find_env(wrapped_env: dict, query: List[str]) -> Union[str, None]:
@@ -422,73 +433,63 @@ def enclose_footnote(data, color="red") -> None:
 
 
 def enclose_text(data, color="olive"):
-    processed = []
-    for item in data:
-        log.debug(f"item={item}")
-        if isinstance(item, str):
-            if item[0] == '%':
-                continue
-            break_lines = item.split("\n\n")
-            processed.append(break_lines[0])
-            for i in range(1, len(break_lines)):
-                processed.append("\n")
-                processed.append("\n")
-                processed.append(break_lines[i])
-        else:
-            processed.append(item)
-
-    log.debug(f"processed={processed}")
-
     result = []
     current_group = []
 
-    for item in processed:
-        log.debug(f"item={item}")
-        if isinstance(item, dict) and (
-            "section" in item or "subsection" in item or "equation" in item
-        ):
-            if current_group:
+    for item in data:
+        if isinstance(item, dict):
+            # check if is an environment
+            if find_env(item, non_text_envs) is not None:
+                if current_group:
+                    result.append(current_group)
+                    current_group = []
+                result.append(item)
+            else:
+                current_group.append(item)
+        elif isinstance(item, str):
+            if item == "\n":
                 result.append(current_group)
                 result.append(item)
                 current_group = []
-        elif isinstance(item, str) and item.replace(" ", "") == "\n":
-            if current_group:
-                result.append(current_group)
-                result.append(item)
-                current_group = []
-        elif isinstance(item, str) and item:
-            # ignore comments
-            continue
+            else:
+                index = item.find("\n\n")
+                # contains two paragraphs
+                if index != -1:
+                    current_group.append(item[:index])
+                    result.append(current_group)
+                    result.append("\n\n")
+                    result.append(item[index + 4 :])
+                    current_group = []
+                else:
+                    current_group.append(item)
         else:
-            current_group.append(item)
+            raise ValueError(f"Unknown type: {type(item)}")
 
     if current_group:
         result.append(current_group)
 
+    for index, item in enumerate(result):
+        if isinstance(item, dict):
+            continue
+        if isinstance(item, str):
+            continue
+        # list
+        result[index] = {
+            "BraceGroup": [
+                {"begin": "{"},
+                [
+                    {
+                        "color": [
+                            "\\color{{{}}}\n".format(color),
+                            *item,
+                            "\n",
+                        ]
+                    }
+                ],
+                {"end": "}"},
+            ]
+        }
 
-    # for index, item in enumerate(result):
-    #     if isinstance(item, dict):
-    #         continue
-    #     if isinstance(item, str):
-    #         continue
-    #     # list
-    #     result[index] = {
-    #         "BraceGroup": [
-    #             {"begin": "{"},
-    #             [
-    #                 {
-    #                     "color": [
-    #                         "\\color{{{}}}\n".format(color),
-    #                         *item,
-    #                         "\n",
-    #                     ]
-    #                 }
-    #             ],
-    #             {"end": "}"},
-    #         ]
-    #     }
-
-    export_to_json(result, "text.json")
     return result
 
 

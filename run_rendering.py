@@ -63,8 +63,8 @@ def main():
 
     rendering.enclose_footnote(main_content, color=name2color["Footnote"])
 
-    # very first version, need to be improved
-    # rendering.enclose_text(main_content, color=name2color["Text"])
+    main_content = rendering.enclose_text(main_content, color=name2color["Text"])
+    data[index]["document"][1] = main_content
 
     rendering.enclose_reference(main_content, color=name2color["Text"])
 
