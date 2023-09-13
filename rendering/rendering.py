@@ -1,6 +1,7 @@
 from ast import Dict
 from typing import Union, List, Dict, Tuple
 import logger.logger as logger
+from rendering.utils import export_to_json
 
 log = logger.get_logger(__name__)
 
@@ -374,8 +375,75 @@ def enclose_footnote(data, color="red") -> None:
         log.debug(f"item={item}, env={env}")
 
 
-def enclose_text(data, color="olive") -> None:
-    data.insert(0, {"color": "\\color{{{}}}".format(color)})
+def enclose_text(data, color="olive"):
+    processed = []
+    for item in data:
+        log.debug(f"item={item}")
+        if isinstance(item, str):
+            if item[0] == '%':
+                continue
+            break_lines = item.split("\n\n")
+            processed.append(break_lines[0])
+            for i in range(1, len(break_lines)):
+                processed.append("\n")
+                processed.append("\n")
+                processed.append(break_lines[i])
+        else:
+            processed.append(item)
+
+    log.debug(f"processed={processed}")
+
+    result = []
+    current_group = []
+
+    for item in processed:
+        log.debug(f"item={item}")
+        if isinstance(item, dict) and (
+            "section" in item or "subsection" in item or "equation" in item
+        ):
+            if current_group:
+                result.append(current_group)
+                result.append(item)
+                current_group = []
+        elif isinstance(item, str) and item.replace(" ", "") == "\n":
+            if current_group:
+                result.append(current_group)
+                result.append(item)
+                current_group = []
+        elif isinstance(item, str) and item:
+            # ignore comments
+            continue
+        else:
+            current_group.append(item)
+
+    if current_group:
+        result.append(current_group)
+
+
+    # for index, item in enumerate(result):
+    #     if isinstance(item, dict):
+    #         continue
+    #     if isinstance(item, str):
+    #         continue
+    #     # list
+    #     result[index] = {
+    #         "BraceGroup": [
+    #             {"begin": "{"},
+    #             [
+    #                 {
+    #                     "color": [
+    #                         "\\color{{{}}}\n".format(color),
+    #                         *item,
+    #                         "\n",
+    #                     ]
+    #                 }
+    #             ],
+    #             {"end": "}"},
+    #         ]
+    #     }
+
+    export_to_json(result, "text.json")
+    return result
 
 
 def enclose_reference(data, color="violet") -> None:
