@@ -80,6 +80,56 @@ def add_usepackage_command(data, package: str) -> None:
     data.insert(documentclass_index + 3, "\n")  # for clarity
 
 
+def enclose_abstract(
+    data,
+    title_color="red",
+    text_color="green"
+):
+    document_index = -1
+    for index, item in enumerate(data):
+        if isinstance(item, dict) and "document" in item:
+            document_index = index
+            break
+
+    if document_index == -1:
+        raise Exception("documentclass not found")
+
+    # enclose title with renewcommand
+    data.insert(document_index, "\n")  # for clarity
+    data.insert(
+        document_index,
+        {
+            "renewcommand": f"\\renewcommand{{\\abstractname}}{{\\color{{{title_color}}}Abstract}}\n"
+        },
+    )
+    data.insert(document_index, "\n")  # for clarity
+
+    # enclose the content of the abstract
+    main_content = data[document_index + 3]['document'][1]
+    log.debug(f"main_content={main_content}")
+    for index, item in enumerate(main_content):
+        if isinstance(item, dict) and "abstract" in item:
+            main_content[index] = {
+                "BraceGroup": [
+                    {"begin": "{"},
+                    [
+                        {
+                            "color": [
+                                "\\color{{{}}}\n".format(text_color),
+                                *item["abstract"],
+                                "\n",
+                            ]
+                        }
+                    ],
+                    {"end": "}"},
+                ]
+            }
+            log.debug(f"main_content={main_content}")
+            break
+
+    data[document_index + 3]['document'][1] = main_content
+
+
 def add_color_definition(
     data, name2rgbcolor: Dict[str, Tuple[int, int, int]]
 ) -> Dict[str, str]:

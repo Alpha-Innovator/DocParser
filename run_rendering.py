@@ -44,6 +44,10 @@ def main():
 
     # render title
     rendering.enclose_title(data, color=name2color["Title"])
+    # render abstract
+    rendering.enclose_abstract(
+        data, title_color=name2color["Title"], text_color=name2color["Text"]
+    )
 
     main_content, index = utils.get_main_content(data)
 
