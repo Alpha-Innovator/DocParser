@@ -66,7 +66,7 @@ Explanation:
 
 
 # Pipeline
-1. Use `TexSoup` to parse the `.tex` source file into a `list`, whose elements may be `dict`` or `str`
+1. Use `TexSoup` to parse the `.tex` source file into a `list`, whose elements may be `dict` or `str`
 2. Use Rule-based method to render elements that belong to different categories. 
 3. Compile the rendered `.tex` file  into PDF
 4. Use `pdfminer` to generate candidate bounding boxes
