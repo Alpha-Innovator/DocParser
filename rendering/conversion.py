@@ -16,18 +16,29 @@ def to_list(tex_tree):
         if isinstance(i, list):
             str_tree.append(i)
         elif isinstance(i, TexEnv):
-            for index, item in enumerate(i.all):
-                if isinstance(item, str) and item[0] == "\n":
-                    break
-            str_tree.append(
-                {
-                    i.name: [
-                        {"begin": i.begin + str(i.args)},
-                        to_list(i.all[index:]),
-                        {"end": i.end},
-                    ]
-                }
-            )
+            if i.args:
+                for index, item in enumerate(i.all):
+                    if isinstance(item, str) and item[0] == "\n":
+                        break
+                str_tree.append(
+                    {
+                        i.name: [
+                            {"begin": i.begin + str(i.args)},
+                            to_list(i.all[index:]),
+                            {"end": i.end},
+                        ]
+                    }
+                )
+            else:
+                str_tree.append(
+                    {
+                        i.name: [
+                            {"begin": i.begin},
+                            to_list(i.all),
+                            {"end": i.end},
+                        ]
+                    }
+                )
         elif isinstance(i, TexCmd):
             if i.name == "item":
                 str_tree.append(
