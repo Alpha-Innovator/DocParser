@@ -486,7 +486,7 @@ def enclose_text(data, color="olive"):
                         ]
                     }
                 ],
-                {"end": "}"},
+                {"end": "}\n"},
             ]
         }
 
