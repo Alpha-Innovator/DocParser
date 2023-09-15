@@ -30,7 +30,14 @@ def to_list(tex_tree):
             )
         elif isinstance(i, TexCmd):
             if i.name == "item":
-                str_tree.append({i.name: "\\" + i.name + str(i.contents[0])})
+                str_tree.append(
+                    {
+                        i.name: [
+                            "\\" + i.name,
+                            to_list(i.contents),
+                        ]
+                    }
+                )
                 continue
             str_tree.append({i.name: "\\" + i.name + str(i.args)})
         elif isinstance(i, TexText):
