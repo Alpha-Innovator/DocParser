@@ -40,6 +40,7 @@ non_text_envs = (
     + ["section", "subsection", "section*", "subsection*"]
     + ["abstract"]
     + ["bibliography"]
+    + ["newcolumntype"] # corner case
 )
 
 
