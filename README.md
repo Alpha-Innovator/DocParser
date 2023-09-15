@@ -2,25 +2,32 @@
 This repository is used to process paper with `.tex` source files.
 
 # Roadmap
-- [ ] text,text-eq rendering
-- [ ] table rendering (recursive)
 - [ ] text-bb matching
 - [ ] improved merge_bb
 - [ ] `text.json` output
 
 
 # Install
-[TODO]
+First create a conda environment (if Anaconda has not been installed, see [installtion](https://docs.anaconda.com/free/anaconda/install/index.html))
+```shell
+conda create --name vrdu 
+```
+
+Then activate the environment and install packages:
+```shell
+conda activate vrdu
+conda install --file requirements.txt
+```
 
 # Usage
 ```shell
-./pipeline.sh path_to_paper
+./pipeline.sh path_to_paper/paper.tex
 ```
 where directory contains all files (must contain a main `.tex` file) related to a paper.
 
 the script then generates the bounding box of the following categories and their corresponding content (if there are text inside the bounding box):
 
-the result is stored in the `output` directory, the structure is given as follows (`paper.tex` as main file):
+the result is stored in the `output` directory inside the `path_to_paper`, the structure is given as follows:
 ```shell
 path_to_paper
 ├── output
@@ -55,10 +62,24 @@ each bounding box is classified into one the following category.
 | Content | Text  | Text-EQ  | Title  |  Caption  | Equation  |  List | Table | Figure | Algorithm | Footnote | Reference | Others | 
 
 Explanation:  
-[TODO]
+`Text` refers to a paragraph of texts without no inline equations, while `Text-EQ` refers to text with equations
 
 
 # Pipeline
+1. Use `TexSoup` to parse the `.tex` source file into a `list`, whose elements may be `dict`` or `str`
+2. Use Rule-based method to render elements that belong to different categories. 
+3. Compile the rendered `.tex` file  into PDF
+4. Use `pdfminer` to generate candidate bounding boxes
+5. Processing candidate bounding boxes (merge by rules)
+6. Use `opencv` to identify the color of content in each bounding box and classify bounding boxes
+7. Build the relationship between source file and the bounding boxes
+
+
+# Update log
+## 2023.09.15
+ - [x] fix environment with argument parsing error.
+ - [x] fix align environment rendering error
+ - [x] fix list environment parsing error
 
 
 # Acknowledgements
