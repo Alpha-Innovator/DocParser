@@ -360,8 +360,22 @@ def enclose_equation(data, color="green") -> None:
                 if isinstance(value, list):
                     enclose_equation(value[CONTENT_INDEX], color)
             continue
-
-        item[env][1].insert(0, {"color": "\\color{{{}}}".format(color)})
+        
+        item[env] = {
+            "BraceGroup": [
+                {"begin": "{"},
+                [
+                    {
+                        "color": [
+                            "\\color{{{}}}\n".format(color),
+                            item[env],
+                            "\n",
+                        ]
+                    }
+                ],
+                {"end": "}"},
+            ]
+        }
 
 
 def enclose_tabular(data: List, color="cyan"):
