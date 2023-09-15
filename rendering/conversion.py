@@ -1,5 +1,3 @@
-
-
 from TexSoup.TexSoup import TexSoup
 from TexSoup.TexSoup.data import TexEnv
 from TexSoup.TexSoup.data import TexText
@@ -18,21 +16,20 @@ def to_list(tex_tree):
         if isinstance(i, list):
             str_tree.append(i)
         elif isinstance(i, TexEnv):
-            if str(i.args).find(str(i.all[0])) != -1:                
-                str_tree.append({
+            for index, item in enumerate(i.all):
+                if isinstance(item, str) and item[0] == "\n":
+                    break
+            str_tree.append(
+                {
                     i.name: [
                         {"begin": i.begin + str(i.args)},
-                        to_list(i.all[1:]),
-                        {"end": i.end}
-                ]})
-            else:
-                str_tree.append({i.name: [
-                    {"begin": i.begin + str(i.args)},
-                    to_list(i.all),
-                    {"end": i.end}
-                ]})
+                        to_list(i.all[index:]),
+                        {"end": i.end},
+                    ]
+                }
+            )
         elif isinstance(i, TexCmd):
-            if i.name == 'item':
+            if i.name == "item":
                 str_tree.append({i.name: "\\" + i.name + str(i.contents[0])})
                 continue
             str_tree.append({i.name: "\\" + i.name + str(i.args)})
