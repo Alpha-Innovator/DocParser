@@ -20,7 +20,7 @@ input_filename="${filename_with_extension%.*}"
 # store the result
 mkdir -p $input_directory/output
 if [ "$?" -ne 0 ]; then
-    echo "Error: Failed to create the output directory"
+    echo "[Pipeline] Error: Failed to create the output directory"
     exit 1
 fi
 
@@ -38,10 +38,10 @@ fi
 
 # Check if the Python script execution was successful
 if [ "$?" -ne 0 ]; then
-    echo "Error: Failed to render the .tex file."
+    echo "[Pipeline] Error: Failed to render the $input_tex."
     exit 1
 else
-    echo "Successfully rendered the .tex file."
+    echo "[Pipeline] Successfully rendered the $input_tex."
 fi
 
 ############# compile the original .tex file into a PDF###########################
@@ -50,10 +50,10 @@ bash compile_latex.sh "$input_directory" "$input_filename"
 
 # Check if the shell script execution was successful
 if [ "$?" -ne 0 ]; then
-    echo "Error: Failed to compile the original .tex file into a PDF."
+    echo "[Pipeline] Error: Failed to compile the $input_filename into a PDF."
     exit 1
 else
-    echo "Successfully compiled the original .tex file into a PDF."
+    echo "[Pipeline] Successfully compiled the $input_filename into a PDF."
 fi
 
 # copy the original PDF file to the output directory
@@ -67,10 +67,10 @@ bash compile_latex.sh "$input_directory" "$output_filename"
 
 # Check if the shell script execution was successful
 if [ "$?" -ne 0 ]; then
-    echo "Failed to compile the output .tex file into a PDF."
+    echo "[Pipeline] Failed to compile the $output_filename into a PDF."
     exit 1
 else
-    echo "Successfully compiled the output .tex file into a PDF."
+    echo "[Pipeline] Successfully compiled the $output_filename into a PDF."
 fi
 
 mkdir -p "$input_directory/output/rendered/"
@@ -82,10 +82,10 @@ python pdf2jpg.py --pdf "$original_pdf" --output_path "$input_directory/output/o
 
 # Check if the shell script execution was successful
 if [ "$?" -ne 0 ]; then
-    echo "Error: Failed to converting the input .pdf file into images."
+    echo "[Pipeline] Error: Failed to converting the $original_pdf file into images."
     exit 1
 else
-    echo "Successfully converted the input .pdf file into images."
+    echo "[Pipeline] Successfully converted the $original_pdf file into images."
 fi
 
 ############# convert the rendered PDF into images ################
@@ -93,10 +93,10 @@ python pdf2jpg.py --pdf "$rendered_pdf" --output_path "$input_directory/output/r
 
 # Check if the shell script execution was successful
 if [ "$?" -ne 0 ]; then
-    echo "Error: Failed to converting the output .pdf file into images."
+    echo "[Pipeline] Error: Failed to converting the $rendered_pdf file into images."
     exit 1
 else
-    echo "Successfully converted the output .pdf file into images."
+    echo "[Pipeline] Successfully converted the $rendered_pdf file into images."
 fi
 
 ############## generate the bounding box with original and rendered PDF ##########
@@ -105,10 +105,10 @@ python generate_bb.py --path "$input_directory/output" --file_name "$input_filen
 
 # Check if the shell script execution was successful
 if [ "$?" -ne 0 ]; then
-    echo "Error: Failed to generate the bounding box."
+    echo "[Pipeline] Error: Failed to generate the bounding box."
     exit 1
 else
-    echo "Successfully generated the bounding box."
+    echo "[Pipeline] Successfully generated the bounding box."
 fi
 
-echo "Script completed successfully."
+echo "[Pipeline] Script completed successfully, result is stored in $input_directory/output/result."
