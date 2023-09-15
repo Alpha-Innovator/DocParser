@@ -92,11 +92,7 @@ def add_usepackage_command(data, package: str) -> None:
     data.insert(documentclass_index + 3, "\n")  # for clarity
 
 
-def enclose_abstract(
-    data,
-    title_color="red",
-    text_color="green"
-):
+def enclose_abstract(data, title_color="red", text_color="green"):
     document_index = -1
     for index, item in enumerate(data):
         if isinstance(item, dict) and "document" in item:
@@ -117,29 +113,22 @@ def enclose_abstract(
     data.insert(document_index, "\n")  # for clarity
 
     # enclose the content of the abstract
-    main_content = data[document_index + 3]['document'][1]
+    main_content = data[document_index + 3]["document"][1]
     log.debug(f"main_content={main_content}")
     for index, item in enumerate(main_content):
         if isinstance(item, dict) and "abstract" in item:
-            main_content[index] = {
-                "BraceGroup": [
-                    {"begin": "{"},
-                    [
-                        {
-                            "color": [
-                                "\\color{{{}}}\n".format(text_color),
-                                *item["abstract"],
-                                "\n",
-                            ]
-                        }
-                    ],
-                    {"end": "}"},
+            item["abstract"][CONTENT_INDEX] = {
+                "textcolor": [
+                    "\\textcolor{{{}}}{{".format(text_color),
+                    *item["abstract"][CONTENT_INDEX],
+                    "}\n",
                 ]
             }
+
             log.debug(f"main_content={main_content}")
             break
 
-    data[document_index + 3]['document'][1] = main_content
+    data[document_index + 3]["document"][1] = main_content
 
 
 def add_color_definition(
@@ -290,15 +279,21 @@ def enclose_caption_inside_env(data, color="orange") -> None:
     Raises:
         None
     """
+    log.debug(f"data={data}")
     for index, element in enumerate(data):
         if not isinstance(element, dict):
             continue
 
+        log.debug(f"element={element}")
+
         if "caption" not in element:
             for key, value in element.items():
                 if isinstance(value, list):
-                    enclose_caption(value[CONTENT_INDEX], color)
+                    log.debug(f"value={value[CONTENT_INDEX]}")
+                    enclose_caption_inside_env(value[CONTENT_INDEX], color)
             continue
+
+        log.debug(f"element={element}")
 
         data[index] = {
             "BraceGroup": [
@@ -336,6 +331,8 @@ def enclose_caption(data, color="orange") -> None:
         env = find_env(item, caption_envs)
         if env is None:
             continue
+
+        log.debug(f"env={env}, item={item}")
 
         enclose_caption_inside_env(item[env][CONTENT_INDEX], color)
 
@@ -461,7 +458,7 @@ def enclose_text(data, color="olive"):
                     current_group = []
                     result.append("\n")
                     result.append("\n")
-                    current_group.append(item[index + 2:])
+                    current_group.append(item[index + 2 :])
                 else:
                     current_group.append(item)
         else:
