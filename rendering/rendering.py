@@ -50,15 +50,18 @@ texts = []
 
 def find_env(wrapped_env: dict, query: List[str]) -> Union[str, None]:
     """
-    Finds and returns the environment variable from the given query list that exists in the wrapped_env dictionary.
+    Finds and returns the environment variable from the given query list
+    that exists in the wrapped_env dictionary.
 
     Parameters:
-        wrapped_env (dict): A dictionary containing environment variables as keys.
+        wrapped_env (dict): A dictionary containing environment variables
+            as keys.
         query (list): A list of environment variables to search for.
 
     Returns:
-        Union[str, None]: The environment variable found in the query list that exists in the wrapped_env dictionary,
-                          or None if no matching environment variable is found.
+        Union[str, None]: The environment variable found in the query list
+            that exists in the wrapped_env dictionary, or None
+            if no matching environment variable is found.
     """
     for env in query:
         if env in wrapped_env:
