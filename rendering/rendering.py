@@ -101,6 +101,21 @@ def add_usepackage_command(data, package: str) -> None:
 
 
 def enclose_abstract(data, title_color="red", text_color="green"):
+    """
+    Encloses the abstract section of a document with specified
+    title and text colors.
+
+    Parameters:
+        data (list): The list representing the document structure.
+        title_color (str, optional): The color of the abstract title.
+            Defaults to "red".
+        text_color (str, optional): The color of the abstract text.
+            Defaults to "green".
+
+    Raises:
+        Exception: If the documentclass is not found.
+
+    """
     document_index = -1
     for index, item in enumerate(data):
         if isinstance(item, dict) and "document" in item:
@@ -190,20 +205,25 @@ def add_color_definition(
 
 def enclose_title(data, color="red") -> None:
     """
-    Encloses the title of each dictionary item in the given data list with LaTeX formatting and a specified color.
+    Encloses the title of each dictionary item in the given data list with
+        LaTeX formatting and a specified color.
 
     Parameters:
-        data (list[dict]): A list of dictionaries containing the items to be modified.
-        color (str): The color to use for the enclosed title. Defaults to 'red'.
+        data (list[dict]): A list of dictionaries containing the
+            items to be modified.
+        color (str): The color to use for the enclosed title.
+            Defaults to 'red'.
 
     Returns:
         None
 
     Notes:
-        - The function modifies the 'title' key in each dictionary item in the data list.
-        - The function assumes that each dictionary item in the data list has a 'title' key.
-        - The function uses LaTeX formatting to enclose the title text in the specified color.
-            The format of the enclosed title is "\\title{{\\textcolor{{{}}}{{{}}}}}".format(color, title_text).
+        - The function modifies the 'title' key in each dictionary item 
+            in the data list.
+        - The function assumes that each dictionary item in the data list 
+            has a 'title' key.
+        - The function uses LaTeX formatting to enclose the title text in 
+            the specified color.
     """
     for item in data:
         if isinstance(item, dict) and "title" in item:
@@ -597,6 +617,19 @@ def enclose_figure(data, color="black"):
 
 
 def enclose_algorithm(data, color="pink"):
+    """
+    Generate a function comment for the given function body.
+
+    Args:
+        data (list): The data to be processed.
+        color (str, optional): The color to be used. Defaults to "pink".
+
+    Returns:
+        None
+
+    Raises:
+        None
+    """
     for item in data:
         if not isinstance(item, dict):
             continue
