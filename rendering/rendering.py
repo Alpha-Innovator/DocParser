@@ -43,6 +43,8 @@ non_text_envs = (
     + ["newcolumntype"] # corner case
 )
 
+texts = []
+
 
 def find_env(wrapped_env: dict, query: List[str]) -> Union[str, None]:
     """
@@ -584,7 +586,7 @@ def enclose_algorithm(data, color="pink"):
         if env is None:
             for key, value in item.items():
                 if isinstance(value, list):
-                    enclose_equation(value[CONTENT_INDEX], color)
+                    enclose_algorithm(value[CONTENT_INDEX], color)
             continue
 
         item[env][1].insert(0, {"color": "\n\\color{{{}}}".format(color)})
