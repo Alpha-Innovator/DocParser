@@ -147,7 +147,6 @@ def enclose_abstract(data, title_color="red", text_color="green"):
 
     # enclose the content of the abstract
     main_content = data[document_index + 3]["document"][1]
-    log.debug(f"main_content={main_content}")
     for index, item in enumerate(main_content):
         if isinstance(item, dict) and "abstract" in item:
             texts["abstract"] = item["abstract"][CONTENT_INDEX]
@@ -159,7 +158,6 @@ def enclose_abstract(data, title_color="red", text_color="green"):
                 ]
             }
 
-            log.debug(f"main_content={main_content}")
             break
 
     data[document_index + 3]["document"][1] = main_content
@@ -321,17 +319,13 @@ def enclose_caption_inside_env(data, color="orange") -> None:
     Raises:
         None
     """
-    log.debug(f"data={data}")
     for index, element in enumerate(data):
         if not isinstance(element, dict):
             continue
 
-        log.debug(f"element={element}")
-
         if "caption" not in element:
             for key, value in element.items():
                 if isinstance(value, list):
-                    log.debug(f"value={value[CONTENT_INDEX]}")
                     enclose_caption_inside_env(value[CONTENT_INDEX], color)
             continue
 
@@ -364,7 +358,6 @@ def enclose_caption(data, color="orange") -> None:
     Raises:
         None
     """
-
     for item in data:
         if not isinstance(item, dict):
             continue
@@ -372,8 +365,6 @@ def enclose_caption(data, color="orange") -> None:
         env = find_env(item, caption_envs)
         if env is None:
             continue
-
-        log.debug(f"env={env}, item={item}")
 
         enclose_caption_inside_env(item[env][CONTENT_INDEX], color)
 
