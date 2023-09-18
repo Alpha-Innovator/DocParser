@@ -76,6 +76,10 @@ Explanation:
 
 
 # Update log
+## 2023.09.22
+- [x] extract elements in '.tex' files
+
+
 ## 2023.09.15
  - [x] fix environment with argument parsing error.
  - [x] fix align environment rendering error
