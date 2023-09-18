@@ -45,8 +45,18 @@ non_text_envs = (
     + ["newcolumntype"] # corner case
 )
 
-texts = []
-
+texts = {
+    "algorithm": [],
+    "section": [],
+    "caption": [],
+    "list": [],
+    "equation": [],
+    "footnote": [],
+    "title": [],
+    "abstract": [],
+    "bibliography": [],
+    "table": [],
+}
 
 def find_env(wrapped_env: dict, query: List[str]) -> Union[str, None]:
     """
@@ -140,6 +150,7 @@ def enclose_abstract(data, title_color="red", text_color="green"):
     log.debug(f"main_content={main_content}")
     for index, item in enumerate(main_content):
         if isinstance(item, dict) and "abstract" in item:
+            texts["abstract"] = item["abstract"][CONTENT_INDEX]
             item["abstract"][CONTENT_INDEX] = {
                 "textcolor": [
                     "\\textcolor{{{}}}{{".format(text_color),
@@ -234,6 +245,7 @@ def enclose_title(data, color="red") -> None:
                 color, title_text
             )
             item["title"] = rendered_title
+            texts["title"].append(title_text)
 
 
 def enclose_section(data, color="red") -> None:
@@ -264,6 +276,7 @@ def enclose_section(data, color="red") -> None:
             env, color, section_text
         )
         item[env] = rendered_section
+        texts["section"].append(section_text)
 
 
 def enclose_list(data, color="yellow") -> None:
@@ -290,6 +303,7 @@ def enclose_list(data, color="yellow") -> None:
                 {"end": "}"},
             ]
         }
+        texts["list"].append(item[env])
 
 
 def enclose_caption_inside_env(data, color="orange") -> None:
@@ -321,8 +335,7 @@ def enclose_caption_inside_env(data, color="orange") -> None:
                     enclose_caption_inside_env(value[CONTENT_INDEX], color)
             continue
 
-        log.debug(f"element={element}")
-
+        texts["caption"].append(element)
         data[index] = {
             "BraceGroup": [
                 {"begin": "{"},
@@ -387,7 +400,8 @@ def enclose_equation(data, color="green") -> None:
                 if isinstance(value, list):
                     enclose_equation(value[CONTENT_INDEX], color)
             continue
-        
+
+        texts["equation"].append(item)
         item[env] = {
             "BraceGroup": [
                 {"begin": "{"},
@@ -453,6 +467,7 @@ def enclosed_table(data, color="cyan") -> None:
         if env is None:
             continue
 
+        texts["table"].append(item)
         enclose_tabular(item[env][CONTENT_INDEX], color)
 
 
@@ -485,6 +500,7 @@ def enclose_footnote(data, color="red") -> None:
             env, color, footenote_text
         )
         item[env] = rendered_footnote
+        texts["footnote"].append(footenote_text)
 
 
 def enclose_text(data, color="olive"):
@@ -642,4 +658,10 @@ def enclose_algorithm(data, color="pink"):
                     enclose_algorithm(value[CONTENT_INDEX], color)
             continue
 
+        texts["algorithm"].append(item)
         item[env][1].insert(0, {"color": "\n\\color{{{}}}".format(color)})
+
+
+def save_texts(file="texts.json"):
+    log.debug(f"texts['algorithm']={texts['algorithm']}")
+    export_to_json(texts, file)
