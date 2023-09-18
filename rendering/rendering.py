@@ -17,6 +17,7 @@ CONTENT_INDEX = 1
 
 
 math_envs = ["equation", "align", "equation*", "align*", "$$"]
+section_envs = ["section", "subsection", "section*", "subsection*"]
 table_envs = ["table", "table*"]
 figure_envs = ["figure", "minipage", "subfigure"]
 algorithm_envs = [
@@ -38,7 +39,7 @@ non_text_envs = (
     + caption_envs
     + algorithm_envs
     + list_envs
-    + ["section", "subsection", "section*", "subsection*"]
+    + section_envs
     + ["abstract"]
     + ["bibliography"]
     + ["newcolumntype"] # corner case
@@ -218,7 +219,8 @@ def enclose_section(data, color="red") -> None:
 
     Parameters:
         data (dict): The data to be enclosed.
-        color (str, optional): The color of the enclosed section. Defaults to 'red'.
+        color (str, optional): The color of the enclosed section.
+            Defaults to 'red'.
 
     Returns:
         dict: A dictionary representing the enclosed section.
@@ -226,12 +228,11 @@ def enclose_section(data, color="red") -> None:
     Raises:
         Exception: If a 'section' or 'subsection' key is not found in the data.
     """
-    section_lists = ["section", "subsection", "section*", "subsection*"]
     for index, item in enumerate(data):
         if not isinstance(item, dict):
             continue
 
-        env = find_env(item, section_lists)
+        env = find_env(item, section_envs)
         if env is None:
             continue
 
