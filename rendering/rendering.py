@@ -29,6 +29,7 @@ algorithm_envs = [
 list_envs = ["itemize", "enumerate"]
 reference_envs = ["bibliography"]
 caption_envs = table_envs + figure_envs
+footnote_envs = ["footnote", "footnote*", "footnote**"]
 non_text_envs = (
     math_envs
     + table_envs
@@ -432,11 +433,26 @@ def enclosed_table(data, color="cyan") -> None:
 
 
 def enclose_footnote(data, color="red") -> None:
-    footnote_lists = ["footnote", "footnote*", "footnote**"]
+    """
+    Encloses the text of footnotes in a given data structure
+    with a specified color.
+
+    Args:
+        data (list): A list of items to be processed.
+            Each item can be a dictionary.
+        color (str): The color to be applied to the enclosed footnotes.
+            Defaults to "red".
+
+    Returns:
+        None
+
+    Raises:
+        None
+    """
     for item in data:
         if not isinstance(item, dict):
             continue
-        env = find_env(item, footnote_lists)
+        env = find_env(item, footnote_envs)
         if env is None:
             continue
 
