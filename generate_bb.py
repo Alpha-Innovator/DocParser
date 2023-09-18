@@ -337,7 +337,9 @@ def generate_annotation(
     """
     draw = ImageDraw.Draw(page_image)
     # use `locate .ttf` to find the available fonts
-    font = ImageFont.truetype("DejaVuSans.ttf", config["annotation_image_font_size"])
+    font = ImageFont.truetype(
+        config["annotation_image_font_type"], config["annotation_image_font_size"]
+    )
 
     for index, element in enumerate(page_elements):
         category = category_info[index]
