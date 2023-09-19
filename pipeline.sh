@@ -8,7 +8,7 @@ fi
 
 # Assign the command line arguments to variables
 input_tex=$1
-debug_flag=$3
+debug_flag=$2
 
 # Get the directory of the input_tex file
 input_directory=$(dirname "$input_tex")
