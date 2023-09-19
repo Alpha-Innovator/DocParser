@@ -29,7 +29,7 @@ algorithm_envs = [
 ]
 list_envs = ["itemize", "enumerate"]
 reference_envs = ["bibliography"]
-caption_envs = table_envs + figure_envs
+caption_envs = table_envs + figure_envs + algorithm_envs
 footnote_envs = ["footnote", "footnote*", "footnote**"]
 non_text_envs = (
     math_envs
@@ -333,17 +333,11 @@ def enclose_caption_inside_env(data, color="orange") -> None:
             continue
 
         texts["caption"].append(element)
-        data[index] = {
-            "BraceGroup": [
-                {"begin": "{"},
-                [
-                    "\n",
-                    {"color": "\\color{{{}}}{{{}}}".format(color, element["caption"])},
-                    "\n",
-                ],
-                {"end": "}"},
-            ]
-        }
+        caption_text = element['caption'][9: -1]
+        rendered_caption = "\\{}{{\\textcolor{{{}}}{{{}}}}}".format(
+            'caption', color, caption_text
+        )
+        element['caption'] = rendered_caption
 
 
 def enclose_caption(data, color="orange") -> None:
