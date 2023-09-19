@@ -68,10 +68,9 @@ def main():
 
     rendering.enclose_reference(main_content, color=name2color["Text"])
 
-
     rendering.enclose_algorithm(main_content, color=name2color["Algorithm"])
 
-    rendering.save_texts()
+    rendering.save_texts(config["text_elements_file"])
 
     # output tex file
     utils.tex_file_from_data(data, rendered_tex_file, debug_mode)
