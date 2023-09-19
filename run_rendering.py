@@ -80,8 +80,6 @@ def render_tex_data(data):
 
     rendering.enclose_algorithm(main_content, color=name2color["Algorithm"])
 
-    rendering.save_texts(config["text_elements_file"])
-
 
 def main():
     origin_tex_file, rendered_tex_file, debug_mode = parse_arguments()
@@ -90,6 +88,9 @@ def main():
     data = utils.data_from_tex_file(origin_tex_file, debug_mode)
 
     render_tex_data(data)
+
+    # save the text annotation information into json
+    rendering.save_texts(config["text_elements_file"])
 
     # Convert data back to tex file
     utils.tex_file_from_data(data, rendered_tex_file, debug_mode)
