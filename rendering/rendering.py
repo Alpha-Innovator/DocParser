@@ -56,8 +56,8 @@ texts = {
     "abstract": [],
     "bibliography": [],
     "table": [],
-    'text': [],
-    'figure': [],
+    "text": [],
+    "figure": [],
 }
 
 
