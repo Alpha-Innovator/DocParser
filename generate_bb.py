@@ -256,8 +256,8 @@ def main():
 
     # generate object detection info
     geometry_infos = {}  # geometry info member of COCO
-    image_infos = {}
-    category_infos = {}
+    image_infos = {}   # annotation image info member of COCO
+    category_infos = {}  # map of bb index to category 
     for page_index, page_elements in file_elements.items():
         page_image_path = os.path.join(
             rendered_path, f"{filename}_rendered_page_{page_index}.jpg"
