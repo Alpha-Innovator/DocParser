@@ -230,11 +230,11 @@ def enclose_title(data, color="red") -> None:
         None
 
     Notes:
-        - The function modifies the 'title' key in each dictionary item 
+        - The function modifies the 'title' key in each dictionary item
             in the data list.
-        - The function assumes that each dictionary item in the data list 
+        - The function assumes that each dictionary item in the data list
             has a 'title' key.
-        - The function uses LaTeX formatting to enclose the title text in 
+        - The function uses LaTeX formatting to enclose the title text in
             the specified color.
     """
     for item in data:
