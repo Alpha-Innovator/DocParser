@@ -381,6 +381,9 @@ def enclose_equation(data, color="green") -> None:
         if not isinstance(item, dict):
             continue
 
+        if find_env(item, algorithm_envs) is not None:
+            continue
+
         env = find_env(item, math_envs)
 
         if env is None:
