@@ -42,7 +42,7 @@ non_text_envs = (
     + section_envs
     + ["abstract"]
     + ["bibliography"]
-    + ["newcolumntype"] # corner case
+    + ["newcolumntype", "label"]  # corner case
 )
 
 texts = {
