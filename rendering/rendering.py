@@ -56,7 +56,10 @@ texts = {
     "abstract": [],
     "bibliography": [],
     "table": [],
+    'text': [],
+    'figure': [],
 }
+
 
 def find_env(wrapped_env: dict, query: List[str]) -> Union[str, None]:
     """
@@ -537,6 +540,7 @@ def enclose_text(data, color="olive"):
         if isinstance(item, str):
             continue
         # list
+        texts["text"].append(item)
         result[index] = {
             "BraceGroup": [
                 {"begin": "{"},
@@ -579,22 +583,6 @@ def enclose_reference(data, color="violet") -> None:
 
 
 def enclose_figure(data, color="black"):
-    """
-    Encloses a figure in an `mdframed` environment with a specified background color.
-
-    Parameters:
-        - data (list): A list of dictionaries representing figures.
-        - color (str): The background color of the `mdframed` environment. Defaults to 'black'.
-
-    Returns:
-        None
-
-    Note:
-        This function requires `mdframed` to be installed.
-
-    See:
-        add_usepackage_command
-    """
     for item in data:
         if not isinstance(item, dict):
             continue
@@ -610,17 +598,7 @@ def enclose_figure(data, color="black"):
             if "includegraphics" not in element:
                 continue
 
-            item[env][CONTENT_INDEX][index] = {
-                "mdframed": [
-                    {"begin": "\\begin{{mdframed}}[backgroundcolor={}]".format(color)},
-                    "\n",
-                    [
-                        item[env][CONTENT_INDEX][index],
-                    ],
-                    "\n",
-                    {"end": "\\end{mdframed}"},
-                ]
-            }
+            texts["figure"].append(item[env][CONTENT_INDEX][index])
 
 
 def enclose_algorithm(data, color="pink"):
