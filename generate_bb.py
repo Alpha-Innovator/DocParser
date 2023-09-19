@@ -255,7 +255,7 @@ def main():
     file_elements = geometry.merge_bb(file_elements)
 
     # generate object detection info
-    annotation_infos = {}
+    geometry_infos = {}  # geometry info member of COCO
     image_infos = {}
     category_infos = {}
     for page_index, page_elements in file_elements.items():
@@ -276,10 +276,10 @@ def main():
         annotated_image_path = os.path.join(result_path, image_name)
         image_infos[page_index] = annotated_image_path
         annotated_image.save(annotated_image_path, "JPEG")
-        annotation_infos[page_index] = transformed_page_elements
+        geometry_infos[page_index] = transformed_page_elements
 
     json_file = os.path.join(result_path, "annotation.json")
-    export_to_coco(annotation_infos, image_infos, category_infos, filename=json_file)
+    export_to_coco(geometry_infos, image_infos, category_infos, filename=json_file)
 
 
 if __name__ == "__main__":
