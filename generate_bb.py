@@ -123,7 +123,7 @@ def get_category(image: Image.Image, element: LTComponent) -> int:
             return name2category["Others"]
         else:
             # TODO: add log to check if line is table or algorithm
-            return name2category['Table']
+            return name2category["Table"]
 
     x0, y0, x1, y1 = element.bbox
     roi = image.crop((x0, y0, x1, y1))
@@ -255,8 +255,8 @@ def main():
 
     # generate object detection info
     geometry_infos = {}  # geometry info member of COCO
-    image_infos = {}   # annotation image info member of COCO
-    category_infos = {}  # map of bb index to category 
+    image_infos = {}  # annotation image info member of COCO
+    category_infos = {}  # map of bb index to category
     for page_index, page_elements in file_elements.items():
         page_image_path = os.path.join(
             rendered_path, f"{filename}_rendered_page_{page_index}.jpg"
