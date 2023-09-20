@@ -19,7 +19,8 @@ CONTENT_INDEX = 1
 math_envs = ["equation", "align", "equation*", "align*", "$$"]
 section_envs = ["section", "subsection", "section*", "subsection*"]
 table_envs = ["table", "table*"]
-figure_envs = ["figure", "minipage", "subfigure"]
+figure_envs = ["figure", "minipage"]
+graphic_envs = ["centerline", "includegraphics", "subfigure"]
 algorithm_envs = [
     "algorithm",
     "algorithm*",
@@ -579,6 +580,20 @@ def enclose_reference(data, color="violet") -> None:
         }
 
 
+def enclose_graphics_inside_figure(data, color="black"):
+    for index, element in enumerate(data):
+        if not isinstance(element, dict):
+            continue
+
+        env = find_env(element, graphic_envs)
+        if env is None:
+            for key, value in element.items():
+                if isinstance(value, list):
+                    enclose_graphics_inside_figure(value[CONTENT_INDEX], color)
+        else:
+            texts['figure'].append(element[env])
+
+
 def enclose_figure(data, color="black"):
     for item in data:
         if not isinstance(item, dict):
@@ -588,14 +603,7 @@ def enclose_figure(data, color="black"):
         if env is None:
             continue
 
-        for index, element in enumerate(item[env][CONTENT_INDEX]):
-            if not isinstance(element, dict):
-                continue
-
-            if "includegraphics" not in element:
-                continue
-
-            texts["figure"].append(item[env][CONTENT_INDEX][index])
+        enclose_graphics_inside_figure(item[env][CONTENT_INDEX], color)
 
 
 def enclose_algorithm(data, color="pink"):
