@@ -6,15 +6,6 @@ import logger.logger as logger
 
 log = logger.setup_app_level_logger(file_name="app_debug.log")
 
-config = utils.load_json("config.json")
-name2category = {name: category for category, name in config["category_name"]}
-category2rgbcolor = {
-    category: tuple(color) for category, color in config["category_color"]
-}
-name2rgbcolor = {
-    name: category2rgbcolor[category] for name, category in name2category.items()
-}
-
 
 def parse_arguments():
     """
@@ -47,7 +38,7 @@ def parse_arguments():
     return origin_tex_file, rendered_tex_file, debug_mode
 
 
-def render_tex_data(data):
+def render_tex_data(data, name2rgbcolor):
     rendering.add_usepackage_command(data, "xcolor")
     rendering.add_usepackage_command(data, "mdframed")  # used for figure
 
@@ -84,10 +75,20 @@ def render_tex_data(data):
 def main():
     origin_tex_file, rendered_tex_file, debug_mode = parse_arguments()
 
+    # load color information for each category
+    config = utils.load_json("config.json")
+    name2category = {name: category for category, name in config["category_name"]}
+    category2rgbcolor = {
+        category: tuple(color) for category, color in config["category_color"]
+    }
+    name2rgbcolor = {
+        name: category2rgbcolor[category] for name, category in name2category.items()
+    }
+
     # Read tex file and convert to texSoup
     data = utils.data_from_tex_file(origin_tex_file, debug_mode)
 
-    render_tex_data(data)
+    render_tex_data(data, name2rgbcolor)
 
     # save the text annotation information into json
     rendering.save_texts(config["text_elements_file"])
