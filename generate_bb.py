@@ -119,17 +119,15 @@ def generate_geometry_annotation(
 
 def get_category(image: Image.Image, element: LTComponent) -> int:
     if isinstance(element, LTLine):
-        # TODO: add log to check if line is table or algorithm
-        return name2category["Others"]
+        if element.stroking_color == 0:
+            return name2category["Others"]
+        else:
+            # TODO: add log to check if line is table or algorithm
+            return name2category['Table']
 
     x0, y0, x1, y1 = element.bbox
     roi = image.crop((x0, y0, x1, y1))
 
-    width, height = roi.size
-    if width == 0 or height == 0:
-        return name2category["Others"]
-
-    # roi = cv2.resize(roi, (700, 600))
     roi_array = np.array(roi)
     hsv_roi = cv2.cvtColor(roi_array, cv2.COLOR_RGB2HSV)
 
@@ -142,6 +140,7 @@ def get_category(image: Image.Image, element: LTComponent) -> int:
             count = np.sum(mask)
             category = key
 
+    log.debug(f"element={element}, category: {category}")
     return category
 
 
