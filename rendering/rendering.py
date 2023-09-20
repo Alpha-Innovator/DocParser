@@ -334,11 +334,11 @@ def enclose_caption_inside_env(data, color="orange") -> None:
             continue
 
         texts["caption"].append(element)
-        caption_text = element['caption'][9: -1]
+        caption_text = element["caption"][9:-1]
         rendered_caption = "\\{}{{\\textcolor{{{}}}{{{}}}}}".format(
-            'caption', color, caption_text
+            "caption", color, caption_text
         )
-        element['caption'] = rendered_caption
+        element["caption"] = rendered_caption
 
 
 def enclose_caption(data, color="orange") -> None:
