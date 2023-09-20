@@ -61,9 +61,6 @@ def render_tex_data(data):
 
     main_content, index = utils.get_main_content(data)
 
-    main_content = rendering.enclose_text(main_content, color=name2color["Text"])
-    data[index]["document"][1] = main_content
-
     rendering.enclose_section(main_content, color=name2color["Title"])
 
     rendering.enclose_list(main_content, color=name2color["List"])
@@ -79,6 +76,9 @@ def render_tex_data(data):
     rendering.enclose_reference(main_content, color=name2color["Text"])
 
     rendering.enclose_algorithm(main_content, color=name2color["Algorithm"])
+
+    main_content = rendering.enclose_text(main_content, color=name2color["Text"])
+    data[index]["document"][1] = main_content
 
 
 def main():
