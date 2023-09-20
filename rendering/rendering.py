@@ -338,7 +338,7 @@ def enclose_caption_inside_env(data, color="orange") -> None:
                     enclose_caption_inside_env(value[CONTENT_INDEX], color)
             continue
 
-        texts["caption"].append(item)
+        texts["caption"].append(item['caption'])
         caption_text = item["caption"][9:-1]
         rendered_caption = "\\{}{{\\textcolor{{{}}}{{{}}}}}".format(
             "caption", color, caption_text
