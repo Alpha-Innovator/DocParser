@@ -281,7 +281,20 @@ def enclose_section(data, color="red") -> None:
         texts["section"].append(section_text)
 
 
-def enclose_list(data, color="yellow") -> None:
+def enclose_list(data: List, color: str = "yellow") -> None:
+    """
+    Encloses dictionary items in a list with a brace group
+    and modifies the data in-place.
+
+    Args:
+        data (List): The list of items to be processed.
+        color (str, optional): The color to be applied to the enclosed items.
+            Defaults to "yellow".
+
+    Returns:
+        None
+    """
+
     for index, item in enumerate(data):
         if not isinstance(item, dict):
             continue
@@ -290,14 +303,14 @@ def enclose_list(data, color="yellow") -> None:
         if env is None:
             continue
 
+        texts["list"].append(item[env])
         data[index] = {
             "BraceGroup": [
                 {"begin": "{"},
-                [{"color": ["\\color{{{}}}\n".format(color), *item[env], "\n"]}],
+                [{"color": [f"\\color{{{color}}}\n", *item[env], "\n"]}],
                 {"end": "}"},
             ]
         }
-        texts["list"].append(item[env])
 
 
 def enclose_caption_inside_env(data, color="orange") -> None:
