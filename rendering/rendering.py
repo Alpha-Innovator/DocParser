@@ -7,7 +7,7 @@ log = logger.get_logger(__name__)
 
 # an latex env will be parsed into a list with 3 elements
 # [{'begin': xxx}, [yyy], {'end': xxx}]
-# the content is in the second element, which is a list
+# the content is in the second item, which is a list
 CONTENT_INDEX = 1
 
 # colors in xcolor.sty:
@@ -282,14 +282,6 @@ def enclose_section(data, color="red") -> None:
 
 
 def enclose_list(data, color="yellow") -> None:
-    """
-    Generate a brace group dictionary that encloses a list with a specified color.
-
-    :param data: A dictionary containing either an 'itemize' or 'enumerate' key.
-    :param color: The color to be applied to the enclosed list. Defaults to 'yellow'.
-    :return: A brace group dictionary.
-    :raises Exception: If 'itemize' or 'enumerate' key is not found in the data dictionary.
-    """
     for index, item in enumerate(data):
         if not isinstance(item, dict):
             continue
@@ -323,22 +315,22 @@ def enclose_caption_inside_env(data, color="orange") -> None:
     Raises:
         None
     """
-    for index, element in enumerate(data):
-        if not isinstance(element, dict):
+    for index, item in enumerate(data):
+        if not isinstance(item, dict):
             continue
 
-        if "caption" not in element:
-            for key, value in element.items():
+        if "caption" not in item:
+            for key, value in item.items():
                 if isinstance(value, list):
                     enclose_caption_inside_env(value[CONTENT_INDEX], color)
             continue
 
-        texts["caption"].append(element)
-        caption_text = element["caption"][9:-1]
+        texts["caption"].append(item)
+        caption_text = item["caption"][9:-1]
         rendered_caption = "\\{}{{\\textcolor{{{}}}{{{}}}}}".format(
             "caption", color, caption_text
         )
-        element["caption"] = rendered_caption
+        item["caption"] = rendered_caption
 
 
 def enclose_caption(data, color="orange") -> None:
@@ -423,12 +415,12 @@ def enclose_tabular(data: List, color="cyan"):
     Returns:
         None
     """
-    for index, element in enumerate(data):
-        if not isinstance(element, dict):
+    for index, item in enumerate(data):
+        if not isinstance(item, dict):
             continue
 
-        if "tabular" not in element:
-            for key, value in element.items():
+        if "tabular" not in item:
+            for key, value in item.items():
                 if isinstance(value, list):
                     enclose_tabular(value[CONTENT_INDEX], color)
             continue
@@ -440,7 +432,7 @@ def enclose_tabular(data: List, color="cyan"):
                     {
                         "color": [
                             "\\color{{{}}}\n".format(color),
-                            *element["tabular"],
+                            *item["tabular"],
                             "\n",
                         ]
                     }
@@ -581,17 +573,17 @@ def enclose_reference(data, color="violet") -> None:
 
 
 def enclose_graphics_inside_figure(data, color="black"):
-    for index, element in enumerate(data):
-        if not isinstance(element, dict):
+    for index, item in enumerate(data):
+        if not isinstance(item, dict):
             continue
 
-        env = find_env(element, graphic_envs)
+        env = find_env(item, graphic_envs)
         if env is None:
-            for key, value in element.items():
+            for key, value in item.items():
                 if isinstance(value, list):
                     enclose_graphics_inside_figure(value[CONTENT_INDEX], color)
         else:
-            texts['figure'].append(element[env])
+            texts["figure"].append(item[env])
 
 
 def enclose_figure(data, color="black"):
