@@ -68,6 +68,8 @@ def render_tex_data(data, name2rgbcolor):
 
     rendering.enclose_algorithm(main_content, color=name2color["Algorithm"])
 
+    rendering.enclose_figure(main_content, color=name2color["Figure"])
+
     main_content = rendering.enclose_text(main_content, color=name2color["Text"])
     data[index]["document"][1] = main_content
 
