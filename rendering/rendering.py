@@ -48,7 +48,6 @@ non_text_envs = (
 
 texts = {
     "algorithm": [],
-    "section": [],
     "caption": [],
     "list": [],
     "equation": [],
@@ -278,7 +277,7 @@ def enclose_section(data, color="red") -> None:
             env, color, section_text
         )
         item[env] = rendered_section
-        texts["section"].append(section_text)
+        texts["title"].append(section_text)
 
 
 def enclose_list(data: List, color: str = "yellow") -> None:
