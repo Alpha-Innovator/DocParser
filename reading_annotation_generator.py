@@ -1,6 +1,7 @@
-from typing import List
+from typing import Any, List, Dict
 
 import Levenshtein
+from pdfminer.layout import LTTextContainer
 
 from rendering.utils import load_json
 from logger import logger
@@ -14,7 +15,17 @@ category2name = {k: v for k, v in config["category_name"]}
 category2color = {k: v for k, v in config["category_color"]}
 
 
-def find_closest_string(new_string, string_list):
+def find_closest_string(new_string: str, string_list: List[str]) -> str:
+    """
+    Find the closest string in a list to a given new string.
+
+    Args:
+        new_string (str): The new string for comparison.
+        string_list (list): A list of strings to compare against.
+
+    Returns:
+        str: The closest string in the list to the new string.
+    """
     distances = [Levenshtein.distance(new_string, s) for s in string_list]
     closest_index = distances.index(min(distances))
     closest_string = string_list[closest_index]
@@ -47,9 +58,29 @@ def generate_caption_annotation(geometry_infos, category_infos):
     pass
 
 
-def generate_section_annotation(geometry_infos, category_infos, reading_infos):
-    reading_infos = load_json(config["text_elements_file"])
+def generate_section_annotation(
+    geometry_infos: Dict[str, List[LTTextContainer]],
+    category_infos: Dict[str, List[Dict]],
+    reading_infos: Dict[str, List[Any]],
+) -> Dict[int, List[Dict]]:
+    """
+    Generate annotations for sections based on geometry,
+    category, and reading information.
 
+
+    Args:
+        geometry_infos (Dict[str, List[LTTextContainer]]):
+            A dictionary mapping page indices to geometry information.
+        category_infos (Dict[str, List[Dict]]):
+            A dictionary mapping page indices to category information.
+        reading_infos (Dict[str, List[Any]]):
+            A dictionary mapping page indices to reading information.
+
+    Returns:
+        Dict[int, List[Dict]]:
+        A dictionary representing the generated section annotations.
+    reading_infos = load_json(config["text_elements_file"])
+    """
     result = {}
 
     sections = reading_infos["title"]
