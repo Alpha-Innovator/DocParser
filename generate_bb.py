@@ -11,8 +11,9 @@ from pdfminer.high_level import extract_pages
 from pdfminer.layout import LAParams, LTPage, LTComponent, LTFigure, LTLine
 
 from logger import logger
-from rendering.utils import load_json
+from rendering.utils import export_to_json, load_json
 from layout import geometry
+from reading_annotation_generator import generate_reading_annotation
 
 log = logger.setup_app_level_logger(file_name="app_debug.log", mode="a")
 
@@ -277,8 +278,15 @@ def main():
         annotated_image.save(annotated_image_path, "JPEG")
         geometry_infos[page_index] = transformed_page_elements
 
-    json_file = os.path.join(result_path, "annotation.json")
-    export_to_coco(geometry_infos, image_infos, category_infos, filename=json_file)
+    layout_json_file = os.path.join(result_path, "layout_annotation.json")
+    export_to_coco(
+        geometry_infos, image_infos, category_infos, filename=layout_json_file
+    )
+
+    # generate text annotation info
+    result = generate_reading_annotation(geometry_infos, category_infos)
+    text_json_file = os.path.join(result_path, "reading_annotation.json")
+    export_to_json(result, text_json_file)
 
 
 if __name__ == "__main__":
