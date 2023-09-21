@@ -54,8 +54,53 @@ def extract_image_paths(strings) -> List[str]:
     return image_paths
 
 
-def generate_caption_annotation(geometry_infos, category_infos):
-    pass
+def generate_caption_annotation(
+    geometry_infos: Dict[str, List[LTTextContainer]],
+    category_infos: Dict[str, List[Dict]],
+    reading_infos: Dict[str, List[Any]]
+) -> Dict[int, List[Dict]]:
+    """
+    Generate annotations for captions based on geometry,
+    category, and reading information.
+
+
+    Args:
+        geometry_infos (Dict[str, List[LTTextContainer]]):
+            A dictionary mapping page indices to geometry information.
+        category_infos (Dict[str, List[Dict]]):
+            A dictionary mapping page indices to category information.
+        reading_infos (Dict[str, List[Any]]):
+            A dictionary mapping page indices to reading information.
+
+    Returns:
+        Dict[int, List[Dict]]:
+        A dictionary representing the generated captions annotations.
+    """
+    result = {}
+
+    captions = reading_infos["caption"]
+
+    for page_index, page_elements in geometry_infos.items():
+        result[page_index] = []
+        category_info = category_infos[page_index]
+        for index, element in enumerate(page_elements):
+            if category2name[category_info[index]] != "Caption":
+                continue
+
+            source = find_closest_string(element.get_text(), captions)
+            log.debug(f"element={element}, source={source}")
+            result[int(page_index)].append(
+                {
+                    "id": index,
+                    "image_id": page_index,
+                    "category_id": category_info[index],
+                    "bbox": list(element.bbox),
+                    "content": [],
+                    "source": source,
+                }
+            )
+
+    return result
 
 
 def generate_section_annotation(
@@ -149,5 +194,10 @@ def generate_reading_annotation(geometry_infos, category_infos):
         geometry_infos, category_infos, reading_infos
     )
     result.update(title_annoatation)
+
+    caption_annotation = generate_caption_annotation(
+        geometry_infos, category_infos, reading_infos
+    )
+    result.update(caption_annotation)
 
     return result
