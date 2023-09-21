@@ -124,7 +124,6 @@ def generate_section_annotation(
     Returns:
         Dict[int, List[Dict]]:
         A dictionary representing the generated section annotations.
-    reading_infos = load_json(config["text_elements_file"])
     """
     result = {}
 
