@@ -272,12 +272,12 @@ def enclose_section(data, color="red") -> None:
         if env is None:
             continue
 
+        texts["title"].append(item[env])
         section_text = item[env][len(env) + 2 : -1]
         rendered_section = "\\{}{{\\textcolor{{{}}}{{{}}}}}".format(
             env, color, section_text
         )
         item[env] = rendered_section
-        texts["title"].append(section_text)
 
 
 def enclose_list(data: List, color: str = "yellow") -> None:
@@ -337,7 +337,7 @@ def enclose_caption_inside_env(data, color="orange") -> None:
                     enclose_caption_inside_env(value[CONTENT_INDEX], color)
             continue
 
-        texts["caption"].append(item['caption'])
+        texts["caption"].append(item["caption"])
         caption_text = item["caption"][9:-1]
         rendered_caption = "\\{}{{\\textcolor{{{}}}{{{}}}}}".format(
             "caption", color, caption_text
