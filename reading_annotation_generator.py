@@ -221,16 +221,24 @@ def generate_figure_annotation(geometry_infos, category_infos, reading_infos):
 def generate_reading_annotation(geometry_infos, category_infos):
     reading_infos = load_json(config["text_elements_file"])
 
-    result = {}
+    result = {key: [] for key in geometry_infos.keys()}
 
     title_annoatation = generate_section_annotation(
         geometry_infos, category_infos, reading_infos
     )
-    result.update(title_annoatation)
+    for key, value in result.items():
+        value.extend(title_annoatation[key])
 
     caption_annotation = generate_caption_annotation(
         geometry_infos, category_infos, reading_infos
     )
-    result.update(caption_annotation)
+    for key, value in result.items():
+        value.extend(caption_annotation[key])
+
+    footnote_annotation = generate_footnote_annotation(
+        geometry_infos, category_infos, reading_infos
+    )
+    for key, value in result.items():
+        value.extend(footnote_annotation[key])
 
     return result
