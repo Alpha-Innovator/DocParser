@@ -1,4 +1,5 @@
 from typing import Any, List, Dict
+import re
 
 import Levenshtein
 from pdfminer.layout import LTTextContainer
@@ -6,7 +7,7 @@ from pdfminer.layout import LTTextContainer
 from rendering.utils import load_json
 from logger import logger
 
-log = logger.setup_app_level_logger(file_name="app_debug.log", mode="a")
+log = logger.get_logger(__name__)
 
 config = load_json("config.json")
 
