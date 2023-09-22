@@ -153,6 +153,40 @@ def generate_section_annotation(
     return result
 
 
+def generate_footnote_annotation(
+    geometry_infos: Dict[str, List[LTTextContainer]],
+    category_infos: Dict[str, List[Dict]],
+    reading_infos: Dict[str, List[Any]],
+) -> Dict[int, List[Dict]]:
+    result = {}
+
+    footnotes = reading_infos["footnote"]
+
+    for page_index, page_elements in geometry_infos.items():
+        result[page_index] = []
+        category_info = category_infos[page_index]
+        for index, element in enumerate(page_elements):
+            if category2name[category_info[index]] != "Footnote":
+                continue
+
+            source = find_closest_string(element.get_text(), footnotes)
+            log.debug(f"element={element}, source={source}")
+            result[int(page_index)].append(
+                {
+                    "id": index,
+                    "image_id": page_index,
+                    "category_id": category_info[index],
+                    "bbox": list(element.bbox),
+                    "content": [],
+                    "source": source,
+                }
+            )
+            continue
+
+    return result
+
+
+
 def generate_figure_annotation(geometry_infos, category_infos, reading_infos):
     figures: List[str] = extract_image_paths(reading_infos["figure"])
     figure_generator = (x for x in figures)
