@@ -66,7 +66,7 @@ def parse_argument():
 
 
 def load_data(directory, basename, page_index):
-    image_file_name = f"{basename}_annotation_page_{page_index}.jpg"
+    image_file_name = f"{basename}_annotation_page_{page_index}.png"
     image_path = os.path.join(directory, image_file_name)
 
     if not os.path.exists(image_path):

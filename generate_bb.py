@@ -260,7 +260,7 @@ def main():
     category_infos = {}  # map of bb index to category
     for page_index, page_elements in file_elements.items():
         page_image_path = os.path.join(
-            rendered_path, f"{filename}_rendered_page_{page_index}.jpg"
+            rendered_path, f"{filename}_rendered_page_{page_index}.png"
         )
         page_image = Image.open(page_image_path)
 
@@ -272,10 +272,10 @@ def main():
             page_image, transformed_page_elements, category_infos[page_index]
         )
 
-        image_name = f"{filename}_annotation_page_{page_index}.jpg"
+        image_name = f"{filename}_annotation_page_{page_index}.png"
         annotated_image_path = os.path.join(result_path, image_name)
         image_infos[page_index] = annotated_image_path
-        annotated_image.save(annotated_image_path, "JPEG")
+        annotated_image.save(annotated_image_path)
         geometry_infos[page_index] = transformed_page_elements
 
     layout_json_file = os.path.join(result_path, "layout_annotation.json")
