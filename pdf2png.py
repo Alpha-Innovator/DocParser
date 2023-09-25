@@ -20,8 +20,8 @@ def pdf2jpg(pdf: str, path: str) -> None:
     pdf_name = os.path.splitext(os.path.basename(pdf))[0]
     images = convert_from_path(pdf)
     for page_index, image in enumerate(images):
-        image_name = pdf_name + "_page_" + str(page_index) + ".jpg"
-        image.save(os.path.join(path, image_name), "JPEG")
+        image_name = pdf_name + "_page_" + str(page_index) + ".png"
+        image.save(os.path.join(path, image_name))
 
 
 def main() -> None:
