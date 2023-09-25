@@ -237,6 +237,74 @@ def export_to_coco(
         json.dump(result, f)
 
 
+def merge_env_bboxes(elements: List[LTComponent], ratio=1.0) -> List[LTComponent]:
+    result = []
+    for element in elements:
+        x0, y0, x1, y1 = element.bbox
+        center_y = (y0 + y1) / 2
+        height = y1 - y0
+
+        has_been_merged = False
+        for item in result:
+            item_center_y = (item.bbox[1] + item.bbox[3]) / 2
+            if abs(center_y - item_center_y) <= ratio * height:
+                item.bbox[0] = min(x0, item.bbox[0])
+                item.bbox[1] = min(y0, item.bbox[1])
+                item.bbox[2] = max(x1, item.bbox[2])
+                item.bbox[3] = max(y1, item.bbox[3])
+                has_been_merged = True
+                break
+
+        if not has_been_merged:
+            result.append(element)
+
+    return result
+
+
+def merge_bb_with_color(page_elements, category_info, ratio=1.0):
+    result = []
+    table_elements = []
+    equation_elements = []
+    algorithm_elements = []
+    for index, element in enumerate(page_elements):
+        if category_info[index] == "Table":
+            table_elements.append(element)
+        elif category_info[index] == "Equation":
+            equation_elements.append(element)
+        elif category_info[index] == "Algorithm":
+            algorithm_elements.append(element)
+
+    table_elements = merge_env_bboxes(table_elements, ratio)
+    equation_elements = merge_env_bboxes(equation_elements, ratio)
+    algorithm_elements = merge_env_bboxes(algorithm_elements, ratio)
+
+    current_index = 0
+    for index, element in enumerate(page_elements):
+        if category_info[index] in ["Table", "Equation", "Algorithm"]:
+            continue
+
+        result.append(element)
+        category_info[current_index] = category_info[index]
+        current_index += 1
+
+    for index, element in enumerate(table_elements):
+        result.append(element)
+        category_info[current_index] = "Table"
+        current_index += 1
+
+    for index, element in enumerate(equation_elements):
+        result.append(element)
+        category_info[current_index] = "Equation"
+        current_index += 1
+
+    for index, element in enumerate(algorithm_elements):
+        result.append(element)
+        category_info[current_index] = "Algorithm"
+        current_index += 1
+
+    return result, category_info
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--path", type=str, required=True)
@@ -267,6 +335,9 @@ def main():
         transformed_page_elements = geometry.transform(page_elements, page_image)
         category_infos[page_index] = color_to_category(
             page_image, transformed_page_elements
+        )
+        transformed_page_elements, category_infos[page_index] = merge_bb_with_color(
+            transformed_page_elements, category_infos[page_index]
         )
         annotated_image = generate_geometry_annotation(
             page_image, transformed_page_elements, category_infos[page_index]
