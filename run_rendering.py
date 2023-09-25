@@ -40,7 +40,6 @@ def parse_arguments():
 
 def render_tex_data(data, name2rgbcolor):
     rendering.add_usepackage_command(data, "xcolor")
-    rendering.add_usepackage_command(data, "mdframed")  # used for figure
 
     name2color = rendering.add_color_definition(data, name2rgbcolor)
     # render title
