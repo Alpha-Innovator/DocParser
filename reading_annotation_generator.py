@@ -58,7 +58,7 @@ def extract_image_paths(strings) -> List[str]:
 def generate_caption_annotation(
     geometry_infos: Dict[str, List[LTTextContainer]],
     category_infos: Dict[str, List[Dict]],
-    reading_infos: Dict[str, List[Any]]
+    reading_infos: Dict[str, List[Any]],
 ) -> Dict[int, List[Dict]]:
     """
     Generate annotations for captions based on geometry,
@@ -185,7 +185,6 @@ def generate_footnote_annotation(
             continue
 
     return result
-
 
 
 def generate_figure_annotation(geometry_infos, category_infos, reading_infos):
