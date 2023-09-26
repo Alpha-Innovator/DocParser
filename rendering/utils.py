@@ -3,7 +3,7 @@ import os
 from typing import Any
 
 from TexSoup.TexSoup import TexSoup
-import rendering.conversion as conversion
+import TexSoup.app.conversion as conversion
 
 
 def export_to_json(data, file_path) -> None:
