@@ -13,6 +13,8 @@ fi
 folder="$1"
 main_file="$2"
 
+main_file="${main_file%.*}"
+
 # Change to the folder directory
 cd "$folder" || exit 1
 
