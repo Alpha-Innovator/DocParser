@@ -57,25 +57,25 @@ bib_file=$(find . -maxdepth 1 -type f -name "*.bib" | head -n 1)
 if [ -z "$bib_file" ]; then
     echo "No bibliography file (*.bib) found in the folder."
     # Compile the main LaTeX file using pdflatex only
-    pdflatex "$main_file.tex"
-    pdflatex "$main_file.tex"
+    pdflatex "$main_file.tex" > /dev/null
+    pdflatex "$main_file.tex" > /dev/null
 else
     # Remove the "./" prefix from the bib_file path
     bib_file=${bib_file#./}
 
     # Compile the main LaTeX file
-    pdflatex "$main_file.tex"
+    pdflatex "$main_file.tex" > /dev/null
 
     # Run BibTeX to process the bibliography
-    bibtex "$main_file"
+    bibtex "$main_file" > /dev/null
 
     # Compile the main LaTeX file again to update references
-    pdflatex "$main_file.tex"
+    pdflatex "$main_file.tex" > /dev/null
 
     # Compile the main LaTeX file one more time for proper references
-    pdflatex "$main_file.tex"
+    pdflatex "$main_file.tex" > /dev/null
 fi
-
+echo "[Compile_Latex]Successfully compiled the $main_file.tex file."
 
 # Clean up auxiliary files
 if [ -f "$main_file.aux" ]; then
