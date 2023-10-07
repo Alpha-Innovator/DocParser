@@ -20,7 +20,7 @@ input_filename="${filename_with_extension%.*}"
 # store the result
 mkdir -p $input_directory/output
 if [ "$?" -ne 0 ]; then
-    echo "[Pipeline] Error: Failed to create the output directory"
+    echo "[$0] Error: Failed to create the output directory"
     exit 1
 fi
 
@@ -38,11 +38,11 @@ fi
 
 # Check if the Python script execution was successful
 if [ "$?" -ne 0 ]; then
-    echo "[Pipeline] Error: Failed to render the $input_tex."
+    echo "[$0] Error: Failed to render the $input_tex."
     exit 1
-else
-    echo "[Pipeline] Successfully rendered the $input_tex."
 fi
+
+echo "[$0] Successfully rendered the $input_tex."
 
 ############# compile the original .tex file into a PDF###########################
 # Run the shell script to compile the original .tex file into a PDF
@@ -50,11 +50,11 @@ bash compile_latex.sh "$input_directory" "$input_filename"
 
 # Check if the shell script execution was successful
 if [ "$?" -ne 0 ]; then
-    echo "[Pipeline] Error: Failed to compile the $input_filename into a PDF."
+    echo "[$0] Error: Failed to compile the $input_filename into a PDF."
     exit 1
-else
-    echo "[Pipeline] Successfully compiled the $input_filename into a PDF."
 fi
+
+echo "[$0] Successfully compiled the $input_filename into a PDF."
 
 # copy the original PDF file to the output directory
 mkdir -p "$input_directory/output/original"
@@ -67,12 +67,13 @@ bash compile_latex.sh "$input_directory" "$output_filename"
 
 # Check if the shell script execution was successful
 if [ "$?" -ne 0 ]; then
-    echo "[Pipeline] Failed to compile the $output_filename into a PDF."
+    echo "[$0] Failed to compile the $output_filename into a PDF."
     exit 1
-else
-    echo "[Pipeline] Successfully compiled the $output_filename into a PDF."
 fi
 
+echo "[$0] Successfully compiled the $output_filename into a PDF."
+
+# move the rendered PDF file to the output directory
 mkdir -p "$input_directory/output/rendered/"
 rendered_pdf="$input_directory/output/rendered/$output_filename.pdf"
 mv "$input_directory/$output_filename.pdf" "$rendered_pdf"
@@ -86,4 +87,4 @@ bash convert_pdf_to_image.sh "$rendered_pdf" "$input_directory/output/rendered"
 ############## generate the bounding box with original and rendered PDF ##########
 bash annotate.sh "$input_directory" "$input_filename"
 
-echo "[Pipeline] Script completed successfully, result is stored in $input_directory/output/result."
+echo "[$0] Script completed successfully, result is stored in $input_directory/output/result."
