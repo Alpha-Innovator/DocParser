@@ -30,11 +30,7 @@ output_filename="${input_filename}_rendered"
 # Run the Python script to render the .tex file
 output_tex="$input_directory/$output_filename.tex"
 
-if [ -z "$debug_flag" ]; then
-    python run_rendering.py --input_tex_file "$input_tex" --output_tex_file "$output_tex"
-else
-    python run_rendering.py --input_tex_file "$input_tex" --output_tex_file "$output_tex" "$debug_flag"
-fi
+python run_rendering.py --input_tex_file "$input_tex" --output_tex_file "$output_tex" ${debug_flag:+"$debug_flag"}
 
 # Check if the Python script execution was successful
 if [ "$?" -ne 0 ]; then
