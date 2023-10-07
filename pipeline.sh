@@ -100,15 +100,6 @@ else
 fi
 
 ############## generate the bounding box with original and rendered PDF ##########
-mkdir -p "$input_directory/output/result/"
-python generate_bb.py --path "$input_directory/output" --file_name "$input_filename"
-
-# Check if the shell script execution was successful
-if [ "$?" -ne 0 ]; then
-    echo "[Pipeline] Error: Failed to generate the bounding box."
-    exit 1
-else
-    echo "[Pipeline] Successfully generated the bounding box."
-fi
+bash annotate.sh "$input_directory" "$input_filename"
 
 echo "[Pipeline] Script completed successfully, result is stored in $input_directory/output/result."
