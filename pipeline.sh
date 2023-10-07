@@ -78,26 +78,10 @@ rendered_pdf="$input_directory/output/rendered/$output_filename.pdf"
 mv "$input_directory/$output_filename.pdf" "$rendered_pdf"
 
 ############# convert the original PDF into images ################
-python pdf2png.py --pdf "$original_pdf" --output_path "$input_directory/output/original"
-
-# Check if the shell script execution was successful
-if [ "$?" -ne 0 ]; then
-    echo "[Pipeline] Error: Failed to converting the $original_pdf file into images."
-    exit 1
-else
-    echo "[Pipeline] Successfully converted the $original_pdf file into images."
-fi
+bash convert_pdf_to_image.sh "$original_pdf" "$input_directory/output/original"
 
 ############# convert the rendered PDF into images ################
-python pdf2png.py --pdf "$rendered_pdf" --output_path "$input_directory/output/rendered"
-
-# Check if the shell script execution was successful
-if [ "$?" -ne 0 ]; then
-    echo "[Pipeline] Error: Failed to converting the $rendered_pdf file into images."
-    exit 1
-else
-    echo "[Pipeline] Successfully converted the $rendered_pdf file into images."
-fi
+bash convert_pdf_to_image.sh "$rendered_pdf" "$input_directory/output/rendered"
 
 ############## generate the bounding box with original and rendered PDF ##########
 bash annotate.sh "$input_directory" "$input_filename"
