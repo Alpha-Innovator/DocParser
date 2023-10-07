@@ -75,7 +75,7 @@ else
     # Compile the main LaTeX file one more time for proper references
     pdflatex "$main_file.tex" > /dev/null
 fi
-echo "[Compile_Latex]Successfully compiled the $main_file.tex file."
+echo "[$0] Successfully compiled the $main_file.tex file."
 
 # Clean up auxiliary files
 if [ -f "$main_file.aux" ]; then
