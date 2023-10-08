@@ -83,4 +83,7 @@ bash convert_pdf_to_image.sh "$rendered_pdf" "$input_directory/output/rendered"
 # generate the bounding box with original and rendered PDF
 bash annotate.sh "$input_directory" "$input_filename"
 
+# delete rendered.tex file
+rm $output_tex
+
 echo "[$0] Script completed successfully, result is stored in $input_directory/output/result."
