@@ -40,7 +40,7 @@ fi
 
 echo "[$0] Successfully rendered the $input_tex."
 
-############# compile the original .tex file into a PDF###########################
+# compile the original .tex file into a PDF
 # Run the shell script to compile the original .tex file into a PDF
 bash compile_latex.sh "$input_directory" "$input_filename"
 
@@ -57,7 +57,7 @@ mkdir -p "$input_directory/output/original"
 original_pdf="$input_directory/output/original/$input_filename.pdf"
 cp "$input_directory/$input_filename.pdf" "$original_pdf"
 
-############# compile the rendered .tex file into a PDF###########################
+# compile the rendered .tex file into a PDF
 # Run the shell script to compile the output .tex file into a PDF
 bash compile_latex.sh "$input_directory" "$output_filename"
 
@@ -74,13 +74,13 @@ mkdir -p "$input_directory/output/rendered/"
 rendered_pdf="$input_directory/output/rendered/$output_filename.pdf"
 mv "$input_directory/$output_filename.pdf" "$rendered_pdf"
 
-############# convert the original PDF into images ################
+# convert the original PDF into images
 bash convert_pdf_to_image.sh "$original_pdf" "$input_directory/output/original"
 
-############# convert the rendered PDF into images ################
+# convert the rendered PDF into images
 bash convert_pdf_to_image.sh "$rendered_pdf" "$input_directory/output/rendered"
 
-############## generate the bounding box with original and rendered PDF ##########
+# generate the bounding box with original and rendered PDF
 bash annotate.sh "$input_directory" "$input_filename"
 
 echo "[$0] Script completed successfully, result is stored in $input_directory/output/result."
