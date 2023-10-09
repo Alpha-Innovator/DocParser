@@ -39,10 +39,18 @@ def parse_arguments():
     return origin_tex_file, rendered_tex_file, debug_mode
 
 
-def render_tex_data(data, name2rgbcolor):
-    render_simple_env.add_usepackage_command(data, "xcolor")
-
+def render_tex_data(data, config):
+    name2category = {name: category for category, name in config["category_name"]}
+    category2rgbcolor = {
+        category: tuple(color) for category, color in config["category_color"]
+    }
+    name2rgbcolor = {
+        name: category2rgbcolor[category] for name, category in name2category.items()
+    }
     name2color = render_simple_env.add_color_definition(data, name2rgbcolor)
+
+    render_simple_env.add_usepackage_command(data, "xcolor")
+    
     # render title
     render_simple_env.enclose_title(data, color=name2color["Title"])
     # render abstract
@@ -70,7 +78,9 @@ def render_tex_data(data, name2rgbcolor):
 
     render_simple_env.enclose_figure(main_content, color=name2color["Figure"])
 
-    main_content = render_simple_env.enclose_text(main_content, color=name2color["Text"])
+    main_content = render_simple_env.enclose_text(
+        main_content, color=name2color["Text"]
+    )
     data[index]["document"][1] = main_content
 
 
@@ -78,20 +88,13 @@ def main():
     origin_tex_file, rendered_tex_file, debug_mode = parse_arguments()
     origin_dir = os.path.dirname(origin_tex_file)
 
-    # load color information for each category
-    config = utils.load_json("config.json")
-    name2category = {name: category for category, name in config["category_name"]}
-    category2rgbcolor = {
-        category: tuple(color) for category, color in config["category_color"]
-    }
-    name2rgbcolor = {
-        name: category2rgbcolor[category] for name, category in name2category.items()
-    }
-
     # Read tex file and convert to texSoup
     data = utils.data_from_tex_file(origin_tex_file, debug_mode)
 
-    render_tex_data(data, name2rgbcolor)
+    # load color information for each category
+    config = utils.load_json("config.json")
+
+    render_tex_data(data, config)
 
     # save the text annotation information into json
     text_file = os.path.join(origin_dir, config["text_elements_file"])
