@@ -1,4 +1,5 @@
 import argparse
+import os
 
 import rendering.utils as utils
 import rendering.rendering as rendering
@@ -75,6 +76,7 @@ def render_tex_data(data, name2rgbcolor):
 
 def main():
     origin_tex_file, rendered_tex_file, debug_mode = parse_arguments()
+    origin_dir = os.path.dirname(origin_tex_file)
 
     # load color information for each category
     config = utils.load_json("config.json")
@@ -92,7 +94,8 @@ def main():
     render_tex_data(data, name2rgbcolor)
 
     # save the text annotation information into json
-    rendering.save_texts(config["text_elements_file"])
+    text_file = os.path.join(origin_dir, config["text_elements_file"])
+    rendering.save_texts(text_file)
 
     # Convert data back to tex file
     utils.tex_file_from_data(data, rendered_tex_file, debug_mode)
