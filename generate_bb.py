@@ -238,20 +238,32 @@ def export_to_coco(
 
 
 def merge_env_bboxes(elements: List[LTComponent], ratio=1.0) -> List[LTComponent]:
+    elements.sort(key=lambda x: x.bbox[1])
     result = []
+
     for element in elements:
         x0, y0, x1, y1 = element.bbox
+        center_x = (x0 + x1) / 2
         center_y = (y0 + y1) / 2
         height = y1 - y0
+        width = x1 - x0
 
         has_been_merged = False
         for item in result:
+            if geometry.inside_bb(element, item):
+                continue
+            item_center_x = (item.bbox[0] + item.bbox[2]) / 2
             item_center_y = (item.bbox[1] + item.bbox[3]) / 2
-            if abs(center_y - item_center_y) <= ratio * height:
-                item.bbox[0] = min(x0, item.bbox[0])
-                item.bbox[1] = min(y0, item.bbox[1])
-                item.bbox[2] = max(x1, item.bbox[2])
-                item.bbox[3] = max(y1, item.bbox[3])
+            if (
+                abs(center_y - item_center_y) <= ratio * height
+                and abs(center_x - item_center_x) <= 0.5 * width
+            ):
+                item.bbox = (
+                    min(x0, item.bbox[0]),
+                    min(y0, item.bbox[1]),
+                    max(x1, item.bbox[2]),
+                    max(y1, item.bbox[3]),
+                )
                 has_been_merged = True
                 break
 
@@ -261,17 +273,18 @@ def merge_env_bboxes(elements: List[LTComponent], ratio=1.0) -> List[LTComponent
     return result
 
 
-def merge_bb_with_color(page_elements, category_info, ratio=1.0):
+def merge_bb_with_color(page_elements, category_info, ratio=1.5):
+    # TODO: consider the area of bbox and consider the table size
     result = []
     table_elements = []
     equation_elements = []
     algorithm_elements = []
     for index, element in enumerate(page_elements):
-        if category_info[index] == "Table":
+        if category_info[index] == name2category["Table"]:
             table_elements.append(element)
-        elif category_info[index] == "Equation":
+        elif category_info[index] == name2category["Equation"]:
             equation_elements.append(element)
-        elif category_info[index] == "Algorithm":
+        elif category_info[index] == name2category["Algorithm"]:
             algorithm_elements.append(element)
 
     table_elements = merge_env_bboxes(table_elements, ratio)
@@ -280,7 +293,11 @@ def merge_bb_with_color(page_elements, category_info, ratio=1.0):
 
     current_index = 0
     for index, element in enumerate(page_elements):
-        if category_info[index] in ["Table", "Equation", "Algorithm"]:
+        if category_info[index] in [
+            name2category["Table"],
+            name2category["Equation"],
+            name2category["Algorithm"],
+        ]:
             continue
 
         result.append(element)
@@ -289,17 +306,17 @@ def merge_bb_with_color(page_elements, category_info, ratio=1.0):
 
     for index, element in enumerate(table_elements):
         result.append(element)
-        category_info[current_index] = "Table"
+        category_info[current_index] = name2category["Table"]
         current_index += 1
 
     for index, element in enumerate(equation_elements):
         result.append(element)
-        category_info[current_index] = "Equation"
+        category_info[current_index] = name2category["Equation"]
         current_index += 1
 
     for index, element in enumerate(algorithm_elements):
         result.append(element)
-        category_info[current_index] = "Algorithm"
+        category_info[current_index] = name2category["Algorithm"]
         current_index += 1
 
     return result, category_info
