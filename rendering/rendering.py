@@ -463,7 +463,7 @@ def enclose_table(data, color="cyan") -> None:
         if env is None:
             for key, value in item.items():
                 if isinstance(value, list):
-                    enclose_table(value[CONTENT_INDEX], color, index)
+                    enclose_table(value[CONTENT_INDEX], color)
             continue
 
         texts["table"].append(item)
