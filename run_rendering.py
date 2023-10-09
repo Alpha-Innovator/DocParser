@@ -59,7 +59,7 @@ def render_tex_data(data, name2rgbcolor):
 
     rendering.enclose_equation(main_content, color=name2color["Equation"])
 
-    rendering.enclosed_table(main_content, color=name2color["Table"])
+    rendering.enclose_table(main_content, color=name2color["Table"])
 
     rendering.enclose_footnote(main_content, color=name2color["Footnote"])
 

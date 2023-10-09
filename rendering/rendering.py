@@ -454,7 +454,7 @@ def enclose_tabular(data: List, color="cyan"):
         }
 
 
-def enclosed_table(data, color="cyan") -> None:
+def enclose_table(data, color="cyan") -> None:
     for item in data:
         if not isinstance(item, dict):
             continue
@@ -463,7 +463,7 @@ def enclosed_table(data, color="cyan") -> None:
         if env is None:
             for key, value in item.items():
                 if isinstance(value, list):
-                    enclosed_table(value[CONTENT_INDEX], color, index)
+                    enclose_table(value[CONTENT_INDEX], color, index)
             continue
 
         texts["table"].append(item)
