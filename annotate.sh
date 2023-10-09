@@ -12,7 +12,7 @@ input_filename=$2
 
 # generate the bounding box with original and rendered PDF
 mkdir -p "$input_directory/output/result/"
-python generate_bb.py --path "$input_directory/output" --file_name "$input_filename"
+python generate_simple_env_bb.py --path "$input_directory/output" --file_name "$input_filename"
 
 # Check if the shell script execution was successful
 if [ "$?" -ne 0 ]; then
