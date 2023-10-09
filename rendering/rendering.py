@@ -461,6 +461,9 @@ def enclosed_table(data, color="cyan") -> None:
 
         env = find_env(item, table_envs)
         if env is None:
+            for key, value in item.items():
+                if isinstance(value, list):
+                    enclosed_table(value[CONTENT_INDEX], color, index)
             continue
 
         texts["table"].append(item)
