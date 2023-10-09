@@ -2,7 +2,7 @@ import argparse
 import os
 
 import rendering.utils as utils
-import rendering.rendering as rendering
+import rendering.render_simple_env as render_simple_env
 import logger.logger as logger
 
 log = logger.setup_app_level_logger(file_name="app_debug.log")
@@ -40,37 +40,37 @@ def parse_arguments():
 
 
 def render_tex_data(data, name2rgbcolor):
-    rendering.add_usepackage_command(data, "xcolor")
+    render_simple_env.add_usepackage_command(data, "xcolor")
 
-    name2color = rendering.add_color_definition(data, name2rgbcolor)
+    name2color = render_simple_env.add_color_definition(data, name2rgbcolor)
     # render title
-    rendering.enclose_title(data, color=name2color["Title"])
+    render_simple_env.enclose_title(data, color=name2color["Title"])
     # render abstract
-    rendering.enclose_abstract(
+    render_simple_env.enclose_abstract(
         data, title_color=name2color["Title"], text_color=name2color["Text"]
     )
 
     main_content, index = utils.get_main_content(data)
 
-    rendering.enclose_section(main_content, color=name2color["Title"])
+    render_simple_env.enclose_section(main_content, color=name2color["Title"])
 
-    rendering.enclose_list(main_content, color=name2color["List"])
+    render_simple_env.enclose_list(main_content, color=name2color["List"])
 
-    rendering.enclose_caption(main_content, color=name2color["Caption"])
+    render_simple_env.enclose_caption(main_content, color=name2color["Caption"])
 
-    rendering.enclose_equation(main_content, color=name2color["Equation"])
+    render_simple_env.enclose_equation(main_content, color=name2color["Equation"])
 
-    rendering.enclose_table(main_content, color=name2color["Table"])
+    render_simple_env.enclose_table(main_content, color=name2color["Table"])
 
-    rendering.enclose_footnote(main_content, color=name2color["Footnote"])
+    render_simple_env.enclose_footnote(main_content, color=name2color["Footnote"])
 
-    rendering.enclose_reference(main_content, color=name2color["Text"])
+    render_simple_env.enclose_reference(main_content, color=name2color["Text"])
 
-    rendering.enclose_algorithm(main_content, color=name2color["Algorithm"])
+    render_simple_env.enclose_algorithm(main_content, color=name2color["Algorithm"])
 
-    rendering.enclose_figure(main_content, color=name2color["Figure"])
+    render_simple_env.enclose_figure(main_content, color=name2color["Figure"])
 
-    main_content = rendering.enclose_text(main_content, color=name2color["Text"])
+    main_content = render_simple_env.enclose_text(main_content, color=name2color["Text"])
     data[index]["document"][1] = main_content
 
 
@@ -95,7 +95,7 @@ def main():
 
     # save the text annotation information into json
     text_file = os.path.join(origin_dir, config["text_elements_file"])
-    rendering.save_texts(text_file)
+    render_simple_env.save_texts(text_file)
 
     # Convert data back to tex file
     utils.tex_file_from_data(data, rendered_tex_file, debug_mode)
