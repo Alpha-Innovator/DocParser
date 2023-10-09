@@ -3,6 +3,7 @@ import os
 
 import rendering.utils as utils
 import rendering.render_simple_env as render_simple_env
+import rendering.render_complex_env as render_complex_env
 import logger.logger as logger
 
 log = logger.setup_app_level_logger(file_name="app_debug.log")
@@ -102,6 +103,9 @@ def main():
 
     # Convert data back to tex file
     utils.tex_file_from_data(data, rendered_tex_file, debug_mode)
+
+    # render complex environment
+    render_complex_env.run(rendered_tex_file, text_file)
 
 
 if __name__ == "__main__":
