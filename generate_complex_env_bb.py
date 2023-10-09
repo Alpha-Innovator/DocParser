@@ -1,62 +1,109 @@
 import os
+import shutil
+import argparse
+from typing import Tuple
 
-
-import rendering.rendering as rendering
 import rendering.utils as utils
+import logger.logger as logger
+
+log = logger.setup_app_level_logger(file_name="app_debug.log")
+
+
+def replace_nth(string: str, old: str, new: str, n: int) -> str:
+    """
+    Replace the n-th occurrence of a substring in a given string with a new substring.
+
+    Args:
+        string (str): The original string to search and perform the replacement on.
+        old (str): The substring to be replaced.
+        new (str): The substring to replace the n-th occurrence of `old` in `string`.
+        n (int): The occurrence number of `old` to be replaced (1-based index).
+
+    Returns:
+        str: The modified string with the n-th occurrence of `old` replaced by `new`. If the
+             occurrence is not found, the original string is returned.
+
+    Example:
+        >>> replace_nth("Hello, hello, hello!", 'hello', 'hi', 2)
+        'Hello, hello, hi!'
+    """
+    index_of_occurrence = string.find(old)
+    occurrence = int(index_of_occurrence != -1)
+
+    while index_of_occurrence != -1 and occurrence != n:
+        index_of_occurrence = string.find(old, index_of_occurrence + 1)
+        occurrence += 1
+
+    if occurrence == n:
+        return (
+            string[:index_of_occurrence]
+            + new
+            + string[index_of_occurrence + len(old) :]
+        )
+
+    return string
+
+
+def parse_arguments() -> Tuple[str, str]:
+    """
+    Parse the command-line arguments
+
+    Returns:
+        str: The path to the tex file.
+        str: The path to the text annotation file.
+    """
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--tex_file", type=str, help="The path to the tex file")
+    parser.add_argument(
+        "--text_annotation_file", type=str, help="The path to the text annotation file"
+    )
+    args = parser.parse_args()
+    tex_file, text_annotation_file = args.tex_file, args.text_annotation_file
+    return tex_file, text_annotation_file
 
 
 def main():
-    json_file = "example_paper_rendered.tex.json"
-    text_annotation_file = "texts.json"
-    json_data = utils.load_json(json_file)
+    tex_file, text_annotation_file = parse_arguments()
     text_annotation = utils.load_json(text_annotation_file)
 
+    base_name = os.path.splitext(tex_file)[0]
+
     num_algorithms = len(text_annotation["algorithm"])
-    print(f"num_algorithms={num_algorithms}")
-
-    base_name = os.path.splitext(json_file)[0]
-    base_name = os.path.splitext(base_name)[0]
     for i in range(num_algorithms):
-        # render i-th algorithm env
-        rendering.enclose_algorithm(json_data, color="black", index=i)
-
-        # store the result as a tex file
         output_file = base_name + "_" + "algorithm_" + str(i) + ".tex"
-        utils.tex_file_from_data(json_data, output_file)
-        # cancel the render operation
-        rendering.enclose_algorithm(json_data, color="Algorithm_color", index=i)
+        shutil.copyfile(tex_file, output_file)
+
+        with open(output_file, "r") as f:
+            content = f.read()
+
+        new_content = replace_nth(content, "Algorithm_color", "black", i + 2)
+
+        with open(output_file, "w") as f:
+            f.write(new_content)
 
     num_equations = len(text_annotation["equation"])
-    print(f"num_equations={num_equations}")
     for i in range(num_equations):
-        # render i-th algorithm env
-        rendering.enclose_equation(json_data, color="black", index=i)
-
-        # store the result as a tex file
         output_file = base_name + "_" + "equation_" + str(i) + ".tex"
-        utils.tex_file_from_data(json_data, output_file)
-        # cancel the render operation
-        rendering.enclose_equation(json_data, color="Equation_color", index=i)
+        shutil.copyfile(tex_file, output_file)
+
+        with open(output_file, "r") as f:
+            content = f.read()
+
+        new_content = replace_nth(content, "Equation_color", "black", i + 2)
+
+        with open(output_file, "w") as f:
+            f.write(new_content)
 
     num_tables = len(text_annotation["table"])
     print(f"num_tables={num_tables}")
     for i in range(num_tables):
-        # render i-th algorithm env
-        rendering.enclosed_table(json_data, color="black", index=i)
-
-        # store the result as a tex file
         output_file = base_name + "_" + "table_" + str(i) + ".tex"
-        utils.tex_file_from_data(json_data, output_file)
-        # cancel the render operation
-        rendering.enclosed_table(json_data, color="Table_color", index=i)
+        shutil.copyfile(tex_file, output_file)
 
+        with open(output_file, "r") as f:
+            content = f.read()
 
-# 1. load the _rendered.tex.json file
-# 2. load the statistic information of envs, such as table, equation, algorithm
-# 3. render the env one by one
-# 4. compile the pdf file
-# 5. use layout_annotation_generator to generate annotation
-# 6. delete redundant files
+        new_content = replace_nth(content, "Table_color", "black", i + 2)
 
-if __name__ == "__main__":
-    main()
+        with open(output_file, "w") as f:
+            f.write(new_content)
