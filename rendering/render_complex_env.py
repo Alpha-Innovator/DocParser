@@ -62,48 +62,29 @@ def parse_arguments() -> Tuple[str, str]:
     return tex_file, text_annotation_file
 
 
-def main():
-    tex_file, text_annotation_file = parse_arguments()
-    text_annotation = utils.load_json(text_annotation_file)
-
+def render_env(tex_file, text_annotation, env_name):
     base_name = os.path.splitext(tex_file)[0]
 
-    num_algorithms = len(text_annotation["algorithm"])
+    num_algorithms = len(text_annotation[env_name])
     for i in range(num_algorithms):
-        output_file = base_name + "_" + "algorithm_" + str(i) + ".tex"
+        output_file = base_name + "_" + env_name + "_" + str(i) + ".tex"
         shutil.copyfile(tex_file, output_file)
 
         with open(output_file, "r") as f:
             content = f.read()
 
-        new_content = replace_nth(content, "Algorithm_color", "black", i + 2)
+        # the first one is the color definition, skip it
+        new_content = replace_nth(
+            content, env_name.capitalize() + "_color", "black", i + 2
+        )
 
         with open(output_file, "w") as f:
             f.write(new_content)
+    return base_name
 
-    num_equations = len(text_annotation["equation"])
-    for i in range(num_equations):
-        output_file = base_name + "_" + "equation_" + str(i) + ".tex"
-        shutil.copyfile(tex_file, output_file)
 
-        with open(output_file, "r") as f:
-            content = f.read()
-
-        new_content = replace_nth(content, "Equation_color", "black", i + 2)
-
-        with open(output_file, "w") as f:
-            f.write(new_content)
-
-    num_tables = len(text_annotation["table"])
-    print(f"num_tables={num_tables}")
-    for i in range(num_tables):
-        output_file = base_name + "_" + "table_" + str(i) + ".tex"
-        shutil.copyfile(tex_file, output_file)
-
-        with open(output_file, "r") as f:
-            content = f.read()
-
-        new_content = replace_nth(content, "Table_color", "black", i + 2)
-
-        with open(output_file, "w") as f:
-            f.write(new_content)
+def run(tex_file, text_file):
+    text_annotation = utils.data_from_tex_file(text_file)
+    env_list = ["algorithm", "equation", "table"]
+    for env in env_list:
+        render_env(tex_file, text_annotation, env)
