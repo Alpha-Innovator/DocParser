@@ -322,13 +322,24 @@ def merge_bb_with_color(page_elements, category_info, ratio=1.5):
     return result, category_info
 
 
-def main():
+def parse_arguments():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--path", type=str, required=True)
-    parser.add_argument("--file_name", type=str, required=True)
+    parser.add_argument(
+        "--path", type=str, required=True, help="The path to the main directory"
+    )
+    parser.add_argument(
+        "--file_name", type=str, required=True, help="The name of the file"
+    )
+
     args = parser.parse_args()
     main_directory = args.path
     filename = args.file_name
+
+    return main_directory, filename
+
+
+def main():
+    main_directory, filename = parse_arguments()
 
     rendered_path = os.path.join(main_directory, "rendered")
     result_path = os.path.join(main_directory, "result")
