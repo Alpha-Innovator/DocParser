@@ -1,7 +1,8 @@
-from ast import Dict
+import os
 from typing import Union, List, Dict, Tuple
 import logger.logger as logger
-from rendering.utils import export_to_json
+from rendering.utils import data_from_tex_file, export_to_json, tex_file_from_data
+from rendering.utils import get_main_content
 
 log = logger.get_logger(__name__)
 
@@ -95,22 +96,20 @@ def add_usepackage_command(data, package: str) -> None:
     None.
     """
     # find the index of documentclass
-    documentclass_index = -1
+    index = -1
     for index, item in enumerate(data):
         if isinstance(item, dict) and "documentclass" in item:
-            documentclass_index = index
+            index = index
             break
 
-    if documentclass_index == -1:
+    if index == -1:
         raise Exception("documentclass not found")
 
     # add usepackage in rendered document
     # notice: multiple inclusion will be ignored, so this addition is safe
-    data.insert(documentclass_index + 1, "\n")  # for clarity
-    data.insert(
-        documentclass_index + 2, {"usepackage": "\\usepackage{" + package + "}"}
-    )
-    data.insert(documentclass_index + 3, "\n")  # for clarity
+    data.insert(index + 1, "\n")  # for clarity
+    data.insert(index + 2, {"usepackage": "\\usepackage{" + package + "}"})
+    data.insert(index + 3, "\n")  # for clarity
 
 
 def enclose_abstract(data, title_color="red", text_color="green"):
@@ -643,6 +642,70 @@ def enclose_algorithm(data, color="pink"):
         item[env][1].insert(0, {"color": "\n\\color{{{}}}".format(color)})
 
 
+def run(origin_tex_file, config, debug_mode=False):
+    # TODO: simplify the logic
+    origin_dir = os.path.dirname(origin_tex_file)
+    file_name = os.path.basename(origin_tex_file)
+    file_name = os.path.splitext(file_name)[0]
+
+    name2category = {name: category for category, name in config["category_name"]}
+    category2rgbcolor = {
+        category: tuple(color) for category, color in config["category_color"]
+    }
+    name2rgbcolor = {
+        name: category2rgbcolor[category] for name, category in name2category.items()
+    }
+
+    data = data_from_tex_file(origin_tex_file, debug_mode)
+    name2color = add_color_definition(data, name2rgbcolor)
+
+    render_env(data, name2color)
+
+    text_file = os.path.join(
+        origin_dir, "output/result/" + config["text_elements_file"]
+    )
+    log.debug(f"text_file: {text_file}")
+    save_texts(text_file)
+
+    # Convert data back to tex file
+    rendered_tex_file = os.path.join(origin_dir, file_name + "_rendered_colored.tex")
+    log.debug(f"rendered_tex_file: {rendered_tex_file}")
+    tex_file_from_data(data, rendered_tex_file, debug_mode)
+
+
+def render_env(data, name2color):
+    add_usepackage_command(data, "xcolor")
+
+    # render title
+    enclose_title(data, color=name2color["Title"])
+    # render abstract
+    enclose_abstract(
+        data, title_color=name2color["Title"], text_color=name2color["Text"]
+    )
+
+    main_content, index = get_main_content(data)
+
+    enclose_section(main_content, color=name2color["Title"])
+
+    enclose_list(main_content, color=name2color["List"])
+
+    enclose_caption(main_content, color=name2color["Caption"])
+
+    enclose_equation(main_content, color=name2color["Equation"])
+
+    enclose_table(main_content, color=name2color["Table"])
+
+    enclose_footnote(main_content, color=name2color["Footnote"])
+
+    enclose_reference(main_content, color=name2color["Text"])
+
+    enclose_algorithm(main_content, color=name2color["Algorithm"])
+
+    enclose_figure(main_content, color=name2color["Figure"])
+
+    main_content = enclose_text(main_content, color=name2color["Text"])
+    data[index]["document"][1] = main_content
+
+
 def save_texts(file="texts.json"):
-    log.debug(f"texts['algorithm']={texts['algorithm']}")
     export_to_json(texts, file)

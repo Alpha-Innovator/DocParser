@@ -2,11 +2,12 @@ import os
 import shutil
 import argparse
 from typing import Tuple
+import re
 
 import rendering.utils as utils
 import logger.logger as logger
 
-log = logger.setup_app_level_logger(file_name="app_debug.log")
+log = logger.get_logger(__name__)
 
 
 def replace_nth(string: str, old: str, new: str, n: int) -> str:
@@ -63,10 +64,12 @@ def parse_arguments() -> Tuple[str, str]:
 
 
 def render_env(tex_file, text_annotation, env_name):
-    base_name = os.path.splitext(tex_file)[0]
+    suffix = "_white.tex"
+    base_name = tex_file[: -len(suffix)]
+    # base_name = os.path.splitext(tex_file)[0]
 
-    num_algorithms = len(text_annotation[env_name])
-    for i in range(num_algorithms):
+    num_items = len(text_annotation[env_name])
+    for i in range(num_items):
         output_file = base_name + "_" + env_name + "_" + str(i) + ".tex"
         shutil.copyfile(tex_file, output_file)
 
@@ -78,13 +81,49 @@ def render_env(tex_file, text_annotation, env_name):
             content, env_name.capitalize() + "_color", "black", i + 2
         )
 
+        log.debug(f"output_file: {output_file}")
+
         with open(output_file, "w") as f:
             f.write(new_content)
     return base_name
 
 
-def run(tex_file, text_file):
-    text_annotation = utils.data_from_tex_file(text_file)
+def modify_color_definitions(input_file, output_file):
+    # Read the content of the input file
+    with open(input_file, "r") as file:
+        content = file.read()
+
+    # Define the pattern to match the color definitions
+    pattern = r"\\definecolor{([^}]+)}{RGB}{(\d+), (\d+), (\d+)}"
+
+    # Replace the color definitions with pure white
+    modified_content = re.sub(
+        pattern, r"\\definecolor{\1}{RGB}{255, 255, 255}", content
+    )
+
+    # Write the modified content to the output file
+    with open(output_file, "w") as file:
+        file.write(modified_content)
+
+
+def run(origin_tex_file, config):
+    original_dir = os.path.dirname(origin_tex_file)
+    file_name = os.path.splitext(os.path.basename(origin_tex_file))[0]
+
+    # save a white complex env for complex env bb generation
+    tex_file = os.path.join(original_dir, file_name + "_rendered_colored.tex")
+    log.debug(f"tex_file: {tex_file}")
+    white_tex_file = os.path.join(original_dir, file_name + "_rendered_white.tex")
+    log.debug(f"white_tex_file: {white_tex_file}")
+    modify_color_definitions(tex_file, white_tex_file)
+
+    # load the text annotation information
+    text_file = os.path.join(
+        original_dir, "output/result/" + config["text_elements_file"]
+    )
+    text_annotation = utils.load_json(text_file)
+
+    # render complex env
     env_list = ["algorithm", "equation", "table"]
     for env in env_list:
-        render_env(tex_file, text_annotation, env)
+        render_env(white_tex_file, text_annotation, env)
