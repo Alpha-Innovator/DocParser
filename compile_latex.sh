@@ -1,10 +1,7 @@
 #!/bin/bash
 
-# Store the current directory
-original_dir=$(pwd)
-
 # Check if the required argument is provided
-if [ $# -lt 1 ]; then
+if [ "$#" -lt 1 ] || [ "$#" -gt 2 ]; then
     echo "Usage: ./compile.sh <folder> [main_file]"
     exit 1
 fi
@@ -13,49 +10,17 @@ fi
 folder="$1"
 main_file="$2"
 
-main_file="${main_file%.*}"
+main_file="${main_file%.*}" # Remove the ".tex" extension
 
-# Change to the folder directory
-cd "$folder" || exit 1
-
-# Check if main_file argument is provided
-if [ -z "$main_file" ]; then
-    # Find all .tex files in the folder
-    tex_files=($(find . -maxdepth 1 -type f -name "*.tex"))
-
-    # Check if no .tex file is found
-    if [ ${#tex_files[@]} -eq 0 ]; then
-        echo "No .tex files found in the folder."
-        exit 1
-    fi
-
-    # Check if there is only one .tex file
-    if [ ${#tex_files[@]} -eq 1 ]; then
-        # Extract the filename without extension
-        main_file=$(basename "${tex_files[0]}" .tex)
-    else
-        # Set the default main file as main.tex
-        main_file="main"
-
-        # Check if there are multiple .tex files
-        if [ ${#tex_files[@]} -gt 1 ]; then
-            # Check if main.tex exists
-            if [[ " ${tex_files[@]} " =~ " ./main.tex " ]]; then
-                main_file="main"
-            else
-                echo "Multiple .tex files found. Please ensure there is a main.tex file."
-                exit 1
-            fi
-        fi
-    fi
-fi
+# Store the current directory and change to the folder directory
+original_dir=$(pwd)
+cd "$folder"
 
 # Find the bibliography file with .bib extension
 bib_file=$(find . -maxdepth 1 -type f -name "*.bib" | head -n 1)
 
 # Check if a bibliography file is found
 if [ -z "$bib_file" ]; then
-    echo "No bibliography file (*.bib) found in the folder."
     # Compile the main LaTeX file using pdflatex only
     pdflatex "$main_file.tex" > /dev/null
     pdflatex "$main_file.tex" > /dev/null
@@ -75,7 +40,6 @@ else
     # Compile the main LaTeX file one more time for proper references
     pdflatex "$main_file.tex" > /dev/null
 fi
-echo "[$0] Successfully compiled the $main_file.tex file."
 
 # Clean up auxiliary files
 if [ -f "$main_file.aux" ]; then
@@ -100,3 +64,11 @@ fi
 
 # Change back to the original directory
 cd "$original_dir"
+
+# Check if the shell script execution was successful
+if [ "$?" -ne 0 ]; then
+    echo "[$0] Failed to compile the $output_filename into a PDF."
+    exit 1
+fi
+
+echo "[$0] Successfully compiled the $main_file.tex file into a PDF."
