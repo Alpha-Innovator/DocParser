@@ -218,9 +218,7 @@ def generate_figure_annotation(geometry_infos, category_infos, reading_infos):
     return result
 
 
-def generate_reading_annotation(geometry_infos, category_infos):
-    reading_infos = load_json(config["text_elements_file"])
-
+def generate_reading_annotation(geometry_infos, category_infos, reading_infos):
     result = {key: [] for key in geometry_infos.keys()}
 
     title_annoatation = generate_section_annotation(
