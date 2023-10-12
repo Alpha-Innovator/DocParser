@@ -11,7 +11,7 @@
                     },
                     "\n    ",
                     {
-                        "caption": "\\caption{Primal-dual Newton Method}"
+                        "caption": "\\caption{\\textcolor{Caption_color}{Primal-dual Newton Method}}"
                     },
                     "\n    ",
                     {
@@ -331,120 +331,102 @@
                                 },
                                 " \n        ",
                                 {
-                                    "equation": {
-                                        "BraceGroup": [
+                                    "equation": [
+                                        {
+                                            "begin": "\\begin{equation}"
+                                        },
+                                        [
                                             {
-                                                "begin": "{"
+                                                "label": "\\label{eq:alg_update_mu}"
                                             },
-                                            [
-                                                {
-                                                    "color": [
-                                                        "\\color{Equation_color}\n",
-                                                        [
-                                                            {
-                                                                "begin": "\\begin{equation}"
-                                                            },
-                                                            [
-                                                                {
-                                                                    "label": "\\label{eq:alg_update_mu}"
-                                                                },
-                                                                "\n            ",
-                                                                {
-                                                                    "mu": "\\mu"
-                                                                },
-                                                                "_i^",
-                                                                {
-                                                                    "BraceGroup": [
-                                                                        {
-                                                                            "begin": "{"
-                                                                        },
-                                                                        [
-                                                                            "k+1"
-                                                                        ],
-                                                                        {
-                                                                            "end": "}"
-                                                                        }
-                                                                    ]
-                                                                },
-                                                                " =",
-                                                                {
-                                                                    "cases": [
-                                                                        {
-                                                                            "begin": "\\begin{cases}"
-                                                                        },
-                                                                        [
-                                                                            "\n                ",
-                                                                            {
-                                                                                "mu": "\\mu"
-                                                                            },
-                                                                            "_i^k-",
-                                                                            {
-                                                                                "beta": "\\beta"
-                                                                            },
-                                                                            "_i^k",
-                                                                            {
-                                                                                "nabla": "\\nabla"
-                                                                            },
-                                                                            "_i",
-                                                                            {
-                                                                                "mathcal": "\\mathcal{L}"
-                                                                            },
-                                                                            {
-                                                                                "left(": "\\left("
-                                                                            },
-                                                                            {
-                                                                                "boldsymbol": "\\boldsymbol"
-                                                                            },
-                                                                            {
-                                                                                "mu": "\\mu"
-                                                                            },
-                                                                            "^k,",
-                                                                            {
-                                                                                "lambda": "\\lambda"
-                                                                            },
-                                                                            "^k",
-                                                                            {
-                                                                                "right)": "\\right)"
-                                                                            },
-                                                                            ", &",
-                                                                            {
-                                                                                "text": "\\text{ if }"
-                                                                            },
-                                                                            "i",
-                                                                            {
-                                                                                "in": "\\in"
-                                                                            },
-                                                                            {
-                                                                                "mathcal": "\\mathcal{B}"
-                                                                            },
-                                                                            "^k",
-                                                                            "\\\\",
-                                                                            "\n                0, &",
-                                                                            {
-                                                                                "text": "\\text{ otherwise }"
-                                                                            },
-                                                                            "\n            "
-                                                                        ],
-                                                                        {
-                                                                            "end": "\\end{cases}"
-                                                                        }
-                                                                    ]
-                                                                },
-                                                                "\n        "
-                                                            ],
-                                                            {
-                                                                "end": "\\end{equation}"
-                                                            }
-                                                        ],
-                                                        "\n"
-                                                    ]
-                                                }
-                                            ],
+                                            "\n            ",
                                             {
-                                                "end": "}"
-                                            }
-                                        ]
-                                    }
+                                                "mu": "\\mu"
+                                            },
+                                            "_i^",
+                                            {
+                                                "BraceGroup": [
+                                                    {
+                                                        "begin": "{"
+                                                    },
+                                                    [
+                                                        "k+1"
+                                                    ],
+                                                    {
+                                                        "end": "}"
+                                                    }
+                                                ]
+                                            },
+                                            " =",
+                                            {
+                                                "cases": [
+                                                    {
+                                                        "begin": "\\begin{cases}"
+                                                    },
+                                                    [
+                                                        "\n                ",
+                                                        {
+                                                            "mu": "\\mu"
+                                                        },
+                                                        "_i^k-",
+                                                        {
+                                                            "beta": "\\beta"
+                                                        },
+                                                        "_i^k",
+                                                        {
+                                                            "nabla": "\\nabla"
+                                                        },
+                                                        "_i",
+                                                        {
+                                                            "mathcal": "\\mathcal{L}"
+                                                        },
+                                                        {
+                                                            "left(": "\\left("
+                                                        },
+                                                        {
+                                                            "boldsymbol": "\\boldsymbol"
+                                                        },
+                                                        {
+                                                            "mu": "\\mu"
+                                                        },
+                                                        "^k,",
+                                                        {
+                                                            "lambda": "\\lambda"
+                                                        },
+                                                        "^k",
+                                                        {
+                                                            "right)": "\\right)"
+                                                        },
+                                                        ", &",
+                                                        {
+                                                            "text": "\\text{ if }"
+                                                        },
+                                                        "i",
+                                                        {
+                                                            "in": "\\in"
+                                                        },
+                                                        {
+                                                            "mathcal": "\\mathcal{B}"
+                                                        },
+                                                        "^k",
+                                                        "\\\\",
+                                                        "\n                0, &",
+                                                        {
+                                                            "text": "\\text{ otherwise }"
+                                                        },
+                                                        "\n            "
+                                                    ],
+                                                    {
+                                                        "end": "\\end{cases}"
+                                                    }
+                                                ]
+                                            },
+                                            "\n        "
+                                        ],
+                                        {
+                                            "end": "\\end{equation}"
+                                        }
+                                    ]
                                 },
                                 "\n        ",
                                 {
@@ -547,64 +529,46 @@
                                 },
                                 "\n            ",
                                 {
-                                    "equation": {
-                                        "BraceGroup": [
+                                    "equation": [
+                                        {
+                                            "begin": "\\begin{equation}"
+                                        },
+                                        [
                                             {
-                                                "begin": "{"
+                                                "label": "\\label{eq:alg_update_lambda}"
                                             },
-                                            [
-                                                {
-                                                    "color": [
-                                                        "\\color{Equation_color}\n",
-                                                        [
-                                                            {
-                                                                "begin": "\\begin{equation}"
-                                                            },
-                                                            [
-                                                                {
-                                                                    "label": "\\label{eq:alg_update_lambda}"
-                                                                },
-                                                                "\n                ",
-                                                                {
-                                                                    "lambda": "\\lambda"
-                                                                },
-                                                                "^",
-                                                                {
-                                                                    "BraceGroup": [
-                                                                        {
-                                                                            "begin": "{"
-                                                                        },
-                                                                        [
-                                                                            "k+1"
-                                                                        ],
-                                                                        {
-                                                                            "end": "}"
-                                                                        }
-                                                                    ]
-                                                                },
-                                                                " = ",
-                                                                {
-                                                                    "lambda": "\\lambda"
-                                                                },
-                                                                "^k + ",
-                                                                {
-                                                                    "frac": "\\frac{\\left[\\sum_{i\\in\\mathcal{B}^k}\\mu_i^{k+1}-C\\right]_+}{\\sum_{i\\in\\mathcal{B}^k}\\beta_i^{k+1}}"
-                                                                },
-                                                                ".\n            "
-                                                            ],
-                                                            {
-                                                                "end": "\\end{equation}"
-                                                            }
-                                                        ],
-                                                        "\n"
-                                                    ]
-                                                }
-                                            ],
+                                            "\n                ",
                                             {
-                                                "end": "}"
-                                            }
-                                        ]
-                                    }
+                                                "lambda": "\\lambda"
+                                            },
+                                            "^",
+                                            {
+                                                "BraceGroup": [
+                                                    {
+                                                        "begin": "{"
+                                                    },
+                                                    [
+                                                        "k+1"
+                                                    ],
+                                                    {
+                                                        "end": "}"
+                                                    }
+                                                ]
+                                            },
+                                            " = ",
+                                            {
+                                                "lambda": "\\lambda"
+                                            },
+                                            "^k + ",
+                                            {
+                                                "frac": "\\frac{\\left[\\sum_{i\\in\\mathcal{B}^k}\\mu_i^{k+1}-C\\right]_+}{\\sum_{i\\in\\mathcal{B}^k}\\beta_i^{k+1}}"
+                                            },
+                                            ".\n            "
+                                        ],
+                                        {
+                                            "end": "\\end{equation}"
+                                        }
+                                    ]
                                 },
                                 "\n        ",
                                 {
@@ -706,51 +670,54 @@
             ]
         }
     ],
-    "section": [
-        "Introduction",
-        "Background",
-        "Related work",
-        "Contribution",
-        "Organization",
-        "Notation",
-        "Problem Formulation",
-        "Algorithm",
-        "Primal update",
-        "Dual update",
-        "Proposed algorithm",
-        "Convergence Analysis",
-        "Experiment Results",
-        "Performance of proposed algorithm",
-        "Multitask Lasso with $\\ell_{1,\\infty}$ constraint",
-        "Conclusion"
-    ],
     "caption": [
-        {
-            "caption": "\\caption{Qualitative comparison of different methods}"
-        },
-        {
-            "caption": "\\caption{Primal update scheme}"
-        },
-        {
-            "caption": "\\caption{$\\mathbf{A}\\in\\mathbb{R}^{m\\times n}$ with $m=n=10000$, averaged in 10 trials}"
-        },
-        {
-            "caption": "\\caption{Time versus dimension, SBM (cyan), SNA (red), PDN (green). PDN grows slowest compared to SBM and SNA.}"
-        },
-        {
-            "caption": "\\caption{Iteration information of SNA (red), NRFM (blue) and PDN (green). Top: $\\|\\boldsymbol\\mu^k-\\boldsymbol\\mu^*\\|_2^2$ (a) and $|\\lambda^k-\\lambda^*|^2$ (b) against iterations. Bottom: $\\|\\boldsymbol\\mu^k-\\boldsymbol\\mu^*\\|_2^2$ (c) and $|\\lambda^k-\\lambda^*|^2$  (d) against time.}"
-        },
-        {
-            "caption": "\\caption{Synthetic data for multitask lasso, M1 (small), M2 (medium), M3 (large), M4(very large).}"
-        },
-        {
-            "caption": "\\caption{multi task lasso with synthetic data. Projection time (s) is recorded. }"
-        },
-        {
-            "caption": "\\caption{Multi task lasso on School dataset. Projection time (s) is recorded.}"
-        }
+        "\\caption{Qualitative comparison of different methods}",
+        "\\caption{Primal update scheme}",
+        "\\caption{Primal-dual Newton Method}",
+        "\\caption{$\\mathbf{A}\\in\\mathbb{R}^{m\\times n}$ with $m=n=10000$, averaged in 10 trials}",
+        "\\caption{Time versus dimension, SBM (cyan), SNA (red), PDN (green). PDN grows slowest compared to SBM and SNA.}",
+        "\\caption{Iteration information of SNA (red), NRFM (blue) and PDN (green). Top: $\\|\\boldsymbol\\mu^k-\\boldsymbol\\mu^*\\|_2^2$ (a) and $|\\lambda^k-\\lambda^*|^2$ (b) against iterations. Bottom: $\\|\\boldsymbol\\mu^k-\\boldsymbol\\mu^*\\|_2^2$ (c) and $|\\lambda^k-\\lambda^*|^2$  (d) against time.}",
+        "\\caption{Synthetic data for multitask lasso, M1 (small), M2 (medium), M3 (large), M4(very large).}",
+        "\\caption{multi task lasso with synthetic data. Projection time (s) is recorded. }",
+        "\\caption{Multi task lasso on School dataset. Projection time (s) is recorded.}"
     ],
-    "list": [],
+    "list": [
+        [
+            {
+                "begin": "\\begin{itemize}"
+            },
+            [
+                "\n",
+                {
+                    "item": [
+                        "\\item",
+                        [
+                            " this is the contribution item 1\n"
+                        ]
+                    ]
+                },
+                {
+                    "item": [
+                        "\\item",
+                        [
+                            " this is the contribution item 2\n"
+                        ]
+                    ]
+                },
+                {
+                    "item": [
+                        "\\item",
+                        [
+                            " this is the contribution item 3\n"
+                        ]
+                    ]
+                }
+            ],
+            {
+                "end": "\\end{itemize}"
+            }
+        ]
+    ],
     "equation": [
         {
             "equation": {
@@ -3248,182 +3215,6 @@
                                         "begin": "\\begin{equation}"
                                     },
                                     [
-                                        {
-                                            "label": "\\label{eq:alg_update_mu}"
-                                        },
-                                        "\n            ",
-                                        {
-                                            "mu": "\\mu"
-                                        },
-                                        "_i^",
-                                        {
-                                            "BraceGroup": [
-                                                {
-                                                    "begin": "{"
-                                                },
-                                                [
-                                                    "k+1"
-                                                ],
-                                                {
-                                                    "end": "}"
-                                                }
-                                            ]
-                                        },
-                                        " =",
-                                        {
-                                            "cases": [
-                                                {
-                                                    "begin": "\\begin{cases}"
-                                                },
-                                                [
-                                                    "\n                ",
-                                                    {
-                                                        "mu": "\\mu"
-                                                    },
-                                                    "_i^k-",
-                                                    {
-                                                        "beta": "\\beta"
-                                                    },
-                                                    "_i^k",
-                                                    {
-                                                        "nabla": "\\nabla"
-                                                    },
-                                                    "_i",
-                                                    {
-                                                        "mathcal": "\\mathcal{L}"
-                                                    },
-                                                    {
-                                                        "left(": "\\left("
-                                                    },
-                                                    {
-                                                        "boldsymbol": "\\boldsymbol"
-                                                    },
-                                                    {
-                                                        "mu": "\\mu"
-                                                    },
-                                                    "^k,",
-                                                    {
-                                                        "lambda": "\\lambda"
-                                                    },
-                                                    "^k",
-                                                    {
-                                                        "right)": "\\right)"
-                                                    },
-                                                    ", &",
-                                                    {
-                                                        "text": "\\text{ if }"
-                                                    },
-                                                    "i",
-                                                    {
-                                                        "in": "\\in"
-                                                    },
-                                                    {
-                                                        "mathcal": "\\mathcal{B}"
-                                                    },
-                                                    "^k",
-                                                    "\\\\",
-                                                    "\n                0, &",
-                                                    {
-                                                        "text": "\\text{ otherwise }"
-                                                    },
-                                                    "\n            "
-                                                ],
-                                                {
-                                                    "end": "\\end{cases}"
-                                                }
-                                            ]
-                                        },
-                                        "\n        "
-                                    ],
-                                    {
-                                        "end": "\\end{equation}"
-                                    }
-                                ],
-                                "\n"
-                            ]
-                        }
-                    ],
-                    {
-                        "end": "}"
-                    }
-                ]
-            }
-        },
-        {
-            "equation": {
-                "BraceGroup": [
-                    {
-                        "begin": "{"
-                    },
-                    [
-                        {
-                            "color": [
-                                "\\color{Equation_color}\n",
-                                [
-                                    {
-                                        "begin": "\\begin{equation}"
-                                    },
-                                    [
-                                        {
-                                            "label": "\\label{eq:alg_update_lambda}"
-                                        },
-                                        "\n                ",
-                                        {
-                                            "lambda": "\\lambda"
-                                        },
-                                        "^",
-                                        {
-                                            "BraceGroup": [
-                                                {
-                                                    "begin": "{"
-                                                },
-                                                [
-                                                    "k+1"
-                                                ],
-                                                {
-                                                    "end": "}"
-                                                }
-                                            ]
-                                        },
-                                        " = ",
-                                        {
-                                            "lambda": "\\lambda"
-                                        },
-                                        "^k + ",
-                                        {
-                                            "frac": "\\frac{\\left[\\sum_{i\\in\\mathcal{B}^k}\\mu_i^{k+1}-C\\right]_+}{\\sum_{i\\in\\mathcal{B}^k}\\beta_i^{k+1}}"
-                                        },
-                                        ".\n            "
-                                    ],
-                                    {
-                                        "end": "\\end{equation}"
-                                    }
-                                ],
-                                "\n"
-                            ]
-                        }
-                    ],
-                    {
-                        "end": "}"
-                    }
-                ]
-            }
-        },
-        {
-            "equation": {
-                "BraceGroup": [
-                    {
-                        "begin": "{"
-                    },
-                    [
-                        {
-                            "color": [
-                                "\\color{Equation_color}\n",
-                                [
-                                    {
-                                        "begin": "\\begin{equation}"
-                                    },
-                                    [
                                         "\n        ",
                                         {
                                             "aligned": [
@@ -4084,7 +3875,24 @@
         "\\url{ https://goo.gl/TngGrc.}",
         "\\url{https://ttic.uchicago.edu/\u02dcargyriou/code}"
     ],
-    "title": [],
+    "title": [
+        "\\section{Introduction}",
+        "\\subsection{Background}",
+        "\\subsection{Related work}",
+        "\\subsection{Contribution}",
+        "\\subsection{Organization}",
+        "\\subsection{Notation}",
+        "\\section{Problem Formulation}",
+        "\\section{Algorithm}",
+        "\\subsection{Primal update}",
+        "\\subsection{Dual update}",
+        "\\subsection{Proposed algorithm}",
+        "\\section{Convergence Analysis}",
+        "\\section{Experiment Results}",
+        "\\subsection{Performance of proposed algorithm}",
+        "\\subsection{Multitask Lasso with $\\ell_{1,\\infty}$ constraint}",
+        "\\section{Conclusion}"
+    ],
     "abstract": [
         "\nWe consider the projection onto the ",
         {
@@ -4155,21 +3963,7 @@
                     "\n",
                     "\n",
                     {
-                        "BraceGroup": [
-                            {
-                                "begin": "{"
-                            },
-                            [
-                                "\n",
-                                {
-                                    "color": "\\color{Caption_color}{\\caption{Qualitative comparison of different methods}}"
-                                },
-                                "\n"
-                            ],
-                            {
-                                "end": "}"
-                            }
-                        ]
+                        "caption": "\\caption{\\textcolor{Caption_color}{Qualitative comparison of different methods}}"
                     },
                     "\n",
                     {
@@ -4211,7 +4005,7 @@
                                                                         "color": [
                                                                             "\\color{Table_color}\n",
                                                                             {
-                                                                                "begin": "\\begin{tabular}{c|c|c|c|c}"
+                                                                                "begin": "\\begin{tabular}{|c|c|c|c|c|}"
                                                                             },
                                                                             [
                                                                                 "\nMethod                & finite step &subproblem solving & feasibility & primal/dual order      ",
@@ -4313,21 +4107,7 @@
                 [
                     "\n",
                     {
-                        "BraceGroup": [
-                            {
-                                "begin": "{"
-                            },
-                            [
-                                "\n",
-                                {
-                                    "color": "\\color{Caption_color}{\\caption{$\\mathbf{A}\\in\\mathbb{R}^{m\\times n}$ with $m=n=10000$, averaged in 10 trials}}"
-                                },
-                                "\n"
-                            ],
-                            {
-                                "end": "}"
-                            }
-                        ]
+                        "caption": "\\caption{\\textcolor{Caption_color}{$\\mathbf{A}\\in\\mathbb{R}^{m\\times n}$ with $m=n=10000$, averaged in 10 trials}}"
                     },
                     "\n",
                     {
@@ -4369,7 +4149,7 @@
                                                                         "color": [
                                                                             "\\color{Table_color}\n",
                                                                             {
-                                                                                "begin": "\\begin{tabular}{c|cc|ccc|ccc|r}"
+                                                                                "begin": "\\begin{tabular}{|c|cc|ccc|ccc|r|}"
                                                                             },
                                                                             [
                                                                                 "\n",
@@ -4528,21 +4308,7 @@
                 [
                     "\n",
                     {
-                        "BraceGroup": [
-                            {
-                                "begin": "{"
-                            },
-                            [
-                                "\n",
-                                {
-                                    "color": "\\color{Caption_color}{\\caption{Synthetic data for multitask lasso, M1 (small), M2 (medium), M3 (large), M4(very large).}}"
-                                },
-                                "\n"
-                            ],
-                            {
-                                "end": "}"
-                            }
-                        ]
+                        "caption": "\\caption{\\textcolor{Caption_color}{Synthetic data for multitask lasso, M1 (small), M2 (medium), M3 (large), M4(very large).}}"
                     },
                     "\n",
                     {
@@ -4584,7 +4350,7 @@
                                                                         "color": [
                                                                             "\\color{Table_color}\n",
                                                                             {
-                                                                                "begin": "\\begin{tabular}{cccc}"
+                                                                                "begin": "\\begin{tabular}{|cccc|}"
                                                                             },
                                                                             [
                                                                                 "\n",
@@ -4816,21 +4582,7 @@
                 [
                     "\n",
                     {
-                        "BraceGroup": [
-                            {
-                                "begin": "{"
-                            },
-                            [
-                                "\n",
-                                {
-                                    "color": "\\color{Caption_color}{\\caption{multi task lasso with synthetic data. Projection time (s) is recorded. }}"
-                                },
-                                "\n"
-                            ],
-                            {
-                                "end": "}"
-                            }
-                        ]
+                        "caption": "\\caption{\\textcolor{Caption_color}{multi task lasso with synthetic data. Projection time (s) is recorded. }}"
                     },
                     "\n",
                     {
@@ -4872,7 +4624,7 @@
                                                                         "color": [
                                                                             "\\color{Table_color}\n",
                                                                             {
-                                                                                "begin": "\\begin{tabular}{ccccccc}"
+                                                                                "begin": "\\begin{tabular}{|ccccccc|}"
                                                                             },
                                                                             [
                                                                                 "\n",
@@ -4996,21 +4748,7 @@
                 [
                     "\n",
                     {
-                        "BraceGroup": [
-                            {
-                                "begin": "{"
-                            },
-                            [
-                                "\n",
-                                {
-                                    "color": "\\color{Caption_color}{\\caption{Multi task lasso on School dataset. Projection time (s) is recorded.}}"
-                                },
-                                "\n"
-                            ],
-                            {
-                                "end": "}"
-                            }
-                        ]
+                        "caption": "\\caption{\\textcolor{Caption_color}{Multi task lasso on School dataset. Projection time (s) is recorded.}}"
                     },
                     "\n",
                     {
@@ -5052,7 +4790,7 @@
                                                                         "color": [
                                                                             "\\color{Table_color}\n",
                                                                             {
-                                                                                "begin": "\\begin{tabular}{cccccc}"
+                                                                                "begin": "\\begin{tabular}{|cccccc|}"
                                                                             },
                                                                             [
                                                                                 "\n",
@@ -6057,7 +5795,58 @@
             " norm ball with respect to different algorithmic properties."
         ],
         [
-            "\n\n"
+            "Our contributions are listed as follows:\n",
+            {
+                "BraceGroup": [
+                    {
+                        "begin": "{"
+                    },
+                    [
+                        {
+                            "color": [
+                                "\\color{List_color}\n",
+                                {
+                                    "begin": "\\begin{itemize}"
+                                },
+                                [
+                                    "\n",
+                                    {
+                                        "item": [
+                                            "\\item",
+                                            [
+                                                " this is the contribution item 1\n"
+                                            ]
+                                        ]
+                                    },
+                                    {
+                                        "item": [
+                                            "\\item",
+                                            [
+                                                " this is the contribution item 2\n"
+                                            ]
+                                        ]
+                                    },
+                                    {
+                                        "item": [
+                                            "\\item",
+                                            [
+                                                " this is the contribution item 3\n"
+                                            ]
+                                        ]
+                                    }
+                                ],
+                                {
+                                    "end": "\\end{itemize}"
+                                },
+                                "\n"
+                            ]
+                        }
+                    ],
+                    {
+                        "end": "}"
+                    }
+                ]
+            }
         ],
         [
             "\nThe remainder of this paper is outlined as follows.\nIn Section ",
@@ -15807,9 +15596,35 @@
         ],
         [
             {
+                "BraceGroup": [
+                    {
+                        "begin": "{"
+                    },
+                    [
+                        "\n",
+                        {
+                            "color": "\\color{Text_color}{\\bibliography{example_paper}}\n"
+                        },
+                        "\n"
+                    ],
+                    {
+                        "end": "}"
+                    }
+                ]
+            }
+        ],
+        [
+            {
                 "bibliographystyle": "\\bibliographystyle{icml2022}"
             }
         ]
     ],
-    "figure": []
+    "figure": [
+        "\\includegraphics[width=\\columnwidth]{figures/primal_update.pdf}",
+        "\\centerline{\\includegraphics[width=\\columnwidth]{figures/time_vs_dimension.png}}",
+        "\\subfigure[]{\\includegraphics[width=0.48\\columnwidth]{figures/iterate_constraint.png}}",
+        "\\subfigure[]{\\includegraphics[width=0.48\\columnwidth]{figures/iterate_error.png}}",
+        "\\subfigure[]{\\includegraphics[width=0.48\\columnwidth]{figures/time_constraint.png}}",
+        "\\subfigure[]{\\includegraphics[width=0.5\\columnwidth]{figures/time_error.png}}"
+    ]
 }
