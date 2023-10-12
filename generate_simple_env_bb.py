@@ -1,21 +1,18 @@
 import os
-from PIL import Image, ImageDraw, ImageFont
-from typing import Dict, List, Tuple
-import json
-import argparse
-import datetime
+from PIL import Image
+from typing import Dict, List
 import numpy as np
 import cv2
 
 from pdfminer.high_level import extract_pages
-from pdfminer.layout import LAParams, LTPage, LTComponent, LTFigure, LTLine
+from pdfminer.layout import LAParams, LTComponent, LTFigure, LTLine
 
 from logger import logger
-from rendering.utils import export_to_json, load_json
+from rendering.utils import load_json
 from layout import geometry
-from reading_annotation_generator import generate_reading_annotation
 
-log = logger.setup_app_level_logger(file_name="app_debug.log", mode="a")
+
+log = logger.get_logger(__name__)
 
 config = load_json("config.json")
 name2category = {v: k for k, v in config["category_name"]}
@@ -81,41 +78,8 @@ def generate_bb(filename: str, laparams=None) -> Dict[int, List[LTComponent]]:
         for element in page_layout:
             file_elements[page_index].append(element)
 
+    file_elements = geometry.merge_bb(file_elements)
     return file_elements
-
-
-def generate_geometry_annotation(
-    page_image: Image.Image,
-    page_elements: List[LTComponent],
-    category_info: Dict[int, int],
-) -> Image.Image:
-    """
-    Generate an annotation for an image.
-
-    Args:
-        page_image (Image.Image): The image to annotate.
-        page_elements (List[LTComponent]): A list of elements to be annotated.
-
-    Returns:
-        Image.Image: The annotated image.
-    """
-    draw = ImageDraw.Draw(page_image)
-    # use `locate .ttf` to find the available fonts
-    font = ImageFont.truetype(
-        config["annotation_image_font_type"], config["annotation_image_font_size"]
-    )
-
-    for index, element in enumerate(page_elements):
-        category = category_info[index]
-        draw.rectangle(element.bbox, outline="red")
-        draw.text(
-            (element.bbox[0], element.bbox[1]),
-            category2name[category],
-            fill=(255, 0, 0),
-            font=font,
-        )
-
-    return page_image
 
 
 def get_category(image: Image.Image, element: LTComponent) -> int:
@@ -141,7 +105,6 @@ def get_category(image: Image.Image, element: LTComponent) -> int:
             count = np.sum(mask)
             category = key
 
-    log.debug(f"element={element}, category: {category}")
     return category
 
 
@@ -176,217 +139,71 @@ def color_to_category(
     return result
 
 
-def export_to_coco(
-    file_elements: Dict[int, List[LTComponent]],
-    image_infos: Dict[int, str],
-    category_infos: Dict[int, Dict[int, int]],
-    filename: str,
-) -> None:
-    result = {
-        "info": {
-            "year": 2023,
-            "version": "1.0",
-            "description": "Visually Rich Document Understanding data process",
-            "contributor": "manual",
-            "url": "https://github.com/MaoSong2022/vrdu_data_process",
-            "date_created": f"{datetime.datetime.now()}",
-        },
-        "licenses": [  # TODO: modify this
-            {
-                "url": "http://creativecommons.org/licenses/by/2.0/",
-                "id": 4,
-                "name": "Attribution License",
-            }
-        ],
-        "images": [],
-        "annotations": [],
-        "categories": [
-            {"id": index, "name": category}
-            for index, category in config["category_name"]
-        ],
-    }
-    for page_index, page_elements in file_elements.items():
-        for index, element in enumerate(page_elements):
-            if isinstance(element, LTPage):
-                image = {
-                    "id": page_index,
-                    "width": element.bbox[2] - element.bbox[0],
-                    "height": element.bbox[3] - element.bbox[1],
-                    "file_name": image_infos[page_index],
-                    "coco_url": "",  # TODO: modify this
-                    "date_captured": "",  # TODO: modify this
-                    "flickr_url": "",  # TODO: modify this
-                    "license": 0,  # TODO: modify this
-                }
-                result["images"].append(image)
-            else:
-                width = element.bbox[2] - element.bbox[0]
-                height = element.bbox[3] - element.bbox[1]
-                annotation = {
-                    "id": index,
-                    "image_id": page_index,
-                    "category_id": category_infos[page_index][index],
-                    "segmentation": [],
-                    "bbox": [element.bbox[0], element.bbox[1], width, height],
-                    "area": width * height,
-                    "iscrowd": 0,
-                }
-                result["annotations"].append(annotation)
-
-    with open(filename, "w") as f:
-        json.dump(result, f)
-
-
-def merge_env_bboxes(elements: List[LTComponent], ratio=1.0) -> List[LTComponent]:
-    elements.sort(key=lambda x: x.bbox[1])
-    result = []
-
-    for element in elements:
-        x0, y0, x1, y1 = element.bbox
-        center_x = (x0 + x1) / 2
-        center_y = (y0 + y1) / 2
-        height = y1 - y0
-        width = x1 - x0
-
-        has_been_merged = False
-        for item in result:
-            if geometry.inside_bb(element, item):
-                continue
-            item_center_x = (item.bbox[0] + item.bbox[2]) / 2
-            item_center_y = (item.bbox[1] + item.bbox[3]) / 2
-            if (
-                abs(center_y - item_center_y) <= ratio * height
-                and abs(center_x - item_center_x) <= 0.5 * width
-            ):
-                item.bbox = (
-                    min(x0, item.bbox[0]),
-                    min(y0, item.bbox[1]),
-                    max(x1, item.bbox[2]),
-                    max(y1, item.bbox[3]),
-                )
-                has_been_merged = True
-                break
-
-        if not has_been_merged:
-            result.append(element)
-
-    return result
-
-
-def merge_bb_with_color(page_elements, category_info, ratio=1.5):
-    # TODO: consider the area of bbox and consider the table size
-    result = []
-    table_elements = []
-    equation_elements = []
-    algorithm_elements = []
-    for index, element in enumerate(page_elements):
-        if category_info[index] == name2category["Table"]:
-            table_elements.append(element)
-        elif category_info[index] == name2category["Equation"]:
-            equation_elements.append(element)
-        elif category_info[index] == name2category["Algorithm"]:
-            algorithm_elements.append(element)
-
-    table_elements = merge_env_bboxes(table_elements, ratio)
-    equation_elements = merge_env_bboxes(equation_elements, ratio)
-    algorithm_elements = merge_env_bboxes(algorithm_elements, ratio)
-
-    current_index = 0
-    for index, element in enumerate(page_elements):
-        if category_info[index] in [
-            name2category["Table"],
-            name2category["Equation"],
-            name2category["Algorithm"],
-        ]:
-            continue
-
-        result.append(element)
-        category_info[current_index] = category_info[index]
-        current_index += 1
-
-    for index, element in enumerate(table_elements):
-        result.append(element)
-        category_info[current_index] = name2category["Table"]
-        current_index += 1
-
-    for index, element in enumerate(equation_elements):
-        result.append(element)
-        category_info[current_index] = name2category["Equation"]
-        current_index += 1
-
-    for index, element in enumerate(algorithm_elements):
-        result.append(element)
-        category_info[current_index] = name2category["Algorithm"]
-        current_index += 1
-
-    return result, category_info
-
-
-def parse_arguments():
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--path", type=str, required=True, help="The path to the main directory"
-    )
-    parser.add_argument(
-        "--file_name", type=str, required=True, help="The name of the file"
-    )
-
-    args = parser.parse_args()
-    main_directory = args.path
-    filename = args.file_name
-
-    return main_directory, filename
-
-
-def main():
-    main_directory, filename = parse_arguments()
-
-    rendered_path = os.path.join(main_directory, "rendered")
-    result_path = os.path.join(main_directory, "result")
-
-    rendered_pdf = os.path.join(rendered_path, f"{filename}_rendered.pdf")
-
-    laparams = LAParams(**config["laparams"])
-    file_elements = generate_bb(rendered_pdf, laparams)
-    file_elements = geometry.merge_bb(file_elements)
-
-    # generate object detection info
-    geometry_infos = {}  # geometry info member of COCO
-    image_infos = {}  # annotation image info member of COCO
-    category_infos = {}  # map of bb index to category
-    for page_index, page_elements in file_elements.items():
+def generate_category_info(filename, main_directory, geometry_info):
+    rendered_path = os.path.join(main_directory, "colored")
+    category_info = {}  # map of bb index to category
+    for page_index in geometry_info.keys():
         page_image_path = os.path.join(
-            rendered_path, f"{filename}_rendered_page_{page_index}.png"
+            rendered_path, f"{filename}_rendered_colored_page_{page_index}.png"
         )
         page_image = Image.open(page_image_path)
 
-        transformed_page_elements = geometry.transform(page_elements, page_image)
-        category_infos[page_index] = color_to_category(
-            page_image, transformed_page_elements
+        category_info[page_index] = color_to_category(
+            page_image, geometry_info[page_index]
         )
-        transformed_page_elements, category_infos[page_index] = merge_bb_with_color(
-            transformed_page_elements, category_infos[page_index]
+        page_image.close()
+
+    return category_info
+
+
+def generate_geometry_info(main_directory, filename):
+    rendered_path = os.path.join(main_directory, "colored")
+    rendered_pdf = os.path.join(rendered_path, f"{filename}_rendered_colored.pdf")
+    laparams = LAParams(**config["laparams"])
+    file_elements = generate_bb(rendered_pdf, laparams)
+
+    # generate object detection info
+    geometry_info = {}  # geometry info member of COCO
+    for page_index, page_elements in file_elements.items():
+        page_image_path = os.path.join(
+            rendered_path, f"{filename}_rendered_colored_page_{page_index}.png"
         )
-        annotated_image = generate_geometry_annotation(
-            page_image, transformed_page_elements, category_infos[page_index]
-        )
+        page_image = Image.open(page_image_path)
+        geometry_info[page_index] = geometry.transform(page_elements, page_image)
+        page_image.close()
 
-        image_name = f"{filename}_annotation_page_{page_index}.png"
-        annotated_image_path = os.path.join(result_path, image_name)
-        image_infos[page_index] = annotated_image_path
-        annotated_image.save(annotated_image_path)
-        geometry_infos[page_index] = transformed_page_elements
-
-    layout_json_file = os.path.join(result_path, "layout_annotation.json")
-    export_to_coco(
-        geometry_infos, image_infos, category_infos, filename=layout_json_file
-    )
-
-    # generate text annotation info
-    result = generate_reading_annotation(geometry_infos, category_infos)
-    text_json_file = os.path.join(result_path, "reading_annotation.json")
-    export_to_json(result, text_json_file)
+    return geometry_info
 
 
-if __name__ == "__main__":
-    main()
+def filter_results(geometry_info, category_info):
+    f_geometry_info = {}
+    f_category_info = {}
+    for page_index, page_elements in geometry_info.items():
+        f_geometry_info[page_index] = []
+        f_category_info[page_index] = {}
+        i = 0
+        for index, element in enumerate(page_elements):
+            if category_info[page_index][index] in [
+                name2category["Table"],
+                name2category["Algorithm"],
+                name2category["Equation"],
+            ]:
+                continue
+            f_geometry_info[page_index].append(element)
+            f_category_info[page_index][i] = category_info[page_index][index]
+            i += 1
+
+    return f_geometry_info, f_category_info
+
+
+def run(main_directory, filename):
+    # generate geometry info
+    geometry_info = generate_geometry_info(main_directory, filename)
+
+    # generate category info
+    category_info = generate_category_info(filename, main_directory, geometry_info)
+
+    # filter results
+    geometry_info, category_info = filter_results(geometry_info, category_info)
+
+    return geometry_info, category_info

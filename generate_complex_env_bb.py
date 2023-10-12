@@ -1,16 +1,18 @@
 import os
 import glob
+from typing import Dict
 import matplotlib.pyplot as plt
+import argparse
 import numpy as np
 from skimage.measure import label, regionprops
-import cv2
 import re
-from typing import Dict, List, Tuple
-import matplotlib.pyplot as plt
 from PIL import Image, ImageDraw
 
+from pdfminer.layout import LTComponent
 from rendering.utils import load_json
+from logger import logger
 
+log = logger.get_logger(__name__)
 
 config = load_json("config.json")
 
@@ -47,12 +49,12 @@ def get_image_pairs(dir1: str, dir2: str):
     for i in range(len(rendered_png_files)):
         match = re.search(r"_(\d+)\.png$", rendered_png_files[i])
         page_index = match.group(1)
-        page_indices.append(page_index)
+        page_indices.append(int(page_index))
 
     for i in range(len(changed_png_files)):
         match = re.search(r"_(\d+)\.png$", rendered_png_files[i])
         page_index = match.group(1)
-        if page_index != page_indices[i]:
+        if int(page_index) != page_indices[i]:
             raise FileNotFoundError("Wrong image path or file name or page index!")
 
     image_pairs = list(zip(page_indices, rendered_png_files, changed_png_files))
@@ -86,7 +88,9 @@ def generate_bounding_box(image_pairs, threshold=0.3):
         max_x = max(bounding_boxes, key=lambda x: x[4])[4]
         max_y = max(bounding_boxes, key=lambda x: x[3])[3]
 
-        result[page_index].append((min_x, min_y, max_x, max_y))
+        element = LTComponent(bbox=(min_x, min_y, max_x, max_y))
+        result[page_index].append(element)
+        # result[page_index].append((min_x, min_y, max_x, max_y))
 
     return result
 
@@ -105,18 +109,78 @@ def show_annotation(image_pair, bounding_boxes):
         x1, y1, x2, y2 = bounding_box
 
         # Draw the rectangle on the image
-        draw.rectangle([(x1, y1), (x2, y2)], outline=outline_color)
+        draw.rectangle((x1, y1, x2, y2), outline=outline_color)
 
     original_image.save("output.png")
 
 
-def run(dir1: str, dir2: str):
-    image_pairs = get_image_pairs(dir1, dir2)
-    annotation = generate_bounding_box(image_pairs)
-    show_annotation(image_pairs[4], annotation['4'])
+def parse_arguments():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--directory",
+        type=str,
+        help="The directory path where the first set of images is located.",
+    )
+    args = parser.parse_args()
+    main_directory = args.directory
+    return main_directory
 
 
-if __name__ == "__main__":
-    dir1 = os.path.expanduser("~/icml2022/output/rendered")
-    dir2 = os.path.expanduser("~/icml2022/output/changed")
-    run(dir1, dir2)
+def get_matching_subdirectories(folder_path):
+    subdirectories = [
+        name
+        for name in os.listdir(folder_path)
+        if os.path.isdir(os.path.join(folder_path, name))
+        and (
+            name.startswith("algorithm")
+            or name.startswith("equation")
+            or name.startswith("table")
+        )
+    ]
+    return subdirectories
+
+
+def generate_category(geometry_info: Dict, dir1: str):
+    dir_name = os.path.basename(dir1)
+    if dir_name.startswith("algorithm"):
+        name = "Algorithm"
+    elif dir_name.startswith("equation"):
+        name = "Equation"
+    elif dir_name.startswith("table"):
+        name = "Table"
+    else:
+        raise ValueError("Invalid directory name")
+
+    category_info = {key: [] for key in geometry_info.keys()}
+    for page_index, page_elements in geometry_info.items():
+        if not page_elements:
+            continue
+        for _ in range(len(page_elements)):
+            category_info[page_index].append(name2category[name])
+    return category_info
+
+
+def run(main_directory):
+    env_dirs = get_matching_subdirectories(main_directory)
+    dir2 = os.path.join(main_directory, "white")
+
+    geometry_info = {}
+    category_info = {}
+    for env_dir in env_dirs:
+        dir1 = os.path.join(main_directory, env_dir)
+        log.debug(f"processing dir: {dir1}")
+        image_pairs = get_image_pairs(dir1, dir2)
+        geometry_annotation = generate_bounding_box(image_pairs)
+
+        for key in geometry_annotation.keys():
+            if key not in geometry_info:
+                geometry_info[key] = []
+            geometry_info[key].extend(geometry_annotation[key])
+
+        category_annotation = generate_category(geometry_annotation, dir1)
+        for key in geometry_annotation.keys():
+            if key not in category_info:
+                category_info[key] = []
+            category_info[key].extend(category_annotation[key])
+
+    return geometry_info, category_info
