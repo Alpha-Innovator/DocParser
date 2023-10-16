@@ -14,7 +14,7 @@ from logger import logger
 
 log = logger.get_logger(__name__)
 
-config = load_json("config.json")
+config = load_json("config/config.json")
 
 name2category = {v: k for k, v in config["category_name"]}
 category2name = {k: v for k, v in config["category_name"]}

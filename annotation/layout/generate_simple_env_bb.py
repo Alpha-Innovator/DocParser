@@ -9,12 +9,12 @@ from pdfminer.layout import LAParams, LTComponent, LTFigure, LTLine
 
 from logger import logger
 from rendering.utils import load_json
-from layout import geometry
+from annotation.layout import geometry
 
 
 log = logger.get_logger(__name__)
 
-config = load_json("config.json")
+config = load_json("config/config.json")
 name2category = {v: k for k, v in config["category_name"]}
 category2name = {k: v for k, v in config["category_name"]}
 category2color = {k: v for k, v in config["category_color"]}
