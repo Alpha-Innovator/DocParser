@@ -35,21 +35,16 @@ path_to_paper
 │   │   ├── paper.pdf
 │   │   ├── paper_page_0.jpg
 │   │   ├── paper_page_1.jpg
-│   ├── rendered
-│   │   ├── paper_rendered.pdf
-│   │   ├── paper_rendered_page_0.jpg
-│   │   ├── paper_rendered_page_1.jpg
 │   └── result
-│       ├── annotation.json
+│       ├── layout_annotation.json
 │       ├── text.json
 │       ├── paper_annotation_page_0.jpg
 │       └── paper_annotation_page_1.jpg
 ```
 - The `original` folder contains the original PDF of paper and the screenshot of each page of the paper, naming convention: `${tex_file_name}_page_${index}.jpg`
-- The `rendered` folder contains the processed PDF and corresponding screenshot of each page of the paper, naming convention: `${tex_file_name}_rendered_page_${index}.jpg`
 - The result contains three parts:
 
-    1. the `annotation.json` gives the bounding box of each element in the given categories, it is represented as [COCO format](https://cocodataset.org/#format-data)
+    1. the `layout_annotation.json` gives the bounding box of each element in the given categories, it is represented as [COCO format](https://cocodataset.org/#format-data)
     2. the `text.json` gives the text (if there exists) inside each bounding box in `annotation.json`, the `id` in `text.json` is consistent with `annotation.json`.
 
 
@@ -76,14 +71,14 @@ Explanation:
 
 
 # Update log
-## 2023.09.22
+## 2023.10
+- [x] release v0.1 that can handle algorithm, equation, table environments.
+
+## 2023.09
 - [x] extract elements in '.tex' files
-
-
-## 2023.09.15
- - [x] fix environment with argument parsing error.
- - [x] fix align environment rendering error
- - [x] fix list environment parsing error
+- [x] fix environment with argument parsing error.
+- [x] fix align environment rendering error
+- [x] fix list environment parsing error
 
 
 # Acknowledgements
