@@ -16,12 +16,12 @@ conda create --name vrdu
 Then activate the environment and install packages:
 ```shell
 conda activate vrdu
-conda install --file requirements.txt
+pip install -e .
 ```
 
 # Usage
 ```shell
-./pipeline.sh path_to_paper/paper.tex
+pipeline.sh path_to_paper/paper.tex
 ```
 where directory contains all files (must contain a main `.tex` file) related to a paper.
 
