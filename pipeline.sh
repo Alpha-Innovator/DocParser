@@ -66,4 +66,15 @@ done
 bash annotate.sh "$output_directory" "$input_filename"
 
 echo "[$0] Script completed successfully, result is stored in $output_directory/result."
+
+echo "[$0] Removing rendunded files, this may take a while..."
+for file in $rendered_tex_files; do
+    filename=$(basename "$file")
+
+    target_dir="${filename#$prefix}"
+    target_dir="$output_directory/${target_dir%.*}"
+    rm -r "$target_dir"
+    rm "$file"
+done
+
 echo "[$0] Total execution time: $SECONDS seconds"
