@@ -12,12 +12,13 @@ input_filename=$2
 
 # generate the bounding box with original and rendered PDF
 mkdir -p "$input_directory/result/"
+echo "[$0] Generating the bounding box, this may take a while..."
 python output_layout_annotation.py --path "$input_directory" --file_name "$input_filename"
 
 # Check if the shell script execution was successful
 if [ "$?" -ne 0 ]; then
     echo "[$0] Error: Failed to generate the bounding box."
     exit 1
-else
-    echo "[$0] Successfully generated the bounding box."
 fi
+
+echo "[$0] Successfully generated the bounding box."
