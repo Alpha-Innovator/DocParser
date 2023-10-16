@@ -9,7 +9,7 @@ fi
 input_pdf=$1
 output_directory=$2
 
-python pdf2png.py --pdf "$input_pdf" --output_path "$output_directory"
+pdf2png --pdf "$input_pdf" --output_path "$output_directory"
 
 # Check if the shell script execution was successful
 if [ "$?" -ne 0 ]; then

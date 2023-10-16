@@ -33,7 +33,7 @@ def parse_arguments():
 def main():
     origin_tex_file = parse_arguments()
 
-    config = utils.load_json("config.json")
+    config = utils.load_json("config/config.json")
 
     # render simple environment
     render_simple_env.run(origin_tex_file, config)

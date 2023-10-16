@@ -36,7 +36,7 @@ if [ "$?" -ne 0 ]; then
 fi
 
 # Run the Python script to render the .tex file
-python run_rendering.py --input_tex_file "$input_tex"
+run_rendering --input_tex_file "$input_tex"
 
 echo "[$0] Successfully rendered the $input_tex."
 

@@ -6,17 +6,17 @@ import argparse
 from PIL import Image, ImageDraw, ImageFont
 
 
-from layout import geometry
+from annotation.layout import geometry
 from pdfminer.layout import LTPage, LTComponent
 from rendering.utils import load_json
 from logger import logger
 
-import generate_simple_env_bb
-import generate_complex_env_bb
+from annotation.layout import generate_simple_env_bb
+from annotation.layout import generate_complex_env_bb
 
 log = logger.setup_app_level_logger(file_name="app_debug.log", mode="a")
 
-config = load_json("config.json")
+config = load_json("config/config.json")
 name2category = {v: k for k, v in config["category_name"]}
 category2name = {k: v for k, v in config["category_name"]}
 category2color = {k: v for k, v in config["category_color"]}

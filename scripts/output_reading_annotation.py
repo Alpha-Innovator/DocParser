@@ -2,7 +2,7 @@ import os
 import argparse
 
 
-from reading_annotation_generator import generate_reading_annotation
+from annotation.reading.reading_annotation_generator import generate_reading_annotation
 from rendering.utils import export_to_json, load_json
 from logger import logger
 
