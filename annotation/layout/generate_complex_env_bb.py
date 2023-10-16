@@ -7,6 +7,7 @@ import numpy as np
 from skimage.measure import label, regionprops
 import re
 from PIL import Image, ImageDraw
+from tqdm import tqdm
 
 from pdfminer.layout import LTComponent
 from rendering.utils import load_json
@@ -166,7 +167,7 @@ def run(main_directory):
 
     geometry_info = {}
     category_info = {}
-    for env_dir in env_dirs:
+    for env_dir in tqdm(env_dirs):
         dir1 = os.path.join(main_directory, env_dir)
         log.debug(f"processing dir: {dir1}")
         image_pairs = get_image_pairs(dir1, dir2)
