@@ -2,6 +2,9 @@ from typing import Dict, List
 from PIL import Image
 
 from pdfminer.layout import LTComponent, LTFigure
+from logger import logger
+
+log = logger.get_logger(__name__)
 
 
 def intersects_bb(element1: LTComponent, element2: LTComponent) -> bool:
@@ -223,7 +226,10 @@ def transform(elements: List[LTComponent], image: Image.Image) -> List[LTCompone
     image_width, image_height = image.size
     page_width, page_height = elements[0].bbox[2], elements[0].bbox[3]
 
-    if image_width / page_width != image_height / page_height:
+    if abs(image_width / page_width - image_height / page_height) > 0.001:
+        log.error(
+            f"image size {(image_width, image_height)} and page size {(page_width, page_height)} are not scaled"
+        )
         raise Exception("image size and page size are not scaled")
 
     scale = image_width / page_width
