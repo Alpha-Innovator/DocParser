@@ -153,8 +153,8 @@ def enclose_abstract(data, title_color="red", text_color="green"):
         if isinstance(item, dict) and "abstract" in item:
             texts["abstract"] = item["abstract"][CONTENT_INDEX]
             item["abstract"][CONTENT_INDEX] = {
-                "textcolor": [
-                    "\\textcolor{{{}}}{{".format(text_color),
+                "color": [
+                    "\\color{{{}}}{{".format(text_color),
                     *item["abstract"][CONTENT_INDEX],
                     "}\n",
                 ]
