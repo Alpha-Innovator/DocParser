@@ -16,11 +16,6 @@ from annotation.layout import generate_complex_env_bb
 
 log = logger.setup_app_level_logger(file_name="app_debug.log", mode="a")
 
-config = load_json("config/config.json")
-name2category = {v: k for k, v in config["category_name"]}
-category2name = {k: v for k, v in config["category_name"]}
-category2color = {k: v for k, v in config["category_color"]}
-
 
 def merge_env_bboxes(elements: List[LTComponent], ratio=1.0) -> List[LTComponent]:
     elements.sort(key=lambda x: x.bbox[1])
@@ -63,6 +58,7 @@ def export_to_coco(
     image_infos: Dict[int, str],
     category_infos: Dict[int, Dict[int, int]],
     filename: str,
+    config: Dict,
 ) -> None:
     result = {
         "info": {
@@ -140,6 +136,7 @@ def generate_geometry_annotation(
     page_image: Image.Image,
     page_elements: List[LTComponent],
     category_info: Dict[int, int],
+    config,
 ) -> Image.Image:
     """
     Generate an annotation for an image.
@@ -156,6 +153,7 @@ def generate_geometry_annotation(
     font = ImageFont.truetype(
         config["annotation_image_font_type"], config["annotation_image_font_size"]
     )
+    category2name = {k: v for k, v in config["category_name"]}
 
     for index, element in enumerate(page_elements):
         category = category_info[index]
@@ -170,7 +168,7 @@ def generate_geometry_annotation(
     return page_image
 
 
-def generate_image_info(filename, main_directory, geometry_info, category_info):
+def generate_image_info(filename, main_directory, geometry_info, category_info, config):
     rendered_path = os.path.join(main_directory, "colored")
     result_path = os.path.join(main_directory, "result")
     image_info = {}  # annotation image info member of COCO
@@ -180,7 +178,7 @@ def generate_image_info(filename, main_directory, geometry_info, category_info):
         )
         page_image = Image.open(page_image_path)
         annotated_image = generate_geometry_annotation(
-            page_image, geometry_info[page_index], category_info[page_index]
+            page_image, geometry_info[page_index], category_info[page_index], config
         )
         image_name = f"{filename}_annotation_page_{page_index}.png"
         annotated_image_path = os.path.join(result_path, image_name)
@@ -209,6 +207,9 @@ def parse_arguments():
 def main():
     main_directory, file_name = parse_arguments()
 
+    root_path = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
+    config = load_json(os.path.join(root_path, "config/config.json"))
+
     geometry_info, category_info = generate_simple_env_bb.run(main_directory, file_name)
 
     geometry_info_complex, category_info_complex = generate_complex_env_bb.run(
@@ -219,11 +220,13 @@ def main():
     category_info = merge_category_info(category_info, category_info_complex)
 
     image_info = generate_image_info(
-        file_name, main_directory, geometry_info, category_info
+        file_name, main_directory, geometry_info, category_info, config
     )
 
     json_file = os.path.join(main_directory, "result/layout_annotation.json")
-    export_to_coco(geometry_info, image_info, category_info, filename=json_file)
+    export_to_coco(
+        geometry_info, image_info, category_info, filename=json_file, config=config
+    )
 
 
 if __name__ == "__main__":

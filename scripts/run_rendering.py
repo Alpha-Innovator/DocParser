@@ -1,4 +1,5 @@
 import argparse
+import os
 
 from rendering import utils
 from rendering import render_simple_env
@@ -33,7 +34,8 @@ def parse_arguments():
 def main():
     origin_tex_file = parse_arguments()
 
-    config = utils.load_json("config/config.json")
+    root_path = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
+    config = utils.load_json(os.path.join(root_path, "config/config.json"))
 
     # render simple environment
     render_simple_env.run(origin_tex_file, config)
