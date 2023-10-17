@@ -58,55 +58,6 @@ def merge_env_bboxes(elements: List[LTComponent], ratio=1.0) -> List[LTComponent
     return result
 
 
-def merge_bb_with_color(page_elements, category_info, ratio=1.5):
-    # TODO: consider the area of bbox and consider the table size
-    result = []
-    table_elements = []
-    equation_elements = []
-    algorithm_elements = []
-    for index, element in enumerate(page_elements):
-        if category_info[index] == name2category["Table"]:
-            table_elements.append(element)
-        elif category_info[index] == name2category["Equation"]:
-            equation_elements.append(element)
-        elif category_info[index] == name2category["Algorithm"]:
-            algorithm_elements.append(element)
-
-    table_elements = merge_env_bboxes(table_elements, ratio)
-    equation_elements = merge_env_bboxes(equation_elements, ratio)
-    algorithm_elements = merge_env_bboxes(algorithm_elements, ratio)
-
-    current_index = 0
-    for index, element in enumerate(page_elements):
-        if category_info[index] in [
-            name2category["Table"],
-            name2category["Equation"],
-            name2category["Algorithm"],
-        ]:
-            continue
-
-        result.append(element)
-        category_info[current_index] = category_info[index]
-        current_index += 1
-
-    for index, element in enumerate(table_elements):
-        result.append(element)
-        category_info[current_index] = name2category["Table"]
-        current_index += 1
-
-    for index, element in enumerate(equation_elements):
-        result.append(element)
-        category_info[current_index] = name2category["Equation"]
-        current_index += 1
-
-    for index, element in enumerate(algorithm_elements):
-        result.append(element)
-        category_info[current_index] = name2category["Algorithm"]
-        current_index += 1
-
-    return result, category_info
-
-
 def export_to_coco(
     file_elements: Dict[int, List[LTComponent]],
     image_infos: Dict[int, str],
@@ -266,12 +217,6 @@ def main():
 
     geometry_info = merge_geometry_info(geometry_info, geometry_info_complex)
     category_info = merge_category_info(category_info, category_info_complex)
-
-    ## merge bb with color
-    # for page_index, page_elements in geometry_info.items():
-    #     geometry_info[page_index], category_info[page_index] = merge_bb_with_color(
-    #         geometry_info[page_index], category_info[page_index]
-    #     )
 
     image_info = generate_image_info(
         file_name, main_directory, geometry_info, category_info
