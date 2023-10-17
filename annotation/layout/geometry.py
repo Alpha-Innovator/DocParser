@@ -1,7 +1,7 @@
-from typing import Dict, List, Tuple
-from PIL import Image, ImageDraw, ImageFont
+from typing import Dict, List
+from PIL import Image
 
-from pdfminer.layout import LAParams, LTPage, LTComponent, LTFigure, LTLine
+from pdfminer.layout import LTComponent, LTFigure
 
 
 def intersects_bb(element1: LTComponent, element2: LTComponent) -> bool:
