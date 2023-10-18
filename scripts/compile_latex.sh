@@ -10,6 +10,8 @@ fi
 folder="$1"
 main_file="$2"
 
+echo "[$0] Compiling $folder/$main_file.tex into a PDF."
+
 main_file="${main_file%.*}" # Remove the ".tex" extension
 
 # Store the current directory and change to the folder directory
