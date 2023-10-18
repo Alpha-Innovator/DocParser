@@ -30,6 +30,7 @@ setup(
     ],
     entry_points={
         "console_scripts": [
+            "batch_process = scripts.batch_process:main",
             "run_rendering = scripts.run_rendering:main",
             "pdf2png = scripts.pdf2png:main",
             "output_layout_annotation = scripts.output_layout_annotation:main",
