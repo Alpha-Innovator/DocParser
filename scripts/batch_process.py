@@ -112,40 +112,6 @@ def rm_redundant_tex_files(main_directory):
     subprocess.run(["bash", script_path, main_directory], check=True)
 
 
-def parse_arguments():
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--path", type=str, required=True, help="The path to the main directory"
-    )
-    args = parser.parse_args()
-    main_directory = args.path
-    return main_directory
-
-
-def main():
-    main_directory = parse_arguments()
-    rm_redundant_tex_files(main_directory)
-
-    extract_all_tar_gz(main_directory)
-    log.debug("Successfully extracted all tar.gz files")
-    tex_files = find_all_tex_files(main_directory)
-    log.debug(
-        f"Successfully obtained all tex_files, there are {len(tex_files)} tex files in total."
-    )
-    tex_files = preprocess_tex_files(tex_files)
-    log.debug(
-        f"Successfully pre-processed all tex_files, there are {len(tex_files)} tex files in total."
-    )
-
-    # resolve_tex_files(tex_files)
-
-    script_path = os.path.join(os.path.abspath("."), "scripts/pipeline.sh")
-    run_annotation(tex_files, script_path)
-
-    destination_directory = os.path.expanduser("~/vrdu_data/annotations")
-    extract_result(main_directory, destination_directory)
-
-
 def resolve_latex_imports(latex_file):
     print(f"latex_file={latex_file}")
     path = os.path.dirname(latex_file)
@@ -212,6 +178,40 @@ def resolve_one_pass(path, file_content):
 def resolve_tex_files(tex_files):
     for tex_file in tex_files:
         resolve_latex_imports(tex_file)
+
+
+def parse_arguments():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--path", type=str, required=True, help="The path to the main directory"
+    )
+    args = parser.parse_args()
+    main_directory = args.path
+    return main_directory
+
+
+def main():
+    main_directory = parse_arguments()
+    rm_redundant_tex_files(main_directory)
+
+    extract_all_tar_gz(main_directory)
+    log.debug("Successfully extracted all tar.gz files")
+    tex_files = find_all_tex_files(main_directory)
+    log.debug(
+        f"Successfully obtained all tex_files, there are {len(tex_files)} tex files in total."
+    )
+    tex_files = preprocess_tex_files(tex_files)
+    log.debug(
+        f"Successfully pre-processed all tex_files, there are {len(tex_files)} tex files in total."
+    )
+
+    # resolve_tex_files(tex_files)
+
+    script_path = os.path.join(os.path.abspath("."), "scripts/pipeline.sh")
+    run_annotation(tex_files, script_path)
+
+    destination_directory = os.path.expanduser("~/vrdu_data/annotations")
+    extract_result(main_directory, destination_directory)
 
 
 if __name__ == "__main__":
