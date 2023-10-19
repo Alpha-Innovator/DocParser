@@ -15,6 +15,17 @@ from logger import logger
 log = logger.setup_app_level_logger(file_name="app_debug.log")
 
 
+def reduce_empty_lines(latex_file):
+    with open(latex_file) as f:
+        latex_content = f.read()
+    # Pattern to match multiple empty lines or lines with only whitespace
+    pattern = r"\n[\s]+\n"
+    latex_content = re.sub(pattern, "\n\n", latex_content)
+
+    with open(latex_file, "w") as f:
+        f.write(latex_content)
+
+
 def remove_comment_line(latex_file):
     # Regular expression pattern to match LaTeX comments
     comment_pattern = r"%.*?$"
@@ -191,11 +202,6 @@ def resolve_one_pass(path, file_content):
     return file_content
 
 
-def resolve_tex_files(tex_files):
-    for tex_file in tex_files:
-        resolve_latex_imports(tex_file)
-
-
 def parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -213,15 +219,14 @@ def main():
     extract_all_tar_gz(main_directory)
     log.debug("Successfully extracted all tar.gz files")
     tex_files = find_all_tex_files(main_directory)
-    log.debug(
-        f"Successfully obtained all tex_files, there are {len(tex_files)} tex files in total."
-    )
+    log.debug(f"There are {len(tex_files)} tex files in total.")
     tex_files = preprocess_tex_files(tex_files)
-    log.debug(
-        f"Successfully pre-processed all tex_files, there are {len(tex_files)} tex files in total."
-    )
+    log.debug(f"There are {len(tex_files)} compilable tex files in total.")
 
-    # resolve_tex_files(tex_files)
+    for tex_file in tex_files:
+        resolve_latex_imports(tex_file)
+        remove_comment_line(tex_file)
+        reduce_empty_lines(tex_file)
 
     script_path = os.path.join(os.path.abspath("."), "scripts/pipeline.sh")
     run_annotation(tex_files, script_path)
