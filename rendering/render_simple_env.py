@@ -3,6 +3,7 @@ from typing import Union, List, Dict, Tuple
 import logger.logger as logger
 from rendering.utils import data_from_tex_file, export_to_json, tex_file_from_data
 from rendering.utils import get_main_content
+from rendering.envs import *
 
 log = logger.get_logger(__name__)
 
@@ -16,36 +17,6 @@ CONTENT_INDEX = 1
 # darkgray, lightgray, brown, lime, olive, orange, pink,
 # purple, teal, violet.]
 
-
-math_envs = ["equation", "align", "equation*", "align*", "$$"]
-section_envs = ["section", "subsection", "section*", "subsection*"]
-table_envs = ["table", "table*"]
-figure_envs = ["figure", "minipage"]
-graphic_envs = ["centerline", "includegraphics", "subfigure"]
-algorithm_envs = [
-    "algorithm",
-    "algorithm*",
-    "algorithmic",
-    "algorithmic*",
-    "algorithm2e",
-]
-list_envs = ["itemize", "enumerate"]
-reference_envs = ["bibliography"]
-caption_envs = table_envs + figure_envs + algorithm_envs
-footnote_envs = ["footnote", "footnote*", "footnote**"]
-non_text_envs = (
-    math_envs
-    + table_envs
-    + figure_envs
-    + reference_envs
-    + caption_envs
-    + algorithm_envs
-    + list_envs
-    + section_envs
-    + ["abstract"]
-    + ["bibliography"]
-    + ["newcolumntype", "label"]  # corner case
-)
 
 texts = {
     "algorithm": [],
