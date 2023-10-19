@@ -15,6 +15,22 @@ from logger import logger
 log = logger.setup_app_level_logger(file_name="app_debug.log")
 
 
+def remove_comment_line(latex_file):
+    # Regular expression pattern to match LaTeX comments
+    comment_pattern = r"%.*?$"
+
+    # Read the LaTeX file
+    with open(latex_file, "r") as file:
+        content = file.read()
+
+    # Remove comments using regular expression substitution
+    content = re.sub(comment_pattern, "", content, flags=re.MULTILINE)
+
+    # Write the modified content back to the LaTeX file
+    with open(latex_file, "w") as file:
+        file.write(content)
+
+
 def extract_all_tar_gz(directory):
     for root, dirs, files in os.walk(directory):
         for file in files:
