@@ -28,7 +28,7 @@ def reduce_empty_lines(latex_file):
 
 def remove_comment_line(latex_file):
     # Regular expression pattern to match LaTeX comments
-    comment_pattern = r"%.*?$"
+    comment_pattern = r"(?<!\)%.*?$"
 
     # Read the LaTeX file
     with open(latex_file, "r") as file:
