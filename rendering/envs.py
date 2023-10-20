@@ -29,3 +29,6 @@ non_text_envs = (
     + ["bibliography"]
     + ["newcolumntype", "label"]  # corner case
 )
+
+
+complex_env_list = ["algorithm", "equation", "table"]

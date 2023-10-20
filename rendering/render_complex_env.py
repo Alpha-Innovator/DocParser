@@ -6,6 +6,7 @@ import re
 
 import rendering.utils as utils
 import logger.logger as logger
+from rendering import envs
 
 log = logger.get_logger(__name__)
 
@@ -124,6 +125,5 @@ def run(origin_tex_file, config):
     text_annotation = utils.load_json(text_file)
 
     # render complex env
-    env_list = ["algorithm", "equation", "table"]
-    for env in env_list:
+    for env in envs.complex_env_list:
         render_env(white_tex_file, text_annotation, env)
