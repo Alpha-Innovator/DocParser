@@ -674,8 +674,8 @@ def render_env(data, name2color):
 
     enclose_figure(main_content, color=name2color["Figure"])
 
-    main_content = enclose_text(main_content, color=name2color["Text"])
-    data[index]["document"][1] = main_content
+    # main_content = enclose_text(main_content, color=name2color["Text"])
+    # data[index]["document"][1] = main_content
 
 
 def save_texts(file="texts.json"):

@@ -15,33 +15,6 @@ from logger import logger
 log = logger.setup_app_level_logger(file_name="app_debug.log")
 
 
-def reduce_empty_lines(latex_file):
-    with open(latex_file) as f:
-        latex_content = f.read()
-    # Pattern to match multiple empty lines or lines with only whitespace
-    pattern = r"\n[\s]+\n"
-    latex_content = re.sub(pattern, "\n\n", latex_content)
-
-    with open(latex_file, "w") as f:
-        f.write(latex_content)
-
-
-def remove_comment_line(latex_file):
-    # Regular expression pattern to match LaTeX comments
-    comment_pattern = r"(?<!\)%.*?$"
-
-    # Read the LaTeX file
-    with open(latex_file, "r") as file:
-        content = file.read()
-
-    # Remove comments using regular expression substitution
-    content = re.sub(comment_pattern, "", content, flags=re.MULTILINE)
-
-    # Write the modified content back to the LaTeX file
-    with open(latex_file, "w") as file:
-        file.write(content)
-
-
 def extract_all_tar_gz(directory):
     for root, dirs, files in os.walk(directory):
         for file in files:
@@ -137,69 +110,6 @@ def extract_result(source_directory, destination_directory):
 def rm_redundant_tex_files(main_directory):
     script_path = os.path.join(os.path.abspath("."), "scripts/rm_tex_files.sh")
     subprocess.run(["bash", script_path, main_directory], check=True)
-
-
-def resolve_latex_imports(latex_file):
-    print(f"latex_file={latex_file}")
-    path = os.path.dirname(latex_file)
-    file_content = ""
-    with open(latex_file) as f:
-        file_content = f.read()
-
-    # Recursively resolve until no more imports found
-    while True:
-        prev_content = file_content
-        file_content = resolve_one_pass(path, file_content)
-
-        if file_content == prev_content:
-            break
-
-    with open(latex_file, "w") as f:
-        f.write(file_content)
-
-
-def resolve_one_pass(path, file_content):
-    # Find and resolve imports
-    input_pattern = r"\\input\{(.*?)\}"
-    for match_str in re.finditer(input_pattern, file_content):
-        input_file = match_str.group(1)
-        if not input_file.endswith(".tex"):
-            input_file = input_file + ".tex"
-        print(f"input_file={input_file}")
-        with open(os.path.join(path, input_file)) as f:
-            file_content = file_content.replace(match_str.group(), f.read())
-
-    # Find and resolve imports
-    import_pattern = r"\\import\{(.*?)\}"
-    for match_str in re.finditer(import_pattern, file_content):
-        import_file = match_str.group(1)
-        if not import_file.endswith(".tex"):
-            import_file = import_file + ".tex"
-        print(f"import_file={import_file}")
-        with open(os.path.join(path, import_file)) as f:
-            file_content = file_content.replace(match_str.group(), f.read())
-
-    # Find and resolve includes
-    include_pattern = r"\\include\{(.*?)\}"
-    for match_str in re.finditer(include_pattern, file_content):
-        include_file = match_str.group(1)
-        if not include_file.endswith(".tex"):
-            include_file = include_file + ".tex"
-        print(f"include_file={include_file}")
-        with open(os.path.join(path, include_file)) as f:
-            file_content = file_content.replace(match_str.group(), f.read())
-
-    # Find and resolve subimports
-    subimport_pattern = r"\\subimport\{(.*?)\}"
-    for match_str in re.finditer(subimport_pattern, file_content):
-        subimport_file = match_str.group(1)
-        if not subimport_file.endswith(".tex"):
-            subimport_file = subimport_file + ".tex"
-        print(f"subimport_file={subimport_file}")
-        with open(os.path.join(path, subimport_file)) as f:
-            file_content = file_content.replace(match_str.group(), f.read())
-
-    return file_content
 
 
 def parse_arguments():
