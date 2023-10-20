@@ -1,3 +1,5 @@
+import re
+
 from TexSoup.TexSoup import TexSoup
 from TexSoup.TexSoup.data import TexEnv
 from TexSoup.TexSoup.data import TexText
@@ -8,6 +10,15 @@ from TexSoup.TexSoup.data import TexGroup
 from logger import logger
 
 log = logger.get_logger(__name__)
+
+
+def remove_outer_curly_brackets(text):
+    pattern = r'^\{(.*)\}$'
+    match = re.match(pattern, text)
+    if match:
+        return match.group(1)
+    else:
+        return text
 
 
 def to_list(tex_tree):
@@ -48,6 +59,13 @@ def to_list(tex_tree):
                             to_list(i.contents),
                         ]
                     }
+                )
+                continue
+            if i.name == "def":
+                macro_name = remove_outer_curly_brackets(str(i.args[0]))
+                parameter_text = i.args[1].string
+                str_tree.append(
+                    {i.name: "\\" + i.name + macro_name + parameter_text}
                 )
                 continue
             str_tree.append({i.name: "\\" + i.name + str(i.args)})
