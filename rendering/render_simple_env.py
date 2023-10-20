@@ -613,6 +613,33 @@ def enclose_algorithm(data, color="pink"):
         item[env][1].insert(0, {"color": "\n\\color{{{}}}".format(color)})
 
 
+def enclose_code(data, color="blue"):
+    for index, item in enumerate(data):
+        if not isinstance(item, dict):
+            continue
+
+        env = find_env(item, envs.code_envs)
+
+        if env is None:
+            for key, value in item.items():
+                if isinstance(value, list):
+                    enclose_code(value[CONTENT_INDEX], color)
+            continue
+
+        texts["code"].append(item)
+        data[index] = {
+            "BraceGroup": [
+                {"begin": "{"},
+                [
+                    "\n",
+                    {"color": "\\color{{{}}}{{{}}}\n".format(color, item[env])},
+                    "\n",
+                ],
+                {"end": "}"},
+            ]
+        }
+
+
 def run(origin_tex_file, config, debug_mode=False):
     # TODO: simplify the logic
     origin_dir = os.path.dirname(origin_tex_file)
@@ -673,6 +700,8 @@ def render_env(data, name2color):
     enclose_algorithm(main_content, color=name2color["Algorithm"])
 
     enclose_figure(main_content, color=name2color["Figure"])
+
+    enclose_code(main_content, color=name2color["Code"])
 
     # main_content = enclose_text(main_content, color=name2color["Text"])
     # data[index]["document"][1] = main_content
