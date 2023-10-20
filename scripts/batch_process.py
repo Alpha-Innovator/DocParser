@@ -1,6 +1,5 @@
 import argparse
 import os
-import re
 import shutil
 import subprocess
 import tarfile
@@ -8,7 +7,6 @@ from typing import List
 import zipfile
 
 
-from TexSoup.app.resolve_imports import resolve
 from logger import logger
 
 
@@ -66,12 +64,6 @@ def preprocess_tex_files(tex_files: List[str]) -> List[str]:
     return result
 
 
-def run_annotation(tex_files, script_path):
-    for tex_file in tex_files:
-        log.debug(f"running for tex file: {tex_file}")
-        subprocess.run(["bash", script_path, tex_file], check=True)
-
-
 def extract_result(source_directory, destination_directory):
     # Create the destination directory if it doesn't exist
     os.makedirs(destination_directory, exist_ok=True)
@@ -124,22 +116,17 @@ def parse_arguments():
 
 def main():
     main_directory = parse_arguments()
+    script_path = os.path.join(os.path.abspath("."), "scripts/pipeline.sh")
+
     rm_redundant_tex_files(main_directory)
 
     extract_all_tar_gz(main_directory)
-    log.debug("Successfully extracted all tar.gz files")
     tex_files = find_all_tex_files(main_directory)
-    log.debug(f"There are {len(tex_files)} tex files in total.")
     tex_files = preprocess_tex_files(tex_files)
-    log.debug(f"There are {len(tex_files)} compilable tex files in total.")
 
     for tex_file in tex_files:
-        resolve_latex_imports(tex_file)
-        remove_comment_line(tex_file)
-        reduce_empty_lines(tex_file)
-
-    script_path = os.path.join(os.path.abspath("."), "scripts/pipeline.sh")
-    run_annotation(tex_files, script_path)
+        log.debug(f"running for tex file: {tex_file}")
+        subprocess.run(["bash", script_path, tex_file], check=True)
 
     destination_directory = os.path.expanduser("~/vrdu_data/annotations")
     extract_result(main_directory, destination_directory)
