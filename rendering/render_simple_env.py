@@ -3,7 +3,7 @@ from typing import Union, List, Dict, Tuple
 import logger.logger as logger
 from rendering.utils import data_from_tex_file, export_to_json, tex_file_from_data
 from rendering.utils import get_main_content
-from rendering.envs import *
+from rendering import envs
 
 log = logger.get_logger(__name__)
 
@@ -238,7 +238,7 @@ def enclose_section(data, color="red") -> None:
         if not isinstance(item, dict):
             continue
 
-        env = find_env(item, section_envs)
+        env = find_env(item, envs.section_envs)
         if env is None:
             continue
 
@@ -268,7 +268,7 @@ def enclose_list(data: List, color: str = "yellow") -> None:
         if not isinstance(item, dict):
             continue
 
-        env = find_env(item, list_envs)
+        env = find_env(item, envs.list_envs)
         if env is None:
             continue
 
@@ -334,7 +334,7 @@ def enclose_caption(data, color="orange") -> None:
         if not isinstance(item, dict):
             continue
 
-        env = find_env(item, caption_envs)
+        env = find_env(item, envs.caption_envs)
         if env is None:
             continue
 
@@ -356,10 +356,10 @@ def enclose_equation(data, color="green") -> None:
         if not isinstance(item, dict):
             continue
 
-        if find_env(item, algorithm_envs) is not None:
+        if find_env(item, envs.algorithm_envs) is not None:
             continue
 
-        env = find_env(item, math_envs)
+        env = find_env(item, envs.math_envs)
 
         if env is None:
             for key, value in item.items():
@@ -429,7 +429,7 @@ def enclose_table(data, color="cyan") -> None:
         if not isinstance(item, dict):
             continue
 
-        env = find_env(item, table_envs)
+        env = find_env(item, envs.table_envs)
         if env is None:
             for key, value in item.items():
                 if isinstance(value, list):
@@ -460,16 +460,16 @@ def enclose_footnote(data, color="red") -> None:
     for item in data:
         if not isinstance(item, dict):
             continue
-        env = find_env(item, footnote_envs)
+        env = find_env(item, envs.footnote_envs)
         if env is None:
             continue
 
-        footenote_text = item[env][len(env) + 2 : -1]
+        footnote_text = item[env][len(env) + 2 : -1]
         rendered_footnote = "\\{}{{\\color{{{}}}{{{}}}}}".format(
-            env, color, footenote_text
+            env, color, footnote_text
         )
         item[env] = rendered_footnote
-        texts["footnote"].append(footenote_text)
+        texts["footnote"].append(footnote_text)
 
 
 def enclose_text(data, color="olive"):
@@ -479,7 +479,7 @@ def enclose_text(data, color="olive"):
     for item in data:
         if isinstance(item, dict):
             # check if is an environment
-            if find_env(item, non_text_envs) is not None:
+            if find_env(item, envs.non_text_envs) is not None:
                 if current_group:
                     result.append(current_group)
                     current_group = []
@@ -540,7 +540,7 @@ def enclose_reference(data, color="violet") -> None:
         if not isinstance(item, dict):
             continue
 
-        env = find_env(item, reference_envs)
+        env = find_env(item, envs.reference_envs)
         if env is None:
             continue
 
@@ -562,7 +562,7 @@ def enclose_graphics_inside_figure(data, color="black"):
         if not isinstance(item, dict):
             continue
 
-        env = find_env(item, graphic_envs)
+        env = find_env(item, envs.graphic_envs)
         if env is None:
             for key, value in item.items():
                 if isinstance(value, list):
@@ -576,7 +576,7 @@ def enclose_figure(data, color="black"):
         if not isinstance(item, dict):
             continue
 
-        env = find_env(item, figure_envs)
+        env = find_env(item, envs.figure_envs)
         if env is None:
             continue
 
@@ -601,7 +601,7 @@ def enclose_algorithm(data, color="pink"):
         if not isinstance(item, dict):
             continue
 
-        env = find_env(item, algorithm_envs)
+        env = find_env(item, envs.algorithm_envs)
 
         if env is None:
             for key, value in item.items():
