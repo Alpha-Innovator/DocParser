@@ -16,6 +16,13 @@ filename_with_extension=$(basename -- "$input_tex")
 input_filename="${filename_with_extension%.*}"
 output_filename="${input_filename}_rendered"
 
+# preprocess, including 
+# 1. resolve imports, 
+# 2. remove comments,
+# 3. reduce multiple empty lines into one
+# 4. crop the image of pdf format
+run_preprocess --tex_file "$input_tex"
+
 # store the result
 output_directory="$input_directory/output"
 mkdir -p $output_directory
