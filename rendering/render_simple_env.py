@@ -30,6 +30,7 @@ texts = {
     "table": [],
     "text": [],
     "figure": [],
+    "code": [],
 }
 
 
