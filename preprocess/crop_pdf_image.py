@@ -3,7 +3,25 @@ import os
 import re
 
 
-def crop_pdf_image(tex_file):
+def crop_pdf_image(tex_file: str) -> None:
+    """Crop PDF images included in a LaTeX file.
+
+    This function takes a LaTeX file (.tex) as input and crops any embedded
+    PDF images that are included using includegraphics. It finds all instances
+    of includegraphics and crops the referenced PDF files using the 'pdfcrop'
+    command.
+
+    The PDF files are cropped in-place, overwriting the original files.
+
+    Arguments:
+        tex_file (str): Path to the LaTeX file.
+
+    Returns:
+        None
+
+    Reference:
+        https://pdfcrop.sourceforge.net/
+    """
     path = os.path.dirname(tex_file)
     with open(tex_file) as f:
         file_content = f.read()

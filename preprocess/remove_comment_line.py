@@ -1,7 +1,26 @@
 import re
 
 
-def remove_comment_line(latex_file):
+def remove_comment_line(latex_file: str):
+    """Remove comment lines from a LaTeX file.
+
+    This function takes a LaTeX file as input and removes any comment
+    lines starting with '%'. LaTeX comments are identified using a
+    regular expression.
+
+    The file contents are read, comments are removed via regex
+    substitution, and the modified content is written back to
+    overwrite the original file.
+
+    Arguments:
+        latex_file (str): Path to the LaTeX input file.
+
+    Returns:
+        None
+
+    Remark:
+        The input file is rewritten in-place without comment lines.
+    """
     # Regular expression pattern to match LaTeX comments
     comment_pattern = r"(?<!\\)%.*?$"
 

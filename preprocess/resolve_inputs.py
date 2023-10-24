@@ -2,7 +2,25 @@ import os
 import re
 
 
-def resolve_latex_imports(latex_file):
+def resolve_latex_imports(latex_file: str) -> None:
+    """Resolve LaTeX import/include files in a given file.
+
+    This function takes a LaTeX file, recursively resolves any import,
+    include or subimport statements by replacing them with the contents
+    of the imported file.
+
+    It performs this resolution recursively until no new imports are
+    found, fully expanding the LaTeX document.
+
+    The resolved file contents are written back to overwrite the input
+    latex_file.
+
+    Arguments:
+        latex_file (str): Path to the LaTeX file
+
+    Returns:
+        None
+    """
     path = os.path.dirname(latex_file)
     file_content = ""
     with open(latex_file) as f:
@@ -20,7 +38,23 @@ def resolve_latex_imports(latex_file):
         f.write(file_content)
 
 
-def resolve_one_pass(path, file_content):
+def resolve_one_pass(path: str, file_content: str) -> str:
+    """Resolve one level of LaTeX imports in a file.
+
+    This function takes a file path and content, finds import/include
+    statements and replaces them with the contents of the referenced
+    file.
+
+    It resolves a single level of imports, including input, import,
+    include and subimport directives.
+
+    Arguments:
+        path (str): Path to search for file imports
+        file_content (str): LaTeX file contents
+
+    Returns:
+        str: Contents with imports resolved for one pass
+    """
     # Find and resolve imports
     input_pattern = r"\\input\{(.*?)\}"
     for match_str in re.finditer(input_pattern, file_content):
