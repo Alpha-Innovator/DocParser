@@ -24,23 +24,23 @@ bib_file=$(find . -maxdepth 1 -type f -name "*.bib" | head -n 1)
 # Check if a bibliography file is found
 if [ -z "$bib_file" ]; then
     # Compile the main LaTeX file using pdflatex only
-    pdflatex "$main_file.tex" > /dev/null
-    pdflatex "$main_file.tex" > /dev/null
+    pdflatex -interaction=nonstopmode "$main_file.tex" > /dev/null
+    pdflatex -interaction=nonstopmode  "$main_file.tex" > /dev/null
 else
     # Remove the "./" prefix from the bib_file path
     bib_file=${bib_file#./}
 
     # Compile the main LaTeX file
-    pdflatex "$main_file.tex" > /dev/null
+    pdflatex -interaction=nonstopmode  "$main_file.tex" > /dev/null
 
     # Run BibTeX to process the bibliography
     bibtex "$main_file" > /dev/null
 
     # Compile the main LaTeX file again to update references
-    pdflatex "$main_file.tex" > /dev/null
+    pdflatex -interaction=nonstopmode  "$main_file.tex" > /dev/null
 
     # Compile the main LaTeX file one more time for proper references
-    pdflatex "$main_file.tex" > /dev/null
+    pdflatex -interaction=nonstopmode  "$main_file.tex" > /dev/null
 fi
 
 # Clean up auxiliary files
