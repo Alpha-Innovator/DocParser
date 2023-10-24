@@ -5,6 +5,7 @@ import subprocess
 import tarfile
 from typing import List
 import zipfile
+import glob
 
 
 from logger import logger
@@ -104,6 +105,19 @@ def rm_redundant_tex_files(main_directory):
     subprocess.run(["bash", script_path, main_directory], check=True)
 
 
+def is_processed(tex_file):
+    directory = os.path.dirname(tex_file)
+    result_directory = os.path.join(directory, "output/result")
+    if not os.path.exists(result_directory):
+        return False
+
+    png_files = glob.glob("result_directory/*.png")
+    if png_files:
+        return True
+
+    return False
+
+
 def parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -125,7 +139,10 @@ def main():
     tex_files = preprocess_tex_files(tex_files)
 
     for tex_file in tex_files:
-        log.debug(f"running for tex file: {tex_file}")
+        print(f"running for tex file: {tex_file}")
+        if is_processed(tex_file):
+            print(f"tex file {tex_file} is already processed")
+            continue
         subprocess.run(["bash", script_path, tex_file], check=True)
 
     destination_directory = os.path.expanduser("~/vrdu_data/annotations")
