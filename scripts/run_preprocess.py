@@ -4,10 +4,12 @@ from preprocess.crop_pdf_image import crop_pdf_image
 from preprocess.reduce_empty_lines import reduce_empty_lines
 from preprocess.remove_comment_line import remove_comment_line
 from preprocess.resolve_inputs import resolve_latex_imports
+from preprocess.comment_lines import comment_sections
 
 
 def run(tex_file):
     resolve_latex_imports(tex_file)
+    comment_sections(tex_file)
     remove_comment_line(tex_file)
     reduce_empty_lines(tex_file)
     crop_pdf_image(tex_file)
