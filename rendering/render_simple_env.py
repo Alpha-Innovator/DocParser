@@ -1,3 +1,4 @@
+from collections import defaultdict
 import os
 from typing import Union, List, Dict, Tuple
 import logger.logger as logger
@@ -18,20 +19,7 @@ CONTENT_INDEX = 1
 # purple, teal, violet.]
 
 
-texts = {
-    "Algorithm": [],
-    "Caption": [],
-    "List": [],
-    "Equation": [],
-    "Footnote": [],
-    "Title": [],
-    "Abstract": [],
-    "Bibliography": [],
-    "Table": [],
-    "Text": [],
-    "Figure": [],
-    "Code": [],
-}
+texts = defaultdict(list)
 
 
 def find_env(wrapped_env: dict, query: List[str]) -> Union[str, None]:
