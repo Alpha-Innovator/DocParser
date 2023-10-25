@@ -46,7 +46,6 @@ def find_all_tex_files(directory) -> List[str]:
 def preprocess_tex_files(tex_files: List[str]) -> List[str]:
     result = []
     for tex_file in tex_files:
-        log.debug(f"processing file: {tex_file}")
         try:
             with open(tex_file, "r") as file:
                 # Perform operations on the file
@@ -71,33 +70,44 @@ def extract_result(source_directory, destination_directory):
 
     # Iterate over the nested directories
     for root, dirs, files in os.walk(source_directory):
-        if "output" in dirs and "result" in os.listdir(os.path.join(root, "output")):
-            # Construct the path to the "result" subdirectory
-            result_directory = os.path.join(root, "output", "result")
+        if "output" not in dirs:
+            continue
+        if "result" not in os.listdir(os.path.join(root, "output")):
+            continue
 
-            # Create a new directory in the destination directory
-            new_directory = os.path.join(destination_directory, os.path.basename(root))
-            os.makedirs(new_directory, exist_ok=True)
+        result_directory = os.path.join(root, "output", "result")
+        log.debug(f"result_directory: {result_directory}")
+        png_files = glob.glob(f"{result_directory}/*.png")
+        log.debug(f"png_files: {png_files}")
+        if not png_files:
+            continue
 
-            # Copy the "result" subdirectory to the new directory
-            shutil.copytree(
-                result_directory, os.path.join(new_directory, os.path.basename(root))
-            )
+        # Construct the path to the "result" subdirectory
+        result_directory = os.path.join(root, "output", "result")
 
-            # Zip the new directory
-            zip_file_path = os.path.join(
-                destination_directory, f"{os.path.basename(root)}.zip"
-            )
-            with zipfile.ZipFile(zip_file_path, "w", zipfile.ZIP_DEFLATED) as zip_file:
-                for folder_name, _, file_names in os.walk(new_directory):
-                    for file_name in file_names:
-                        file_path = os.path.join(folder_name, file_name)
-                        zip_file.write(
-                            file_path, os.path.relpath(file_path, new_directory)
-                        )
+        # Create a new directory in the destination directory
+        new_directory = os.path.join(destination_directory, os.path.basename(root))
+        os.makedirs(new_directory, exist_ok=True)
 
-            # Remove the copied "result" subdirectory
-            shutil.rmtree(new_directory)
+        # Copy the "result" subdirectory to the new directory
+        shutil.copytree(
+            result_directory, os.path.join(new_directory, os.path.basename(root))
+        )
+
+        # Zip the new directory
+        zip_file_path = os.path.join(
+            destination_directory, f"{os.path.basename(root)}.zip"
+        )
+        with zipfile.ZipFile(zip_file_path, "w", zipfile.ZIP_DEFLATED) as zip_file:
+            for folder_name, _, file_names in os.walk(new_directory):
+                for file_name in file_names:
+                    file_path = os.path.join(folder_name, file_name)
+                    zip_file.write(
+                        file_path, os.path.relpath(file_path, new_directory)
+                    )
+
+        # Remove the copied "result" subdirectory
+        shutil.rmtree(new_directory)
 
 
 def rm_redundant_tex_files(main_directory):
@@ -111,7 +121,7 @@ def is_processed(tex_file):
     if not os.path.exists(result_directory):
         return False
 
-    png_files = glob.glob("result_directory/*.png")
+    png_files = glob.glob(f"{result_directory}/*.png")
     if png_files:
         return True
 
@@ -139,9 +149,9 @@ def main():
     tex_files = preprocess_tex_files(tex_files)
 
     for tex_file in tex_files:
-        print(f"running for tex file: {tex_file}")
+        log.debug(f"Running for tex file: {tex_file}")
         if is_processed(tex_file):
-            print(f"tex file {tex_file} is already processed")
+            log.debug(f"Tex file {tex_file} is already processed")
             continue
         subprocess.run(["bash", script_path, tex_file], check=True)
 
