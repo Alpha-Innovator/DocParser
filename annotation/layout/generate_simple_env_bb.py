@@ -1,3 +1,4 @@
+from collections import defaultdict
 import os
 from PIL import Image
 from typing import Dict, List
@@ -111,7 +112,7 @@ def get_category(image: Image.Image, element: LTComponent) -> int:
 def color_to_category(
     image: Image.Image,
     page_elements: List[LTComponent],
-) -> Dict[int, int]:
+) -> list:
     """
     Generate a dictionary mapping the index of each element
     in the page_elements list to its corresponding category index.
@@ -124,24 +125,24 @@ def color_to_category(
         Dict[int, int]: A dictionary mapping the index of
         each element to its corresponding category index.
     """
-    result = {}
+    result = []
 
     for index, element in enumerate(page_elements):
         if index == 0:  # skip the LTPage element
-            result[index] = name2category["Others"]
+            result.append(name2category["Others"])
             continue
         if isinstance(element, LTFigure):
-            result[index] = name2category["Figure"]
+            result.append(name2category["Figure"])
             continue
 
-        result[index] = get_category(image, element)
+        result.append(get_category(image, element))
 
     return result
 
 
 def generate_category_info(filename, main_directory, geometry_info):
     rendered_path = os.path.join(main_directory, "colored")
-    category_info = {}  # map of bb index to category
+    category_info = defaultdict(list)  # map of bb index to category
     for page_index in geometry_info.keys():
         page_image_path = os.path.join(
             rendered_path, f"{filename}_rendered_colored_page_{page_index}.png"
@@ -163,7 +164,7 @@ def generate_geometry_info(main_directory, filename):
     file_elements = generate_bb(rendered_pdf, laparams)
 
     # generate object detection info
-    geometry_info = {}  # geometry info member of COCO
+    geometry_info = defaultdict(list)  # geometry info member of COCO
     for page_index, page_elements in file_elements.items():
         page_image_path = os.path.join(
             rendered_path, f"{filename}_rendered_colored_page_{page_index}.png"
@@ -176,12 +177,9 @@ def generate_geometry_info(main_directory, filename):
 
 
 def filter_results(geometry_info, category_info):
-    f_geometry_info = {}
-    f_category_info = {}
+    f_geometry_info = defaultdict(list)
+    f_category_info = defaultdict(list)
     for page_index, page_elements in geometry_info.items():
-        f_geometry_info[page_index] = []
-        f_category_info[page_index] = {}
-        i = 0
         for index, element in enumerate(page_elements):
             if category_info[page_index][index] in [
                 name2category["Table"],
@@ -190,8 +188,7 @@ def filter_results(geometry_info, category_info):
             ]:
                 continue
             f_geometry_info[page_index].append(element)
-            f_category_info[page_index][i] = category_info[page_index][index]
-            i += 1
+            f_category_info[page_index].append(category_info[page_index][index])
 
     return f_geometry_info, f_category_info
 

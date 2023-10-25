@@ -1,3 +1,4 @@
+from collections import defaultdict
 import os
 import glob
 from typing import Dict
@@ -63,10 +64,9 @@ def get_image_pairs(dir1: str, dir2: str):
 
 
 def generate_bounding_box(image_pairs, threshold=0.3):
-    result = {}
+    result = defaultdict(list)
     for image_pair in image_pairs:
         page_index = image_pair[0]
-        result[page_index] = []
 
         image1 = plt.imread(image_pair[1])
         image1_array = np.array(image1, dtype=np.uint8)
@@ -152,7 +152,7 @@ def generate_category(geometry_info: Dict, dir1: str):
     else:
         raise ValueError("Invalid directory name")
 
-    category_info = {key: [] for key in geometry_info.keys()}
+    category_info = defaultdict(list)
     for page_index, page_elements in geometry_info.items():
         if not page_elements:
             continue
@@ -165,8 +165,8 @@ def run(main_directory):
     env_dirs = get_matching_subdirectories(main_directory)
     dir2 = os.path.join(main_directory, "white")
 
-    geometry_info = {}
-    category_info = {}
+    geometry_info = defaultdict(list)
+    category_info = defaultdict(list)
     for env_dir in tqdm(env_dirs):
         dir1 = os.path.join(main_directory, env_dir)
         log.debug(f"processing dir: {dir1}")
@@ -174,14 +174,10 @@ def run(main_directory):
         geometry_annotation = generate_bounding_box(image_pairs)
 
         for key in geometry_annotation.keys():
-            if key not in geometry_info:
-                geometry_info[key] = []
             geometry_info[key].extend(geometry_annotation[key])
 
         category_annotation = generate_category(geometry_annotation, dir1)
         for key in geometry_annotation.keys():
-            if key not in category_info:
-                category_info[key] = []
             category_info[key].extend(category_annotation[key])
 
     return geometry_info, category_info

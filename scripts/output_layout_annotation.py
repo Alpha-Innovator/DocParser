@@ -116,8 +116,6 @@ def export_to_coco(
 
 
 def merge_geometry_info(info, info_complex):
-    log.debug(f"info: {info}")
-    log.debug(f"info_complex: {info_complex}")
     for page_index, page_elements in info.items():
         info[page_index].extend(info_complex[page_index])
     return info
@@ -125,10 +123,7 @@ def merge_geometry_info(info, info_complex):
 
 def merge_category_info(info, info_complex):
     for page_index, page_elements in info.items():
-        index = len(page_elements)
-        for element in info_complex[page_index]:
-            info[page_index][index] = element
-            index += 1
+        info[page_index].extend(info_complex[page_index])
     return info
 
 
