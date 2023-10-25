@@ -19,18 +19,18 @@ CONTENT_INDEX = 1
 
 
 texts = {
-    "algorithm": [],
-    "caption": [],
-    "list": [],
-    "equation": [],
-    "footnote": [],
-    "title": [],
-    "abstract": [],
-    "bibliography": [],
-    "table": [],
-    "text": [],
-    "figure": [],
-    "code": [],
+    "Algorithm": [],
+    "Caption": [],
+    "List": [],
+    "Equation": [],
+    "Footnote": [],
+    "Title": [],
+    "Abstract": [],
+    "Bibliography": [],
+    "Table": [],
+    "Text": [],
+    "Figure": [],
+    "Code": [],
 }
 
 
@@ -217,7 +217,7 @@ def enclose_title(data, color="red") -> None:
                 color, title_text
             )
             item["title"] = rendered_title
-            texts["title"].append(title_text)
+            texts["Title"].append(title_text)
 
 
 def enclose_section(data, color="red") -> None:
@@ -243,7 +243,7 @@ def enclose_section(data, color="red") -> None:
         if env is None:
             continue
 
-        texts["title"].append(item[env])
+        texts["Title"].append(item[env])
         section_text = item[env][len(env) + 2 : -1]
         rendered_section = "\\{}{{\\textcolor{{{}}}{{{}}}}}".format(
             env, color, section_text
@@ -273,7 +273,7 @@ def enclose_list(data: List, color: str = "yellow") -> None:
         if env is None:
             continue
 
-        texts["list"].append(item[env])
+        texts["List"].append(item[env])
         data[index] = {
             "BraceGroup": [
                 {"begin": "{"},
@@ -308,7 +308,7 @@ def enclose_caption_inside_env(data, color="orange") -> None:
                     enclose_caption_inside_env(value[CONTENT_INDEX], color)
             continue
 
-        texts["caption"].append(item["caption"])
+        texts["Caption"].append(item["caption"])
         caption_text = item["caption"][9:-1]
         rendered_caption = "\\{}{{\\textcolor{{{}}}{{{}}}}}".format(
             "caption", color, caption_text
@@ -368,7 +368,7 @@ def enclose_equation(data, color="green") -> None:
                     enclose_equation(value[CONTENT_INDEX], color)
             continue
 
-        texts["equation"].append(item)
+        texts["Equation"].append(item)
         item[env] = {
             "BraceGroup": [
                 {"begin": "{"},
@@ -437,7 +437,7 @@ def enclose_table(data, color="cyan") -> None:
                     enclose_table(value[CONTENT_INDEX], color)
             continue
 
-        texts["table"].append(item)
+        texts["Table"].append(item)
         enclose_tabular(item[env][CONTENT_INDEX], color)
 
 
@@ -470,7 +470,7 @@ def enclose_footnote(data, color="red") -> None:
             env, color, footnote_text
         )
         item[env] = rendered_footnote
-        texts["footnote"].append(footnote_text)
+        texts["Footnote"].append(footnote_text)
 
 
 def enclose_text(data, color="olive"):
@@ -516,7 +516,7 @@ def enclose_text(data, color="olive"):
         if isinstance(item, str):
             continue
         # list
-        texts["text"].append(item)
+        texts["Text"].append(item)
         result[index] = {
             "BraceGroup": [
                 {"begin": "{"},
@@ -569,7 +569,7 @@ def enclose_graphics_inside_figure(data, color="black"):
                 if isinstance(value, list):
                     enclose_graphics_inside_figure(value[CONTENT_INDEX], color)
         else:
-            texts["figure"].append(item[env])
+            texts["Figure"].append(item[env])
 
 
 def enclose_figure(data, color="black"):
@@ -610,7 +610,7 @@ def enclose_algorithm(data, color="pink"):
                     enclose_algorithm(value[CONTENT_INDEX], color)
             continue
 
-        texts["algorithm"].append(item)
+        texts["Algorithm"].append(item)
         item[env][1].insert(0, {"color": "\n\\color{{{}}}".format(color)})
 
 
@@ -627,7 +627,7 @@ def enclose_code(data, color="blue"):
                     enclose_code(value[CONTENT_INDEX], color)
             continue
 
-        texts["code"].append(item)
+        texts["Code"].append(item)
         data[index] = {
             "BraceGroup": [
                 {"begin": "{"},

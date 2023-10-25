@@ -11,6 +11,7 @@ from PIL import Image, ImageDraw
 from tqdm import tqdm
 
 from pdfminer.layout import LTComponent
+from rendering import envs
 from rendering.utils import load_json
 from logger import logger
 
@@ -132,25 +133,17 @@ def get_matching_subdirectories(folder_path):
         name
         for name in os.listdir(folder_path)
         if os.path.isdir(os.path.join(folder_path, name))
-        and (
-            name.startswith("algorithm")
-            or name.startswith("equation")
-            or name.startswith("table")
-        )
+        and any(name.startswith(prefix) for prefix in envs.complex_env_list)
     ]
     return subdirectories
 
 
 def generate_category(geometry_info: Dict, dir1: str):
     dir_name = os.path.basename(dir1)
-    if dir_name.startswith("algorithm"):
-        name = "Algorithm"
-    elif dir_name.startswith("equation"):
-        name = "Equation"
-    elif dir_name.startswith("table"):
-        name = "Table"
-    else:
-        raise ValueError("Invalid directory name")
+    name = get_env_from_dir_name(dir_name)
+
+    if name is None:
+        raise ValueError(f"Invalid directory name: {dir_name}")
 
     category_info = defaultdict(list)
     for page_index, page_elements in geometry_info.items():
@@ -159,6 +152,13 @@ def generate_category(geometry_info: Dict, dir1: str):
         for _ in range(len(page_elements)):
             category_info[page_index].append(name2category[name])
     return category_info
+
+
+def get_env_from_dir_name(dir_name):
+    for env in envs.complex_env_list:
+        if dir_name.startswith(env):
+            return env
+    return None
 
 
 def run(main_directory):

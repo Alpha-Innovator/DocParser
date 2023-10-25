@@ -64,14 +64,14 @@ def parse_arguments() -> Tuple[str, str]:
     return tex_file, text_annotation_file
 
 
-def render_env(tex_file, text_annotation, env_name):
+def render_env(tex_file, text_annotation, env):
     suffix = "_white.tex"
     base_name = tex_file[: -len(suffix)]
     # base_name = os.path.splitext(tex_file)[0]
 
-    num_items = len(text_annotation[env_name])
+    num_items = len(text_annotation[env])
     for i in range(num_items):
-        output_file = base_name + "_" + env_name + "_" + str(i) + ".tex"
+        output_file = base_name + "_" + env + "_" + str(i) + ".tex"
         shutil.copyfile(tex_file, output_file)
 
         with open(output_file, "r") as f:
@@ -79,7 +79,7 @@ def render_env(tex_file, text_annotation, env_name):
 
         # the first one is the color definition, skip it
         new_content = replace_nth(
-            content, env_name.capitalize() + "_color", "black", i + 2
+            content, env + "_color", "black", i + 2
         )
 
         log.debug(f"output_file: {output_file}")

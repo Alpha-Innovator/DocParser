@@ -9,6 +9,7 @@ from pdfminer.high_level import extract_pages
 from pdfminer.layout import LAParams, LTComponent, LTFigure, LTLine
 
 from logger import logger
+from rendering import envs
 from rendering.utils import load_json
 from annotation.layout import geometry
 
@@ -181,10 +182,9 @@ def filter_results(geometry_info, category_info):
     f_category_info = defaultdict(list)
     for page_index, page_elements in geometry_info.items():
         for index, element in enumerate(page_elements):
+            # TODO: make this list robust
             if category_info[page_index][index] in [
-                name2category["Table"],
-                name2category["Algorithm"],
-                name2category["Equation"],
+                name2category[env] for env in envs.complex_env_list
             ]:
                 continue
             f_geometry_info[page_index].append(element)

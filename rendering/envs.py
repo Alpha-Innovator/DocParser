@@ -32,4 +32,4 @@ non_text_envs = (
 )
 
 
-complex_env_list = ["algorithm", "equation", "table", "list", "code"]
+complex_env_list = ["Algorithm", "Equation", "Table", "List", "Code"]
