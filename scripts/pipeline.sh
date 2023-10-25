@@ -64,9 +64,7 @@ for file in $rendered_tex_files; do
     target_dir="${filename#$prefix}"
     target_dir="$output_directory/${target_dir%.*}"
     mkdir -p "$target_dir"
-    echo "[$script_name] filename: $filename"
     mv "$input_directory/${filename%.*}.pdf" "$target_dir"
-    echo "[$script_name] target_dir: $target_dir"
     bash convert_pdf_to_image.sh "$target_dir/${filename%.*}.pdf" "$target_dir"
 done
 
@@ -77,12 +75,12 @@ echo "[$script_name] Script completed successfully, result is stored in $output_
 
 echo "[$script_name] Removing rendunded files, this may take a while..."
 for file in $rendered_tex_files; do
-    filename=$(basename "$file")
+filename=$(basename "$file")
 
-    target_dir="${filename#$prefix}"
-    target_dir="$output_directory/${target_dir%.*}"
-    rm -r "$target_dir"
-    rm "$file"
+target_dir="${filename#$prefix}"
+target_dir="$output_directory/${target_dir%.*}"
+rm -r "$target_dir"
+rm "$file"
 done
 
 echo "[$script_name] Total execution time: $SECONDS seconds"
