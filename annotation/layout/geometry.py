@@ -150,9 +150,14 @@ def merge_bb(
     for page_index, page_elements in file_elements.items():
         two_column_flag = is_two_column(page_elements, threshold)
         # sort the elements by y coordinate then by x coordinate
-        sorted_elements = sorted(
-            page_elements, key=lambda element: (element.bbox[1], element.bbox[0])
+        sorted_elements = [page_elements[0]]
+        sorted_elements.extend(
+            sorted(
+                page_elements[1:],
+                key=lambda element: (element.bbox[1], element.bbox[0]),
+            )
         )
+
         result[page_index] = [sorted_elements[0], sorted_elements[1]]
         for index, element in enumerate(sorted_elements):
             if index <= 1:
