@@ -44,25 +44,10 @@ else
 fi
 
 # Clean up auxiliary files
-if [ -f "$main_file.aux" ]; then
-    rm "$main_file.aux"
-fi
-
-if [ -f "$main_file.bbl" ]; then
-    rm "$main_file.bbl"
-fi
-
-if [ -f "$main_file.blg" ]; then
-    rm "$main_file.blg"
-fi
-
-if [ -f "$main_file.log" ]; then
-    rm "$main_file.log"
-fi
-
-if [ -f "$main_file.out" ]; then
-    rm "$main_file.out"
-fi
+rm -f "$main_file.aux" "$main_file.bbl" "$main_file.blg" "$main_file.log" "$main_file.out" 
+rm -f "$main_file.toc" "$main_file.dvi" "{$main_file}Notes.bib" "$main_file.brf" "$main_file.vtc" 
+rm -f "$main_file.axp" "$main_file.loc" "$main_file.pdfsync" "$main_file.pag"
+rm -f "$main_file.abs" "$main_file.spl" "$main_file.bcf"
 
 # Change back to the original directory
 cd "$original_dir"
