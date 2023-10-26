@@ -1,10 +1,24 @@
 {
     "cSpell.words": [
         "arxiv",
+        "definecolor",
+        "documentclass",
+        "dtype",
+        "imread",
         "includegraphics",
+        "iscrowd",
+        "laparams",
         "pdfcrop",
+        "pdfminer",
+        "regionprops",
+        "renewcommand",
+        "rgbcolor",
+        "skimage",
         "subimport",
+        "textcolor",
         "tqdm",
-        "vrdu"
+        "usepackage",
+        "vrdu",
+        "xcolor"
     ]
 }
