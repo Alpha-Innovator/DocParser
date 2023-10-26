@@ -79,9 +79,7 @@ def render_env(tex_file, text_annotation, env):
             content = f.read()
 
         # the first one is the color definition, skip it
-        new_content = replace_nth(
-            content, env + "_color", "black", i + 2
-        )
+        new_content = replace_nth(content, env + "_color", "black", i + 2)
 
         log.debug(f"output_file: {output_file}")
 
@@ -108,7 +106,7 @@ def modify_color_definitions(input_file, output_file):
         file.write(modified_content)
 
 
-def run(origin_tex_file, config):
+def run(origin_tex_file):
     original_dir = os.path.dirname(origin_tex_file)
     file_name = os.path.splitext(os.path.basename(origin_tex_file))[0]
 
@@ -120,9 +118,7 @@ def run(origin_tex_file, config):
     modify_color_definitions(tex_file, white_tex_file)
 
     # load the text annotation information
-    text_file = os.path.join(
-        original_dir, "output/result/" + config["text_elements_file"]
-    )
+    text_file = os.path.join(original_dir, "output/result/" + "texts.json")
     text = utils.load_json(text_file)
     text_annotation = defaultdict(list)
     for key, value in text.items():

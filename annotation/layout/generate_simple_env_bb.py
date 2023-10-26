@@ -10,40 +10,10 @@ from pdfminer.layout import LAParams, LTComponent, LTFigure, LTLine
 
 from logger import logger
 from rendering import envs
-from rendering.utils import load_json
 from annotation.layout import geometry
-
+from config import config
 
 log = logger.get_logger(__name__)
-
-config = load_json("config/config.json")
-name2category = {v: k for k, v in config["category_name"]}
-category2name = {k: v for k, v in config["category_name"]}
-category2color = {k: v for k, v in config["category_color"]}
-
-category2hsv_bound = {}  # category: (lower_bound, upper_bound)
-for k, v in category2color.items():
-    rgb_color = tuple(v)
-
-    # Convert RGB to HSV
-    hsv_color = cv2.cvtColor(np.uint8([[rgb_color]]), cv2.COLOR_RGB2HSV)[0][0]
-
-    lower_bound = np.array(
-        [
-            hsv_color[0] - config["hue_range"],
-            hsv_color[1] - config["saturation_range"],
-            hsv_color[2] - config["value_range"],
-        ]
-    )
-    upper_bound = np.array(
-        [
-            hsv_color[0] + config["hue_range"],
-            hsv_color[1] + config["saturation_range"],
-            hsv_color[2] + config["value_range"],
-        ]
-    )
-
-    category2hsv_bound[k] = (lower_bound, upper_bound)
 
 
 def generate_bb(filename: str, laparams=None) -> Dict[int, List[LTComponent]]:
@@ -87,10 +57,10 @@ def generate_bb(filename: str, laparams=None) -> Dict[int, List[LTComponent]]:
 def get_category(image: Image.Image, element: LTComponent) -> int:
     if isinstance(element, LTLine):
         if element.stroking_color == 0:
-            return name2category["Others"]
+            return config.name2category["Others"]
         else:
             # TODO: add log to check if line is table or algorithm
-            return name2category["Table"]
+            return config.name2category["Table"]
 
     x0, y0, x1, y1 = element.bbox
     roi = image.crop((x0, y0, x1, y1))
@@ -99,8 +69,8 @@ def get_category(image: Image.Image, element: LTComponent) -> int:
     hsv_roi = cv2.cvtColor(roi_array, cv2.COLOR_RGB2HSV)
 
     count = 0
-    category = name2category["Others"]
-    for key, value in category2hsv_bound.items():
+    category = config.name2category["Others"]
+    for key, value in config.category2hsv_bound.items():
         lower, upper = value
         mask = cv2.inRange(hsv_roi, lower, upper)
         if np.sum(mask) > count:
@@ -130,10 +100,10 @@ def color_to_category(
 
     for index, element in enumerate(page_elements):
         if index == 0:  # skip the LTPage element
-            result.append(name2category["Others"])
+            result.append(config.name2category["Others"])
             continue
         if isinstance(element, LTFigure):
-            result.append(name2category["Figure"])
+            result.append(config.name2category["Figure"])
             continue
 
         result.append(get_category(image, element))
@@ -161,7 +131,7 @@ def generate_category_info(filename, main_directory, geometry_info):
 def generate_geometry_info(main_directory, filename):
     rendered_path = os.path.join(main_directory, "colored")
     rendered_pdf = os.path.join(rendered_path, f"{filename}_rendered_colored.pdf")
-    laparams = LAParams(**config["laparams"])
+    laparams = LAParams(**config.config["laparams"])
     file_elements = generate_bb(rendered_pdf, laparams)
 
     # generate object detection info
@@ -184,7 +154,7 @@ def filter_results(geometry_info, category_info):
         for index, element in enumerate(page_elements):
             # TODO: make this list robust
             if category_info[page_index][index] in [
-                name2category[env] for env in envs.complex_env_list
+                config.name2category[env] for env in envs.complex_env_list
             ]:
                 continue
             f_geometry_info[page_index].append(element)

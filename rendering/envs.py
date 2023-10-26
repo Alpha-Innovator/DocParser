@@ -2,7 +2,7 @@ math_envs = ["equation", "align", "equation*", "align*", "$$", "displaymath"]
 
 
 section_envs = ["section", "subsection", "section*", "subsection*"]
-table_envs = ["table", "table*"]
+table_envs = ["table", "table*", "wraptable"]
 figure_envs = ["figure", "minipage"]
 graphic_envs = ["centerline", "includegraphics", "subfigure"]
 algorithm_envs = [

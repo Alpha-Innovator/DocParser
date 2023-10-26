@@ -160,6 +160,5 @@
     "saturation_range": 10,
     "value_range": 40,
     "annotation_image_font_type": "DejaVuSans.ttf",
-    "annotation_image_font_size": 20,
-    "text_elements_file": "texts.json"
+    "annotation_image_font_size": 20
 }

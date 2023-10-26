@@ -4,16 +4,10 @@ import re
 import Levenshtein
 from pdfminer.layout import LTTextContainer
 
-from rendering.utils import load_json
 from logger import logger
+from config import config
 
 log = logger.get_logger(__name__)
-
-config = load_json("config.json")
-
-name2category = {v: k for k, v in config["category_name"]}
-category2name = {k: v for k, v in config["category_name"]}
-category2color = {k: v for k, v in config["category_color"]}
 
 
 def find_closest_string(new_string: str, string_list: List[str]) -> str:
@@ -85,7 +79,7 @@ def generate_caption_annotation(
         result[page_index] = []
         category_info = category_infos[page_index]
         for index, element in enumerate(page_elements):
-            if category2name[category_info[index]] != "Caption":
+            if config.category2name[category_info[index]] != "Caption":
                 continue
 
             source = find_closest_string(element.get_text(), captions)
@@ -134,7 +128,7 @@ def generate_section_annotation(
         result[page_index] = []
         category_info = category_infos[page_index]
         for index, element in enumerate(page_elements):
-            if category2name[category_info[index]] != "Title":
+            if config.category2name[category_info[index]] != "Title":
                 continue
 
             source = find_closest_string(element.get_text(), sections)
@@ -183,7 +177,7 @@ def generate_footnote_annotation(
         result[page_index] = []
         category_info = category_infos[page_index]
         for index, element in enumerate(page_elements):
-            if category2name[category_info[index]] != "Footnote":
+            if config.category2name[category_info[index]] != "Footnote":
                 continue
 
             source = find_closest_string(element.get_text(), footnotes)
@@ -233,7 +227,7 @@ def generate_figure_annotation(
         category_info = category_infos[page_index]
 
         for index, element in enumerate(page_elements):
-            if category2name[category_info[index]] == "Figure":
+            if config.category2name[category_info[index]] == "Figure":
                 result[page_index].append(
                     {
                         "id": index,

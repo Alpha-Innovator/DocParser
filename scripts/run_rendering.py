@@ -1,7 +1,5 @@
 import argparse
-import os
 
-from rendering import utils
 from rendering import render_simple_env
 from rendering import render_complex_env
 from logger import logger
@@ -34,14 +32,11 @@ def parse_arguments():
 def main():
     origin_tex_file = parse_arguments()
 
-    root_path = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
-    config = utils.load_json(os.path.join(root_path, "config/config.json"))
-
     # render simple environment
-    render_simple_env.run(origin_tex_file, config)
+    render_simple_env.run(origin_tex_file)
 
     # render complex environment
-    render_complex_env.run(origin_tex_file, config)
+    render_complex_env.run(origin_tex_file)
 
 
 if __name__ == "__main__":

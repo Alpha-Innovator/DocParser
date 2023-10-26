@@ -8,8 +8,8 @@ from PIL import Image, ImageDraw, ImageFont
 
 from annotation.layout import geometry
 from pdfminer.layout import LTPage, LTComponent
-from rendering.utils import load_json
 from logger import logger
+from config import config
 
 from annotation.layout import generate_simple_env_bb
 from annotation.layout import generate_complex_env_bb
@@ -58,7 +58,6 @@ def export_to_coco(
     image_infos: Dict[int, str],
     category_infos: Dict[int, Dict[int, int]],
     filename: str,
-    config: Dict,
 ) -> None:
     result = {
         "info": {
@@ -80,7 +79,7 @@ def export_to_coco(
         "annotations": [],
         "categories": [
             {"id": index, "name": category}
-            for index, category in config["category_name"]
+            for index, category in config.config["category_name"]
         ],
     }
     for page_index, page_elements in file_elements.items():
@@ -131,7 +130,6 @@ def generate_geometry_annotation(
     page_image: Image.Image,
     page_elements: List[LTComponent],
     category_info: Dict[int, int],
-    config,
 ) -> Image.Image:
     """
     Generate an annotation for an image.
@@ -146,16 +144,16 @@ def generate_geometry_annotation(
     draw = ImageDraw.Draw(page_image)
     # use `locate .ttf` to find the available fonts
     font = ImageFont.truetype(
-        config["annotation_image_font_type"], config["annotation_image_font_size"]
+        config.config["annotation_image_font_type"],
+        config.config["annotation_image_font_size"],
     )
-    category2name = {k: v for k, v in config["category_name"]}
 
     for index, element in enumerate(page_elements):
         category = category_info[index]
         draw.rectangle(element.bbox, outline="red")
         draw.text(
             (element.bbox[0], element.bbox[1]),
-            category2name[category],
+            config.category2name[category],
             fill=(255, 0, 0),
             font=font,
         )
@@ -163,7 +161,7 @@ def generate_geometry_annotation(
     return page_image
 
 
-def generate_image_info(filename, main_directory, geometry_info, category_info, config):
+def generate_image_info(filename, main_directory, geometry_info, category_info):
     rendered_path = os.path.join(main_directory, "colored")
     result_path = os.path.join(main_directory, "result")
     image_info = {}  # annotation image info member of COCO
@@ -173,7 +171,9 @@ def generate_image_info(filename, main_directory, geometry_info, category_info, 
         )
         page_image = Image.open(page_image_path)
         annotated_image = generate_geometry_annotation(
-            page_image, geometry_info[page_index], category_info[page_index], config
+            page_image,
+            geometry_info[page_index],
+            category_info[page_index],
         )
         image_name = f"{filename}_annotation_page_{page_index}.png"
         annotated_image_path = os.path.join(result_path, image_name)
@@ -202,9 +202,6 @@ def parse_arguments():
 def main():
     main_directory, file_name = parse_arguments()
 
-    root_path = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
-    config = load_json(os.path.join(root_path, "config/config.json"))
-
     geometry_info, category_info = generate_simple_env_bb.run(main_directory, file_name)
 
     geometry_info_complex, category_info_complex = generate_complex_env_bb.run(
@@ -215,13 +212,11 @@ def main():
     category_info = merge_category_info(category_info, category_info_complex)
 
     image_info = generate_image_info(
-        file_name, main_directory, geometry_info, category_info, config
+        file_name, main_directory, geometry_info, category_info
     )
 
     json_file = os.path.join(main_directory, "result/layout_annotation.json")
-    export_to_coco(
-        geometry_info, image_info, category_info, filename=json_file, config=config
-    )
+    export_to_coco(geometry_info, image_info, category_info, filename=json_file)
 
 
 if __name__ == "__main__":

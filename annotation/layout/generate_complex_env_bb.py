@@ -12,15 +12,10 @@ from tqdm import tqdm
 
 from pdfminer.layout import LTComponent
 from rendering import envs
-from rendering.utils import load_json
 from logger import logger
+from config import config
 
 log = logger.get_logger(__name__)
-
-config = load_json("config/config.json")
-
-name2category = {v: k for k, v in config["category_name"]}
-category2name = {k: v for k, v in config["category_name"]}
 
 
 def get_image_pairs(dir1: str, dir2: str):
@@ -150,7 +145,7 @@ def generate_category(geometry_info: Dict, dir1: str):
         if not page_elements:
             continue
         for _ in range(len(page_elements)):
-            category_info[page_index].append(name2category[name])
+            category_info[page_index].append(config.name2category[name])
     return category_info
 
 

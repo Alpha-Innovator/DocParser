@@ -1,10 +1,12 @@
 from collections import defaultdict
 import os
-from typing import Union, List, Dict, Tuple
+from typing import Union, List, Dict
 import logger.logger as logger
 from rendering.utils import data_from_tex_file, export_to_json, tex_file_from_data
 from rendering.utils import get_main_content
 from rendering import envs
+
+from config import config
 
 log = logger.get_logger(__name__)
 
@@ -12,11 +14,6 @@ log = logger.get_logger(__name__)
 # [{'begin': xxx}, [yyy], {'end': xxx}]
 # the content is in the second item, which is a list
 CONTENT_INDEX = 1
-
-# colors in xcolor.sty:
-# [red, green,blue, cyan, magenta, yellow, black, gray, white,
-# darkgray, lightgray, brown, lime, olive, orange, pink,
-# purple, teal, violet.]
 
 
 texts = defaultdict(list)
@@ -125,17 +122,13 @@ def enclose_abstract(data, title_color="red", text_color="green"):
     data[document_index + 3]["document"][1] = main_content
 
 
-def add_color_definition(
-    data, name2rgbcolor: Dict[str, Tuple[int, int, int]]
-) -> Dict[str, str]:
+def add_color_definition(data) -> Dict[str, str]:
     """
     Adds color definitions to the given data based on the
     provided name-to-RGB color mapping.
 
     Args:
         data: The data to modify, typically a list of dictionaries.
-        name2rgbcolor (Dict[str, Tuple[int, int, int]]):
-            A dictionary mapping color names to RGB values.
 
     Returns:
         Dict[str, str]: A dictionary mapping color names
@@ -160,7 +153,7 @@ def add_color_definition(
     documentclass_index += 3
 
     name2color = {}
-    for name, rgb_color in name2rgbcolor.items():
+    for name, rgb_color in config.name2rgbcolor.items():
         color_name = name + "_color"
         data.insert(documentclass_index + 1, "\n")  # for clarity
         r, g, b = rgb_color
@@ -673,27 +666,19 @@ def save_texts(file="texts.json"):
     export_to_json(texts, file)
 
 
-def run(origin_tex_file, config, debug_mode=False):
+def run(origin_tex_file, debug_mode=False):
     # TODO: simplify the logic
     origin_dir = os.path.dirname(origin_tex_file)
     file_name = os.path.basename(origin_tex_file)
     file_name = os.path.splitext(file_name)[0]
 
-    name2category = {name: category for category, name in config["category_name"]}
-    category2rgbcolor = {
-        category: tuple(color) for category, color in config["category_color"]
-    }
-    name2rgbcolor = {
-        name: category2rgbcolor[category] for name, category in name2category.items()
-    }
-
     data = data_from_tex_file(origin_tex_file, debug_mode)
-    name2color = add_color_definition(data, name2rgbcolor)
+    name2color = add_color_definition(data)
 
     render_env(data, name2color)
 
     text_file = os.path.join(
-        origin_dir, "output/result/" + config["text_elements_file"]
+        origin_dir, "output/result/" + "texts.json"
     )
     log.debug(f"text_file: {text_file}")
     save_texts(text_file)
