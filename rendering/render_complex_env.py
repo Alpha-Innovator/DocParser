@@ -1,3 +1,4 @@
+from collections import defaultdict
 import os
 import shutil
 import argparse
@@ -122,7 +123,11 @@ def run(origin_tex_file, config):
     text_file = os.path.join(
         original_dir, "output/result/" + config["text_elements_file"]
     )
-    text_annotation = utils.load_json(text_file)
+    text = utils.load_json(text_file)
+    text_annotation = defaultdict(list)
+    for key, value in text.items():
+        text_annotation[key].extend(value)
+    log.debug(f"text_annotation: {text_annotation}")
 
     # render complex env
     for env in envs.complex_env_list:
