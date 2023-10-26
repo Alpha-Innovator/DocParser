@@ -620,9 +620,13 @@ def enclose_code(data, color="blue"):
             "BraceGroup": [
                 {"begin": "{"},
                 [
-                    "\n",
-                    {"color": "\\color{{{}}}{{{}}}\n".format(color, item[env])},
-                    "\n",
+                    {
+                        "color": [
+                            "\\color{{{}}}\n".format(color),
+                            *item[env],
+                            "\n",
+                        ]
+                    }
                 ],
                 {"end": "}"},
             ]
