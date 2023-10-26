@@ -633,37 +633,6 @@ def enclose_code(data, color="blue"):
         }
 
 
-def run(origin_tex_file, config, debug_mode=False):
-    # TODO: simplify the logic
-    origin_dir = os.path.dirname(origin_tex_file)
-    file_name = os.path.basename(origin_tex_file)
-    file_name = os.path.splitext(file_name)[0]
-
-    name2category = {name: category for category, name in config["category_name"]}
-    category2rgbcolor = {
-        category: tuple(color) for category, color in config["category_color"]
-    }
-    name2rgbcolor = {
-        name: category2rgbcolor[category] for name, category in name2category.items()
-    }
-
-    data = data_from_tex_file(origin_tex_file, debug_mode)
-    name2color = add_color_definition(data, name2rgbcolor)
-
-    render_env(data, name2color)
-
-    text_file = os.path.join(
-        origin_dir, "output/result/" + config["text_elements_file"]
-    )
-    log.debug(f"text_file: {text_file}")
-    save_texts(text_file)
-
-    # Convert data back to tex file
-    rendered_tex_file = os.path.join(origin_dir, file_name + "_rendered_colored.tex")
-    log.debug(f"rendered_tex_file: {rendered_tex_file}")
-    tex_file_from_data(data, rendered_tex_file, debug_mode)
-
-
 def render_env(data, name2color):
     add_usepackage_command(data, "xcolor")
 
@@ -702,3 +671,34 @@ def render_env(data, name2color):
 
 def save_texts(file="texts.json"):
     export_to_json(texts, file)
+
+
+def run(origin_tex_file, config, debug_mode=False):
+    # TODO: simplify the logic
+    origin_dir = os.path.dirname(origin_tex_file)
+    file_name = os.path.basename(origin_tex_file)
+    file_name = os.path.splitext(file_name)[0]
+
+    name2category = {name: category for category, name in config["category_name"]}
+    category2rgbcolor = {
+        category: tuple(color) for category, color in config["category_color"]
+    }
+    name2rgbcolor = {
+        name: category2rgbcolor[category] for name, category in name2category.items()
+    }
+
+    data = data_from_tex_file(origin_tex_file, debug_mode)
+    name2color = add_color_definition(data, name2rgbcolor)
+
+    render_env(data, name2color)
+
+    text_file = os.path.join(
+        origin_dir, "output/result/" + config["text_elements_file"]
+    )
+    log.debug(f"text_file: {text_file}")
+    save_texts(text_file)
+
+    # Convert data back to tex file
+    rendered_tex_file = os.path.join(origin_dir, file_name + "_rendered_colored.tex")
+    log.debug(f"rendered_tex_file: {rendered_tex_file}")
+    tex_file_from_data(data, rendered_tex_file, debug_mode)
