@@ -64,50 +64,42 @@ def preprocess_tex_files(tex_files: List[str]) -> List[str]:
     return result
 
 
-def extract_result(source_directory, destination_directory):
+def extract_result(source_dir, dest_dir):
     # Create the destination directory if it doesn't exist
-    os.makedirs(destination_directory, exist_ok=True)
+    os.makedirs(dest_dir, exist_ok=True)
 
     # Iterate over the nested directories
-    for root, dirs, files in os.walk(source_directory):
+    for root, dirs, files in os.walk(source_dir):
         if "output" not in dirs:
             continue
         if "result" not in os.listdir(os.path.join(root, "output")):
             continue
 
-        result_directory = os.path.join(root, "output", "result")
-        log.debug(f"result_directory: {result_directory}")
-        png_files = glob.glob(f"{result_directory}/*.png")
-        log.debug(f"png_files: {png_files}")
+        result_dir = os.path.join(root, "output", "result")
+        png_files = glob.glob(f"{result_dir}/*.png")
         if not png_files:
             continue
 
         # Construct the path to the "result" subdirectory
-        result_directory = os.path.join(root, "output", "result")
+        result_dir = os.path.join(root, "output", "result")
 
         # Create a new directory in the destination directory
-        new_directory = os.path.join(destination_directory, os.path.basename(root))
-        os.makedirs(new_directory, exist_ok=True)
+        new_dir = os.path.join(dest_dir, os.path.basename(root))
+        os.makedirs(new_dir, exist_ok=True)
 
         # Copy the "result" subdirectory to the new directory
-        shutil.copytree(
-            result_directory, os.path.join(new_directory, os.path.basename(root))
-        )
+        shutil.copytree(result_dir, os.path.join(new_dir, os.path.basename(root)))
 
         # Zip the new directory
-        zip_file_path = os.path.join(
-            destination_directory, f"{os.path.basename(root)}.zip"
-        )
-        with zipfile.ZipFile(zip_file_path, "w", zipfile.ZIP_DEFLATED) as zip_file:
-            for folder_name, _, file_names in os.walk(new_directory):
+        file_path = os.path.join(dest_dir, f"{os.path.basename(root)}.zip")
+        with zipfile.ZipFile(file_path, "w", zipfile.ZIP_DEFLATED) as zip_file:
+            for folder_name, _, file_names in os.walk(new_dir):
                 for file_name in file_names:
                     file_path = os.path.join(folder_name, file_name)
-                    zip_file.write(
-                        file_path, os.path.relpath(file_path, new_directory)
-                    )
+                    zip_file.write(file_path, os.path.relpath(file_path, new_dir))
 
         # Remove the copied "result" subdirectory
-        shutil.rmtree(new_directory)
+        shutil.rmtree(new_dir)
 
 
 def rm_redundant_tex_files(main_directory):
