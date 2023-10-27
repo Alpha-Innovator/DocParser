@@ -628,7 +628,7 @@ def render_env(main_content):
 
     enclose_footnote(main_content, color=name2color["Footnote"])
 
-    enclose_reference(main_content, color=name2color["Text"])
+    enclose_reference(main_content, color=name2color["Reference"])
 
     enclose_algorithm(main_content, color=name2color["Algorithm"])
 
