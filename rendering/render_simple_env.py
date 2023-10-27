@@ -1,9 +1,10 @@
 from collections import defaultdict
 import os
-from typing import Union, List, Dict
+import re
+import shutil
+from typing import Union, List
 import logger.logger as logger
-from rendering.utils import data_from_tex_file, export_to_json, tex_file_from_data
-from rendering.utils import get_main_content
+from rendering import utils
 from rendering import envs
 
 from config import config
@@ -639,27 +640,19 @@ def render_env(main_content):
 
 
 def save_texts(file="texts.json"):
-    export_to_json(texts, file)
+    utils.export_to_json(texts, file)
 
 
-def run(origin_tex_file, debug_mode=False):
-    # TODO: simplify the logic
-    origin_dir = os.path.dirname(origin_tex_file)
-    file_name = os.path.basename(origin_tex_file)
-    file_name = os.path.splitext(file_name)[0]
+def run(input_file, debug_mode=False):
+    origin_dir = os.path.dirname(input_file)
+    file_name = os.path.splitext(os.path.basename(input_file))[0]
+    output_file = os.path.join(origin_dir, file_name + "_rendered_colored.tex")
+    shutil.copyfile(input_file, output_file)
+    add_color_definition(output_file)
 
-    data = data_from_tex_file(origin_tex_file, debug_mode)
-    name2color = add_color_definition(data)
+    main_content, start, end = utils.data_from_tex_file(output_file)
+    render_env(main_content)
 
-    render_env(data, name2color)
-
-    text_file = os.path.join(
-        origin_dir, "output/result/" + "texts.json"
-    )
-    log.debug(f"text_file: {text_file}")
+    text_file = os.path.join(origin_dir, "output/result/" + "texts.json")
     save_texts(text_file)
-
-    # Convert data back to tex file
-    rendered_tex_file = os.path.join(origin_dir, file_name + "_rendered_colored.tex")
-    log.debug(f"rendered_tex_file: {rendered_tex_file}")
-    tex_file_from_data(data, rendered_tex_file, debug_mode)
+    utils.tex_file_from_data(main_content, output_file, start=start, end=end)
