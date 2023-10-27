@@ -3,6 +3,7 @@ math_envs = ["equation", "align", "equation*", "align*", "$$", "displaymath"]
 
 section_envs = ["section", "subsection", "section*", "subsection*"]
 table_envs = ["table", "table*", "wraptable"]
+tabular_envs = ['tabular', 'tabularx', 'tabulary', 'longtable']
 figure_envs = ["figure", "minipage"]
 graphic_envs = ["centerline", "includegraphics", "subfigure"]
 algorithm_envs = [

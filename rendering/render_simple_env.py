@@ -368,10 +368,11 @@ def enclose_tabular(data: List, color="cyan"):
         if not isinstance(item, dict):
             continue
 
-        if "tabular" not in item:
+        env = find_env(item, envs.tabular_envs)
+        if env is None:
             for key, value in item.items():
                 if isinstance(value, list):
-                    enclose_tabular(value[CONTENT_INDEX], color)
+                    enclose_table(value[CONTENT_INDEX], color)
             continue
 
         texts["Table"].append(item)
