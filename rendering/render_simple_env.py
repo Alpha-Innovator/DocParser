@@ -122,49 +122,33 @@ def enclose_abstract(data, title_color="red", text_color="green"):
     data[document_index + 3]["document"][1] = main_content
 
 
-def add_color_definition(data) -> Dict[str, str]:
-    """
-    Adds color definitions to the given data based on the
-    provided name-to-RGB color mapping.
+def add_color_definition(latex_file):
+    with open(latex_file, "r") as f:
+        content = f.read()
 
-    Args:
-        data: The data to modify, typically a list of dictionaries.
-
-    Returns:
-        Dict[str, str]: A dictionary mapping color names
-            to the corresponding color definitions.
-
-    Raises:
-        Exception: If the 'documentclass' item is not found in the data.
-
-    """
-
-    # find the index of documentclass
-    documentclass_index = -1
-    for index, item in enumerate(data):
-        if isinstance(item, dict) and "documentclass" in item:
-            documentclass_index = index
-            break
-
-    if documentclass_index == -1:
-        raise Exception("documentclass not found")
-
-    add_usepackage_command(data, "xcolor")
-    documentclass_index += 3
-
-    name2color = {}
+    definitions = ["\n\\usepackage{xcolor}"]
     for name, rgb_color in config.name2rgbcolor.items():
-        color_name = name + "_color"
-        data.insert(documentclass_index + 1, "\n")  # for clarity
+        color_name = config.name2color[name]
         r, g, b = rgb_color
-        data.insert(
-            documentclass_index + 2,
-            {"definecolor": f"\\definecolor{{{color_name}}}{{RGB}}{{{r}, {g}, {b}}}"},
-        )
-        data.insert(documentclass_index + 3, "\n")  # for clarity
-        name2color[name] = color_name
+        definition = f"\\definecolor{{{color_name}}}{{RGB}}{{{r}, {g}, {b}}}"
+        definitions.append(definition)
 
-    return name2color
+    color_definitions = "\n".join(definitions)
+
+    # Find location to insert package
+    package_re = r"(\\documentclass.+?)\n"
+    match = re.search(package_re, content)
+    if not match:
+        raise ValueError("Document class not found")
+
+    package_loc = match.end()
+
+    # Insert package line
+    content = content[:package_loc] + color_definitions + content[package_loc:]
+
+    # Write updated content
+    with open(latex_file, "w") as f:
+        f.write(content)
 
 
 def enclose_title(data, color="red") -> None:
