@@ -610,17 +610,8 @@ def enclose_code(data, color="blue"):
         }
 
 
-def render_env(data, name2color):
-    add_usepackage_command(data, "xcolor")
-
-    # render title
-    enclose_title(data, color=name2color["Title"])
-    # render abstract
-    enclose_abstract(
-        data, title_color=name2color["Title"], text_color=name2color["Text"]
-    )
-
-    main_content, index = get_main_content(data)
+def render_env(main_content):
+    name2color = config.name2color
 
     enclose_section(main_content, color=name2color["Title"])
 
