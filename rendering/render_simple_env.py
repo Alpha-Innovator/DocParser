@@ -372,7 +372,7 @@ def enclose_tabular(data: List, color="cyan"):
         if env is None:
             for key, value in item.items():
                 if isinstance(value, list):
-                    enclose_table(value[CONTENT_INDEX], color)
+                    enclose_tabular(value[CONTENT_INDEX], color)
             continue
 
         texts["Table"].append(item)
@@ -383,7 +383,7 @@ def enclose_tabular(data: List, color="cyan"):
                     {
                         "color": [
                             "\\color{{{}}}\n".format(color),
-                            *item["tabular"],
+                            *item[env],
                             "\n",
                         ]
                     }
