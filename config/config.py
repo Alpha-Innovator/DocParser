@@ -18,6 +18,10 @@ name2rgbcolor = {
 }
 category2color = {k: v for k, v in config["category_color"]}
 
+name2color = {}
+for name in name2rgbcolor.keys():
+    name2color[name] = name + "_color"
+
 
 category2hsv_bound = {}  # category: (lower_bound, upper_bound)
 for k, v in category2color.items():
