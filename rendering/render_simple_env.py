@@ -631,7 +631,8 @@ def render_env(main_content):
 
     enclose_figure(main_content, color=name2color["Figure"])
 
-    enclose_code(main_content, color=name2color["Code"])
+    # currently, code is classified as Algorithm
+    enclose_code(main_content, color=name2color["Algorithm"])
 
     # main_content = enclose_text(main_content, color=name2color["Text"])
     # data[index]["document"][1] = main_content
