@@ -1,9 +1,25 @@
-math_envs = ["equation", "align", "equation*", "align*", "$$", "displaymath"]
+math_envs = [
+    "equation",
+    "equation*",
+    "align",
+    "align*",
+    "$$",
+    "displaymath",
+    "gather",
+    "gather*",
+    "flalign",
+    "falign*",
+    "multiline",
+    "multiline*",
+    "alignat",
+    "alignat*",
+    "split",
+]
 
 
 section_envs = ["section", "subsection", "section*", "subsection*"]
 table_envs = ["table", "table*", "wraptable"]
-tabular_envs = ['tabular', 'tabularx', 'tabulary', 'longtable']
+tabular_envs = ["tabular", "tabularx", "tabulary", "longtable"]
 figure_envs = ["figure", "minipage"]
 graphic_envs = ["centerline", "includegraphics", "subfigure"]
 algorithm_envs = [
@@ -17,7 +33,7 @@ list_envs = ["itemize", "enumerate"]
 reference_envs = ["bibliography"]
 caption_envs = table_envs + figure_envs + algorithm_envs
 footnote_envs = ["footnote", "footnote*", "footnote**"]
-code_envs = ['verbatim', 'verbatim*', 'lstlisting', 'lstinputlisting']
+code_envs = ["verbatim", "verbatim*", "lstlisting", "lstinputlisting"]
 non_text_envs = (
     math_envs
     + table_envs
