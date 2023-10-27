@@ -46,8 +46,9 @@ def generate_bb(filename: str, laparams=None) -> Dict[int, List[LTComponent]]:
     for page_index, page_layout in enumerate(page_layouts):
         file_elements[page_index] = []
         file_elements[page_index].append(page_layout)
-        # TODO: extract te color
         for element in page_layout:
+            if isinstance(element, LTLine):
+                continue
             file_elements[page_index].append(element)
 
     file_elements = geometry.merge_bb(file_elements)
