@@ -23,6 +23,12 @@ for name in name2rgbcolor.keys():
     name2color[name] = name + "_color"
 
 
+# TODO: currently, code is classified as Algorithm
+# This line can be deleted to obtain the Code Class
+name2color['Code'] = name2color['Algorithm']
+
+
+
 category2hsv_bound = {}  # category: (lower_bound, upper_bound)
 for k, v in category2color.items():
     rgb_color = tuple(v)
