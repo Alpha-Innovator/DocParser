@@ -4,18 +4,16 @@ from rendering import render_simple_env
 from rendering import render_complex_env
 from logger import logger
 
-log = logger.setup_app_level_logger(file_name="app_debug.log")
+log = logger.setup_app_level_logger(file_name="app_debug.log", mode="a")
 
 
-def parse_arguments():
+def parse_arguments() -> str:
     """
     Parses the command line arguments and returns the values of the input
     tex file, and debug mode.
 
     Returns:
-        Tuple[str, str, bool]: A tuple containing
-        - the path to the input tex file,
-        - a boolean representing the debug mode.
+        str: The path to the input tex file,
     """
     parser = argparse.ArgumentParser()
 
