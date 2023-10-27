@@ -374,6 +374,7 @@ def enclose_tabular(data: List, color="cyan"):
                     enclose_tabular(value[CONTENT_INDEX], color)
             continue
 
+        texts["Table"].append(item)
         data[index] = {
             "BraceGroup": [
                 {"begin": "{"},
@@ -622,7 +623,7 @@ def render_env(main_content):
 
     enclose_equation(main_content, color=name2color["Equation"])
 
-    enclose_table(main_content, color=name2color["Table"])
+    enclose_tabular(main_content, color=name2color["Table"])
 
     enclose_footnote(main_content, color=name2color["Footnote"])
 
