@@ -51,7 +51,6 @@ def generate_bb(filename: str, laparams=None) -> Dict[int, List[LTComponent]]:
                 continue
             file_elements[page_index].append(element)
 
-    file_elements = geometry.merge_bb(file_elements)
     return file_elements
 
 
@@ -134,6 +133,7 @@ def generate_geometry_info(main_directory, filename):
     rendered_pdf = os.path.join(rendered_path, f"{filename}_rendered_colored.pdf")
     laparams = LAParams(**config.config["laparams"])
     file_elements = generate_bb(rendered_pdf, laparams)
+    file_elements = geometry.merge_bb(file_elements)
 
     # generate object detection info
     geometry_info = defaultdict(list)  # geometry info member of COCO
