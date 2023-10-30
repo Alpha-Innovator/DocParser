@@ -114,10 +114,40 @@ def export_to_coco(
         json.dump(result, f)
 
 
-def merge_geometry_info(info, info_complex):
-    for page_index, page_elements in info.items():
-        info[page_index].extend(info_complex[page_index])
-    return info
+def merge_info(
+    geometry_info, geometry_info_complex, category_info, category_info_complex
+):
+    # TODO: post process
+    for page_index, complex_elements in geometry_info_complex.items():
+        for complex_element in complex_elements:
+            for index, element in enumerate(geometry_info[page_index]):
+                if isinstance(element, LTPage):
+                    continue
+
+                x0, y0, x1, y1 = complex_element.bbox
+                x2, y2, x3, y3 = element.bbox
+
+                if geometry.inside_bb(complex_element, element):
+                    # TODO: delete bbox is it is empty
+                    element.bbox = (x2, y2, x3, y0)
+                    geometry_info[page_index].append(LTComponent(bbox=(x2, y1, x3, y3)))
+                    category_info[page_index].append(category_info[page_index][index])
+                    break
+                
+                # FIXME: still have bugs
+                if geometry.intersects_bb(complex_element, element):
+                    # shrink up
+                    if y0 <= y3 <= y1:
+                        element.bbox = (x2, y2, x3, y0)
+                        break
+                    # shrink down
+                    if y0 <= y2 <= y1:
+                        element.bbox = (x2, y1, x3, y3)
+                        break
+
+        geometry_info[page_index].extend(geometry_info_complex[page_index])
+        category_info[page_index].extend(category_info_complex[page_index])
+    return geometry_info, category_info
 
 
 def merge_category_info(info, info_complex):
@@ -208,8 +238,10 @@ def main():
         main_directory
     )
 
-    geometry_info = merge_geometry_info(geometry_info, geometry_info_complex)
-    category_info = merge_category_info(category_info, category_info_complex)
+    geometry_info, category_info = merge_info(
+        geometry_info, geometry_info_complex, category_info, category_info_complex
+    )
+    # category_info = merge_category_info(category_info, category_info_complex)
 
     image_info = generate_image_info(
         file_name, main_directory, geometry_info, category_info
