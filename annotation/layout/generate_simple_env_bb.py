@@ -6,7 +6,7 @@ import numpy as np
 import cv2
 
 from pdfminer.high_level import extract_pages
-from pdfminer.layout import LAParams, LTComponent, LTFigure, LTLine
+from pdfminer.layout import LAParams, LTComponent, LTFigure, LTLine, LTPage
 
 from logger import logger
 from rendering import envs
@@ -128,12 +128,38 @@ def generate_category_info(filename, main_directory, geometry_info):
     return category_info
 
 
+def finetune_figures(file_elements):
+    for page_index, page_elements in file_elements.items():
+        for index, figure_element in enumerate(page_elements):
+            if not isinstance(figure_element, LTFigure):
+                continue
+
+            for other_element in page_elements:
+                if isinstance(other_element, LTFigure):
+                    continue
+                if isinstance(other_element, LTPage):
+                    continue
+                if not geometry.intersects_bb(figure_element, other_element):
+                    continue
+
+                x0, y0, x1, y1 = figure_element.bbox
+                x2, y2, x3, y3 = other_element.bbox
+                if y0 <= y3 <= y1:
+                    figure_element.bbox = (x0, y3, x1, y1)
+                    break
+                # shrink down
+                if y0 <= y2 <= y1:
+                    figure_element.bbox = (x0, y0, x1, y2)
+                    break
+
+
 def generate_geometry_info(main_directory, filename):
     rendered_path = os.path.join(main_directory, "colored")
     rendered_pdf = os.path.join(rendered_path, f"{filename}_rendered_colored.pdf")
     laparams = LAParams(**config.config["laparams"])
     file_elements = generate_bb(rendered_pdf, laparams)
     file_elements = geometry.merge_bb(file_elements)
+    finetune_figures(file_elements)
 
     # generate object detection info
     geometry_info = defaultdict(list)  # geometry info member of COCO
