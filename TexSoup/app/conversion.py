@@ -1,10 +1,7 @@
 import re
 
 from TexSoup.TexSoup import TexSoup
-from TexSoup.TexSoup.data import TexEnv
-from TexSoup.TexSoup.data import TexText
-from TexSoup.TexSoup.data import TexCmd
-from TexSoup.TexSoup.data import TexGroup
+from TexSoup.TexSoup.data import TexEnv, TexText, TexCmd, TexGroup
 
 
 from logger import logger
@@ -14,7 +11,7 @@ log = logger.get_logger(__name__)
 
 
 def remove_outer_curly_brackets(text):
-    pattern = r'^\{(.*)\}$'
+    pattern = r"^\{(.*)\}$"
     match = re.match(pattern, text)
     if match:
         return match.group(1)
