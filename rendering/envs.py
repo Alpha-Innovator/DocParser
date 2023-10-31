@@ -4,7 +4,8 @@ math_envs = [
     "align",
     "align*",
     "$$",
-    "displaymath",
+    "displaymath",  # see TexSoup.TexSoup.data.TexDisplayMathEnv
+    "math",  # see TexSoup.TexSoup.data.TexMathEnv
     "gather",
     "gather*",
     "flalign",
@@ -16,6 +17,7 @@ math_envs = [
     "split",
 ]
 
+inline_math_envs = ['$', 'math']
 
 section_envs = ["section", "subsection", "section*", "subsection*"]
 table_envs = ["table", "table*", "wraptable"]
@@ -29,7 +31,7 @@ algorithm_envs = [
     "algorithmic*",
     "algorithm2e",
 ]
-list_envs = ["itemize", "enumerate"]
+list_envs = ["itemize", "enumerate", "description"]
 reference_envs = ["bibliography"]
 caption_envs = table_envs + figure_envs + algorithm_envs
 footnote_envs = ["footnote", "footnote*", "footnote**"]
@@ -50,3 +52,7 @@ non_text_envs = (
 
 
 complex_env_list = ["Algorithm", "Equation", "Table", "List", "Code"]
+
+
+# these envs or commands will not be parsed
+ignore_envs = ["cite", "eqref", "ref", "emph", "textbf", "textit"]
