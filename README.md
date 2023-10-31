@@ -1,14 +1,9 @@
 # vrdu_data_process
 This repository is used to process paper with `.tex` source files.
 
-# Roadmap
-- [ ] text-bb matching
-- [ ] improved merge_bb
-- [ ] `text.json` output
-
 
 # Install
-First create a conda environment (if Anaconda has not been installed, see [installtion](https://docs.anaconda.com/free/anaconda/install/index.html))
+First create a conda environment (if Anaconda has not been installed, see [installation](https://docs.anaconda.com/free/anaconda/install/index.html))
 ```shell
 conda create --name vrdu 
 ```
@@ -83,6 +78,7 @@ Explanation:
 
 # Acknowledgements
 This project is based on the following python packages:
-- [Texsoup](https://texsoup.alvinwan.com/)
-- [pdf2image](https://pypi.org/project/pdf2image/)
-- [pdfminer.six](https://pdfminersix.readthedocs.io/en/latest/index.html)
+- [Texsoup](https://texsoup.alvinwan.com/)  
+- [pdf2image](https://pypi.org/project/pdf2image/)  
+- [pdfminer.six](https://pdfminersix.readthedocs.io/en/latest/index.html)  
+- [arxiv_cleaner](https://github.com/elsa-lab/arxiv-cleaner.git)
