@@ -39,6 +39,8 @@ def convert_paths_to_unix_style(paths):
 
 
 def copy_file(src, dst):
+    if (src == dst):
+        return
     shutil.copyfile(src, dst)
 
 
