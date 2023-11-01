@@ -19,7 +19,7 @@ output_filename="${input_filename}_rendered"
 # resolve imputs, remove comments, reduce empty lines
 clean_tex --input "$input_directory" --output "$input_directory" --tex "$filename_with_extension"
 # crop pdf image and convert into png files
-run_preprocess --input_tex "$input_tex"
+process_images --input_tex "$input_tex"
 
 # store the result
 output_directory="$input_directory/output"

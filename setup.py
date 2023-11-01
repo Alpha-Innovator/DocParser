@@ -36,7 +36,7 @@ setup(
             "output_layout_annotation = scripts.output_layout_annotation:main",
             "output_reading_annotation = scripts.output_reading_annotation:main",
             "visualize = scripts.visualize:main",
-            "run_preprocess = scripts.run_preprocess:main",
+            "process_images = scripts.process_images:main",
             "clean_tex = arxiv_cleaner.main:main",
         ],
     },
