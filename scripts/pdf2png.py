@@ -15,8 +15,7 @@ def pdf2jpg(pdf: str, path: str) -> None:
     Returns:
         None
     """
-    if not os.path.exists(path):
-        os.makedirs(path)
+    os.makedirs(path, exist_ok=True)
     pdf_name = os.path.splitext(os.path.basename(pdf))[0]
     images = convert_from_path(pdf)
     for page_index, image in enumerate(images):
