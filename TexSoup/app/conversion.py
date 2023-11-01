@@ -19,6 +19,20 @@ def remove_outer_curly_brackets(text):
         return text
 
 
+def split_on_double_newline(text):
+    if text == "\n\n":
+        return text, None, None
+
+    match = re.search(r"(\n\n)", text)
+    if match:
+        before = text[: match.start()]
+        delimiter = match.group(1)
+        after = text[match.end() :]
+        return before, delimiter, after
+    else:
+        return text, None, None
+
+
 def to_list(tex_tree):
     # TODO: simplify code logic, especially for text envs
     str_tree = []
@@ -27,10 +41,7 @@ def to_list(tex_tree):
             str_tree.append(i)
         elif isinstance(i, TexEnv):
             if i.name in envs.inline_math_envs:  # inline math mode
-                if isinstance(str_tree[-1], str):
-                    str_tree[-1] += str(i)
-                else:
-                    str_tree.append(str(i))
+                str_tree.append(str(i))
             elif (
                 i.name
                 in envs.math_envs
@@ -40,12 +51,11 @@ def to_list(tex_tree):
             ):
                 str_tree.append({i.name: str(i)})
             else:
-                index = len(i.args)
                 str_tree.append(
                     {
                         i.name: [
                             {"begin": i.begin + str(i.args)},
-                            to_list(i.all[index:]),
+                            to_list(i.all[len(i.args) :]),
                             {"end": i.end},
                         ]
                     }
@@ -58,27 +68,33 @@ def to_list(tex_tree):
                 parameter_text = i.args[1].string
                 str_tree.append({i.name: "\\" + i.name + macro_name + parameter_text})
             elif i.name in envs.ignore_envs:
-                if isinstance(str_tree[-1], str):
-                    str_tree[-1] += str(i)
-                else:
-                    str_tree.append(str(i))
+                str_tree.append(str(i))
             else:
                 str_tree.append({i.name: "\\" + i.name + str(i.args)})
         elif isinstance(i, TexText):
-            if str_tree and isinstance(str_tree[-1], str):
-                str_tree[-1] += str(i.text)
-            else:
-                str_tree.append(str(i.text))
+            str_tree.append(str(i.text))
         elif isinstance(i, TexGroup):
             str_tree.append(["{", to_list(TexSoup(i.value).expr.all), "}"])
         else:
-            if str_tree and isinstance(str_tree[-1], str):
-                str_tree[-1] += str(i)
-            else:
-                str_tree.append(str(i))
+            str_tree.append(str(i))
 
-    if str_tree and isinstance(str_tree[-1], str):
-        pass
+        # merge texts
+        if (
+            len(str_tree) >= 2
+            and isinstance(str_tree[-1], str)
+            and isinstance(str_tree[-2], str)
+        ):
+            cur = str_tree.pop()
+            str_tree[-1] += cur
+
+        # split texts into paragraphs with '\n\n'
+        if isinstance(str_tree[-1], str):
+            before, delimiter, after = split_on_double_newline(str_tree[-1])
+            str_tree[-1] = before
+            if delimiter:
+                str_tree.append(delimiter)
+            if after:
+                str_tree.append(after)
 
     return str_tree
 
