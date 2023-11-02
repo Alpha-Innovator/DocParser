@@ -42,87 +42,6 @@ def find_env(wrapped_env: dict, query: List[str]) -> Union[str, None]:
     return None
 
 
-def add_usepackage_command(data, package: str) -> None:
-    """
-    Adds a usepackage command to the given data.
-
-    Parameters:
-    - data: A list representing the document data.
-    - package: The name of the package to use.
-
-    Returns:
-    None.
-    """
-    # find the index of documentclass
-    index = -1
-    for index, item in enumerate(data):
-        if isinstance(item, dict) and "documentclass" in item:
-            index = index
-            break
-
-    if index == -1:
-        raise Exception("documentclass not found")
-
-    # add usepackage in rendered document
-    # notice: multiple inclusion will be ignored, so this addition is safe
-    data.insert(index + 1, "\n")  # for clarity
-    data.insert(index + 2, {"usepackage": "\\usepackage{" + package + "}"})
-    data.insert(index + 3, "\n")  # for clarity
-
-
-def enclose_abstract(data, title_color="red", text_color="green"):
-    """
-    Encloses the abstract section of a document with specified
-    title and text colors.
-
-    Parameters:
-        data (list): The list representing the document structure.
-        title_color (str, optional): The color of the abstract title.
-            Defaults to "red".
-        text_color (str, optional): The color of the abstract text.
-            Defaults to "green".
-
-    Raises:
-        Exception: If the documentclass is not found.
-
-    """
-    document_index = -1
-    for index, item in enumerate(data):
-        if isinstance(item, dict) and "document" in item:
-            document_index = index
-            break
-
-    if document_index == -1:
-        raise Exception("documentclass not found")
-
-    # enclose title with renewcommand
-    data.insert(document_index, "\n")  # for clarity
-    data.insert(
-        document_index,
-        {
-            "renewcommand": f"\\renewcommand{{\\abstractname}}{{\\color{{{title_color}}}Abstract}}\n"
-        },
-    )
-    data.insert(document_index, "\n")  # for clarity
-
-    # enclose the content of the abstract
-    main_content = data[document_index + 3]["document"][1]
-    for index, item in enumerate(main_content):
-        if isinstance(item, dict) and "abstract" in item:
-            texts["abstract"] = item["abstract"][CONTENT_INDEX]
-            item["abstract"][CONTENT_INDEX] = {
-                "color": [
-                    "\\color{{{}}}{{".format(text_color),
-                    *item["abstract"][CONTENT_INDEX],
-                    "}\n",
-                ]
-            }
-
-            break
-
-    data[document_index + 3]["document"][1] = main_content
-
-
 def add_color_definition(latex_file):
     with open(latex_file, "r") as f:
         content = f.read()
@@ -240,46 +159,7 @@ def enclose_list(data: List, color: str = "yellow") -> None:
             continue
 
         texts["List"].append(item[env])
-        data[index] = {
-            "BraceGroup": [
-                {"begin": "{"},
-                [{"color": [f"\\color{{{color}}}\n", *item[env], "\n"]}],
-                {"end": "}"},
-            ]
-        }
-
-
-def enclose_caption_inside_env(data, color="orange") -> None:
-    """
-    Encloses the caption of each item in the given data with color formatting.
-
-    Args:
-        data (list): A list of items.
-        color (str, optional): The color to use for the caption formatting.
-            Defaults to 'orange'.
-
-    Returns:
-        None
-
-    Raises:
-        None
-    """
-    for index, item in enumerate(data):
-        if not isinstance(item, dict):
-            continue
-
-        if "caption" not in item:
-            for key, value in item.items():
-                if isinstance(value, list):
-                    enclose_caption_inside_env(value[CONTENT_INDEX], color)
-            continue
-
-        texts["Caption"].append(item["caption"])
-        caption_text = item["caption"][9:-1]
-        rendered_caption = "\\{}{{\\textcolor{{{}}}{{{}}}}}".format(
-            "caption", color, caption_text
-        )
-        item["caption"] = rendered_caption
+        item[env] = r"{\color{" + color + "}{" + item[env] + "}}"
 
 
 def enclose_caption(data, color="orange") -> None:
@@ -375,38 +255,7 @@ def enclose_tabular(data: List, color="cyan"):
                     enclose_tabular(value[CONTENT_INDEX], color)
             continue
 
-        texts["Table"].append(item)
-        data[index] = {
-            "BraceGroup": [
-                {"begin": "{"},
-                [
-                    {
-                        "color": [
-                            "\\color{{{}}}\n".format(color),
-                            *item[env],
-                            "\n",
-                        ]
-                    }
-                ],
-                {"end": "}"},
-            ]
-        }
-
-
-def enclose_table(data, color="cyan") -> None:
-    for item in data:
-        if not isinstance(item, dict):
-            continue
-
-        env = find_env(item, envs.table_envs)
-        if env is None:
-            for key, value in item.items():
-                if isinstance(value, list):
-                    enclose_table(value[CONTENT_INDEX], color)
-            continue
-
-        texts["Table"].append(item)
-        enclose_tabular(item[env][CONTENT_INDEX], color)
+        item[env] = r"{\color{" + color + "}{" + item[env] + "}}"
 
 
 def enclose_footnote(data, color="red") -> None:
