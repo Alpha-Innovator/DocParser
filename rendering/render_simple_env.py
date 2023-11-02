@@ -282,75 +282,52 @@ def enclose_footnote(data, color="red") -> None:
         if env is None:
             continue
 
-        footnote_text = item[env][len(env) + 2 : -1]
-        rendered_footnote = "\\{}{{\\color{{{}}}{{{}}}}}".format(
-            env, color, footnote_text
-        )
-        item[env] = rendered_footnote
-        texts["Footnote"].append(footnote_text)
 
+def is_text_eq(text: str):
+    """
+    Check if the given text is equal to a specific expression.
 
-def enclose_text(data, color="olive"):
-    result = []
-    current_group = []
+    Args:
+        text (str): The text to be checked.
 
-    for item in data:
-        if isinstance(item, dict):
-            # check if is an environment
-            if find_env(item, envs.non_text_envs) is not None:
-                if current_group:
-                    result.append(current_group)
-                    current_group = []
-                result.append(item)
-            else:
-                current_group.append(item)
-        elif isinstance(item, str):
-            if item == "\n":
-                if current_group:
-                    result.append(current_group)
-                    current_group = []
-            else:
-                index = item.find("\n\n")
-                # break two paragraphs
-                if index != -1:
-                    current_group.append(item[:index])
-                    result.append(current_group)
-                    current_group = []
-                    result.append("\n")
-                    result.append("\n")
-                    current_group.append(item[index + 2 :])
-                else:
-                    current_group.append(item)
-        else:
-            raise ValueError(f"Unknown type: {type(item)}")
+    Returns:
+        bool: True if the text is equal to the expression, False otherwise.
 
-    if current_group:
-        result.append(current_group)
+    Reference:
+        https://www.overleaf.com/learn/latex/Mathematical_expressions
+        See also: TexSoup/TexSoup/data.py, TexMathModeEnv, TexMathEnv
+    """
+    parsed = TexSoup(text).expr.all
 
-    for index, item in enumerate(result):
-        if isinstance(item, dict):
+    for element in parsed:
+        if not isinstance(element, TexEnv):
             continue
-        if isinstance(item, str):
+        if element.name in ["math", "$"]:
+            return True
+
+    return False
+
+
+def enclose_text(data, text_color="olive", text_eq_color="green") -> None:
+    for index, item in enumerate(data):
+        if not isinstance(item, str):
             continue
-        # list
+
+        if not item or item == "\n" or item == "\n\n" or item.isspace():
+            continue
+
         texts["Text"].append(item)
-        result[index] = {
-            "BraceGroup": [
-                {"begin": "{"},
-                [
-                    {
-                        "color": [
-                            "\\color{{{}}}\n".format(color),
-                            *item,
-                            "\n",
-                        ]
-                    }
-                ],
-                {"end": "}\n"},
-            ]
-        }
 
-    return result
+        if is_text_eq(item):
+            data[index] = r"\textcolor{" + text_eq_color + "}{" + item + "}"
+        else:
+            data[index] = "\\textcolor{" + text_color + "}{" + item + "}"
+
+        # format
+        if item[0] == "\n":
+            data[index] = "\n" + data[index]
+        if item[-1] == "\n":
+            data[index] += "\n"
 
 
 def enclose_reference(data, color="violet") -> None:
