@@ -33,7 +33,7 @@ algorithm_envs = [
 ]
 list_envs = ["itemize", "enumerate", "description"]
 reference_envs = ["bibliography"]
-caption_envs = table_envs + figure_envs + algorithm_envs
+caption_envs = ["caption", "caption*"]
 footnote_envs = ["footnote", "footnote*", "footnote**"]
 code_envs = ["verbatim", "verbatim*", "lstlisting", "lstinputlisting"]
 non_text_envs = (
