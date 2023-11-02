@@ -413,7 +413,9 @@ def render_env(main_content):
 
     enclose_code(main_content, color=name2color["Code"])
 
-    enclose_text(main_content, text_color=name2color["Text"])
+    enclose_text(
+        main_content, text_color=name2color["Text"], text_eq_color=name2color["Text-EQ"]
+    )
 
 
 def save_texts(file="texts.json"):
