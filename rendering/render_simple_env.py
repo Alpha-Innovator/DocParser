@@ -3,11 +3,13 @@ import os
 import re
 import shutil
 from typing import Union, List
+from TexSoup.TexSoup.data import TexEnv
 import logger.logger as logger
 from rendering import utils
 from rendering import envs
 
 from config import config
+from TexSoup.TexSoup import TexSoup
 
 log = logger.get_logger(__name__)
 
@@ -72,37 +74,21 @@ def add_color_definition(latex_file):
 
 
 def enclose_title(data, color="red") -> None:
-    """
-    Encloses the title of each dictionary item in the given data list with
-        LaTeX formatting and a specified color.
+    # TODO: add title rendering
+    pass
+    # for item in data:
+    #     if not isinstance(item, dict):
+    #         continue
 
-    Parameters:
-        data (list[dict]): A list of dictionaries containing the
-            items to be modified.
-        color (str): The color to use for the enclosed title.
-            Defaults to 'red'.
+    # env = find_env(item, envs.title_envs)
+    # if env is None:
+    #     for key, value in item.items():
+    #         if not isinstance(value, list):
+    #             continue
+    #         enclose_title(value[CONTENT_INDEX], color)
 
-    Returns:
-        None
-
-    Notes:
-        - The function modifies the 'title' key in each dictionary item
-            in the data list.
-        - The function assumes that each dictionary item in the data list
-            has a 'title' key.
-        - The function uses LaTeX formatting to enclose the title text in
-            the specified color.
-    """
-    for item in data:
-        if isinstance(item, dict) and "title" in item:
-            index = item["title"].find("\\title{")
-            # 9 is the length of prefix of title text
-            title_text = item["title"][index + 9 : -1]
-            rendered_title = "\\title{{\\textcolor{{{}}}{{{}}}}}".format(
-                color, title_text
-            )
-            item["title"] = rendered_title
-            texts["Title"].append(title_text)
+    # texts["Title"].append(item[env])
+    # item[env] = r"\color{" + color + "}{" + item[env] + "}"
 
 
 def enclose_section(data, color="red") -> None:
@@ -120,7 +106,7 @@ def enclose_section(data, color="red") -> None:
     Raises:
         Exception: If a 'section' or 'subsection' key is not found in the data.
     """
-    for index, item in enumerate(data):
+    for item in data:
         if not isinstance(item, dict):
             continue
 
@@ -129,11 +115,8 @@ def enclose_section(data, color="red") -> None:
             continue
 
         texts["Title"].append(item[env])
-        section_text = item[env][len(env) + 2 : -1]
-        rendered_section = "\\{}{{\\textcolor{{{}}}{{{}}}}}".format(
-            env, color, section_text
-        )
-        item[env] = rendered_section
+        title_text = item[env][len(env) + 2 : -1]
+        item[env] = "\\" + env + "{" + r"\textcolor{" + color + "}{" + title_text + "}}"
 
 
 def enclose_list(data: List, color: str = "yellow") -> None:
@@ -150,12 +133,16 @@ def enclose_list(data: List, color: str = "yellow") -> None:
         None
     """
 
-    for index, item in enumerate(data):
+    for item in data:
         if not isinstance(item, dict):
             continue
 
         env = find_env(item, envs.list_envs)
         if env is None:
+            for key, value in item.items():
+                if not isinstance(value, list):
+                    continue
+                enclose_list(value[CONTENT_INDEX], color)
             continue
 
         texts["List"].append(item[env])
@@ -183,9 +170,14 @@ def enclose_caption(data, color="orange") -> None:
 
         env = find_env(item, envs.caption_envs)
         if env is None:
+            for key, value in item.items():
+                if not isinstance(value, list):
+                    continue
+                enclose_caption(value[CONTENT_INDEX], color)
             continue
 
-        enclose_caption_inside_env(item[env][CONTENT_INDEX], color)
+        texts["Caption"].append(item[env])
+        item[env] = r"\color{" + color + "}{" + item[env] + "}"
 
 
 def enclose_equation(data, color="green") -> None:
@@ -203,33 +195,17 @@ def enclose_equation(data, color="green") -> None:
         if not isinstance(item, dict):
             continue
 
-        if find_env(item, envs.algorithm_envs) is not None:
-            continue
-
         env = find_env(item, envs.math_envs)
 
         if env is None:
             for key, value in item.items():
-                if isinstance(value, list):
-                    enclose_equation(value[CONTENT_INDEX], color)
+                if not isinstance(value, list):
+                    continue
+                enclose_equation(value[CONTENT_INDEX], color)
             continue
 
-        texts["Equation"].append(item)
-        item[env] = {
-            "BraceGroup": [
-                {"begin": "{"},
-                [
-                    {
-                        "color": [
-                            "\\color{{{}}}\n".format(color),
-                            item[env],
-                            "\n",
-                        ]
-                    }
-                ],
-                {"end": "}"},
-            ]
-        }
+        texts["Equation"].append(item[env])
+        item[env] = r"{\color{" + color + "}{" + item[env] + "}}"
 
 
 def enclose_tabular(data: List, color="cyan"):
@@ -244,7 +220,7 @@ def enclose_tabular(data: List, color="cyan"):
     Returns:
         None
     """
-    for index, item in enumerate(data):
+    for item in data:
         if not isinstance(item, dict):
             continue
 
@@ -255,6 +231,7 @@ def enclose_tabular(data: List, color="cyan"):
                     enclose_tabular(value[CONTENT_INDEX], color)
             continue
 
+        texts["Table"].append(item[env])
         item[env] = r"{\color{" + color + "}{" + item[env] + "}}"
 
 
@@ -280,7 +257,14 @@ def enclose_footnote(data, color="red") -> None:
             continue
         env = find_env(item, envs.footnote_envs)
         if env is None:
+            for key, value in item.items():
+                if not isinstance(value, list):
+                    continue
+                enclose_footnote(value[CONTENT_INDEX], color)
             continue
+
+        texts["Footnote"].append(item[env])
+        item[env] = r"{\color{" + color + "}{" + item[env] + "}}"
 
 
 def is_text_eq(text: str):
@@ -331,7 +315,7 @@ def enclose_text(data, text_color="olive", text_eq_color="green") -> None:
 
 
 def enclose_reference(data, color="violet") -> None:
-    for index, item in enumerate(data):
+    for item in data:
         if not isinstance(item, dict):
             continue
 
@@ -339,43 +323,23 @@ def enclose_reference(data, color="violet") -> None:
         if env is None:
             continue
 
-        data[index] = {
-            "BraceGroup": [
-                {"begin": "{"},
-                [
-                    "\n",
-                    {"color": "\\color{{{}}}{{{}}}\n".format(color, item[env])},
-                    "\n",
-                ],
-                {"end": "}"},
-            ]
-        }
+        item[env] = r"{\color{" + color + "}\n" + item[env] + "}"
 
 
-def enclose_graphics_inside_figure(data, color="black"):
-    for index, item in enumerate(data):
+def extract_figures(data):
+    for item in data:
         if not isinstance(item, dict):
             continue
 
         env = find_env(item, envs.graphic_envs)
         if env is None:
             for key, value in item.items():
-                if isinstance(value, list):
-                    enclose_graphics_inside_figure(value[CONTENT_INDEX], color)
-        else:
-            texts["Figure"].append(item[env])
-
-
-def enclose_figure(data, color="black"):
-    for item in data:
-        if not isinstance(item, dict):
+                if not isinstance(value, list):
+                    continue
+                extract_figures(value[CONTENT_INDEX])
             continue
 
-        env = find_env(item, envs.figure_envs)
-        if env is None:
-            continue
-
-        enclose_graphics_inside_figure(item[env][CONTENT_INDEX], color)
+        texts["Figure"].append(item[env])
 
 
 def enclose_algorithm(data, color="pink"):
@@ -400,16 +364,17 @@ def enclose_algorithm(data, color="pink"):
 
         if env is None:
             for key, value in item.items():
-                if isinstance(value, list):
-                    enclose_algorithm(value[CONTENT_INDEX], color)
+                if not isinstance(value, list):
+                    continue
+                enclose_algorithm(value[CONTENT_INDEX], color)
             continue
 
-        texts["Algorithm"].append(item)
-        item[env][1].insert(0, {"color": "\n\\color{{{}}}".format(color)})
+        texts["Algorithm"].append(item[env])
+        item[env] = r"{\color{" + color + "}" + item[env] + "}"
 
 
 def enclose_code(data, color="blue"):
-    for index, item in enumerate(data):
+    for item in data:
         if not isinstance(item, dict):
             continue
 
@@ -417,31 +382,17 @@ def enclose_code(data, color="blue"):
 
         if env is None:
             for key, value in item.items():
-                if isinstance(value, list):
-                    enclose_code(value[CONTENT_INDEX], color)
+                if not isinstance(value, list):
+                    continue
+                enclose_code(value[CONTENT_INDEX], color)
             continue
 
-        texts["Code"].append(item)
-        data[index] = {
-            "BraceGroup": [
-                {"begin": "{"},
-                [
-                    {
-                        "color": [
-                            "\\color{{{}}}\n".format(color),
-                            *item[env],
-                            "\n",
-                        ]
-                    }
-                ],
-                {"end": "}"},
-            ]
-        }
+        texts["Code"].append(item[env])
+        item[env] = r"{\color{" + color + "}" + item[env] + "}"
 
 
 def render_env(main_content):
     name2color = config.name2color
-
     enclose_section(main_content, color=name2color["Title"])
 
     enclose_list(main_content, color=name2color["List"])
@@ -458,12 +409,11 @@ def render_env(main_content):
 
     enclose_algorithm(main_content, color=name2color["Algorithm"])
 
-    enclose_figure(main_content, color=name2color["Figure"])
+    # extract_figures(main_content)
 
     enclose_code(main_content, color=name2color["Code"])
 
-    # main_content = enclose_text(main_content, color=name2color["Text"])
-    # data[index]["document"][1] = main_content
+    enclose_text(main_content, text_color=name2color["Text"])
 
 
 def save_texts(file="texts.json"):
