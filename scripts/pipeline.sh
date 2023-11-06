@@ -81,4 +81,10 @@ rm -r "$target_dir"
 rm "$file"
 done
 
+# Clean up auxiliary files
+rm -f "*.aux" "*.bbl" "*.blg" "*.log" "*.out" 
+rm -f "*.toc" "*.dvi" "*Notes.bib" "*.brf" "*.vtc" 
+rm -f "*.axp" "*.loc" "*.pdfsync" "*.pag"
+rm -f "*.abs" "*.spl" "*.bcf"
+
 echo "[$script_name] Total execution time: $SECONDS seconds"

@@ -43,11 +43,6 @@ else
     pdflatex -interaction=nonstopmode  "$main_file.tex" > /dev/null
 fi
 
-# Clean up auxiliary files
-rm -f "$main_file.aux" "$main_file.bbl" "$main_file.blg" "$main_file.log" "$main_file.out" 
-rm -f "$main_file.toc" "$main_file.dvi" "{$main_file}Notes.bib" "$main_file.brf" "$main_file.vtc" 
-rm -f "$main_file.axp" "$main_file.loc" "$main_file.pdfsync" "$main_file.pag"
-rm -f "$main_file.abs" "$main_file.spl" "$main_file.bcf"
 
 # Change back to the original directory
 cd "$original_dir"
