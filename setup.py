@@ -38,6 +38,7 @@ setup(
             "visualize = scripts.visualize:main",
             "process_images = scripts.process_images:main",
             "clean_tex = arxiv_cleaner.main:main",
+            "extract_layout_information = scripts.extract_layout_information:main",
         ],
     },
 )
