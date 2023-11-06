@@ -422,6 +422,35 @@ def save_texts(file="texts.json"):
     utils.export_to_json(texts, file)
 
 
+def add_layout_definition(main_content: List):
+    definitions = [
+        "\n\n",
+        {
+            "message": "\\message{[vrdu_data_process: The columnwidth is: \\the\\columnwidth]}"
+        },
+        "\n\n",
+        {
+            "message": "\\message{[vrdu_data_process: The columnsep is: \\the\\columnsep]}"
+        },
+        "\n\n",
+        {
+            "message": "\\message{[vrdu_data_process: The textwidth is: \\the\\textwidth]}"
+        },
+        "\n\n",
+        {
+            "message": "\\message{[vrdu_data_process: The paperwidth is: \\the\\paperwidth]}"
+        },
+        "\n\n",
+        {"message": "\\message{[vrdu_data_process: The hoffset is: \\the\\hoffset]}"},
+        "\n\n",
+        {
+            "message": "\\message{[vrdu_data_process: The oddsidemargin is: \\the\\oddsidemargin]}"
+        },
+        "\n\n",
+    ]
+    main_content.extend(definitions)
+
+
 def run(input_file, debug_mode=False):
     origin_dir = os.path.dirname(input_file)
     file_name = os.path.splitext(os.path.basename(input_file))[0]
@@ -430,6 +459,7 @@ def run(input_file, debug_mode=False):
     add_color_definition(output_file)
 
     main_content, start, end = utils.data_from_tex_file(output_file)
+    add_layout_definition(main_content)
     render_env(main_content)
 
     text_file = os.path.join(origin_dir, "output/result/" + "texts.json")
