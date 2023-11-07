@@ -56,3 +56,22 @@ complex_env_list = ["Text-EQ", "Algorithm", "Equation", "Table", "List", "Code",
 
 # these envs or commands will not be parsed
 ignore_envs = ["cite", "eqref", "ref", "emph", "textbf", "textit"]
+
+
+text_envs = [
+    "theorem",
+    "thm",
+    "definition",
+    "lemma",
+    "remark",
+    "corollary",
+    "proposition",
+    "example",
+    "proof",
+    "axiom",
+    "conjecture",
+    "exercise",
+    "question",
+    "solution",
+    "abstract",
+]

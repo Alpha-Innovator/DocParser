@@ -297,6 +297,14 @@ def is_text_eq(text: str):
 def enclose_text(data, text_color="olive", text_eq_color="green") -> None:
     for index, item in enumerate(data):
         if not isinstance(item, str):
+            if not isinstance(item, dict):
+                continue
+            for key, value in item.items():
+                if key.lower() not in envs.text_envs:
+                    continue
+                if not isinstance(value, list):
+                    continue
+                enclose_text(value[CONTENT_INDEX], text_color, text_eq_color)
             continue
 
         if not item or item == "\n" or item == "\n\n" or item.isspace():
