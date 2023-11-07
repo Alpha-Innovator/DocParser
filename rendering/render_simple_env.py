@@ -302,12 +302,12 @@ def enclose_text(data, text_color="olive", text_eq_color="green") -> None:
         if not item or item == "\n" or item == "\n\n" or item.isspace():
             continue
 
-        texts["Text"].append(item)
-
         if is_text_eq(item):
             data[index] = r"\textcolor{" + text_eq_color + "}{" + item + "}"
+            texts["Text-EQ"].append(item)
         else:
             data[index] = "\\textcolor{" + text_color + "}{" + item + "}"
+            texts["Text"].append(item)
 
         # format
         if item[0] == "\n":
