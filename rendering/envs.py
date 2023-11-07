@@ -51,7 +51,18 @@ non_text_envs = (
 )
 
 
-complex_env_list = ["Text-EQ", "Algorithm", "Equation", "Table", "List", "Code", "Text", "Title", "Caption", "Footnote"]
+complex_env_list = [
+    "Text-EQ",
+    "Algorithm",
+    "Equation",
+    "Table",
+    "List",
+    "Code",
+    "Text",
+    "Title",
+    "Caption",
+    "Footnote",
+]
 
 
 # these envs or commands will not be parsed
