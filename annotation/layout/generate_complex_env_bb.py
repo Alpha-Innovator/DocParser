@@ -1,19 +1,18 @@
 from collections import defaultdict
 import os
 import glob
-from typing import Dict
+from typing import Any, Dict, List, Tuple
 import matplotlib.pyplot as plt
-import argparse
 import numpy as np
 from skimage.measure import label, regionprops
 import re
-from PIL import Image, ImageDraw
 from tqdm import tqdm
 
 from pdfminer.layout import LTComponent
 from rendering import envs
 from logger import logger
 from config import config
+from rendering.utils import load_json
 
 log = logger.get_logger(__name__)
 
@@ -59,105 +58,146 @@ def get_image_pairs(dir1: str, dir2: str):
     return image_pairs
 
 
-def generate_bounding_box(image_pairs, threshold=0.3):
-    result = defaultdict(list)
-    for image_pair in image_pairs:
-        page_index = image_pair[0]
+class LayoutAnnotation:
+    def __init__(self, directory: str, layout_metadata: Dict[str, float]) -> None:
+        self.directory = directory
+        self.background_dir = os.path.join(directory, "white")
+        self.env_dirs = self.get_matching_subdirectories()
+        self.layout_metadata = self.parse_metadata(layout_metadata)
 
-        image1 = plt.imread(image_pair[1])
-        image1_array = np.array(image1, dtype=np.uint8)
+    def parse_metadata(self, layout_metadata: Dict[str, Any]) -> Dict[str, Any]:
+        # TODO: move this to config
+        ppi = 72
+        ONE_INCH = 72.27
+        pt2px = ppi / ONE_INCH
+        image_height, pdf_height = 2200, 792
+        pdf_width = 612
+        px2img = image_height / pdf_height
+        textwidth = layout_metadata["textwidth"]
+        columnsep = layout_metadata["columnsep"]
+        columnwidth = layout_metadata["columnwidth"]
 
-        image2 = plt.imread(image_pair[2])
-        image2_array = np.array(image2, dtype=np.uint8)
+        # textwidth = n * columnwidth + (n - 1) * columnsep
+        num_columns = round((textwidth + columnsep) / (columnwidth + columnsep))
+        layout_metadata["num_columns"] = num_columns
+        # this member stores the boundary for each column,
+        # if one column, it is [0, page_width]
+        # if two column, it is [0, columnwidth + columnsep / 2, page_width]
+        # if three column, it is [0, columnwidth + columnsep / 2,
+        # 2 * columnwidth + 3 * columnsep / 2, page_width]
+        layout_metadata["separations"] = [0]
 
-        diff_image = np.abs(image2_array - image1_array, dtype=np.uint8)
-        binary_image = diff_image > threshold
-        labeled_image = label(binary_image)
+        # https://www.overleaf.com/learn/latex/Page_size_and_margins
+        element1 = ONE_INCH + layout_metadata["hoffset"]
+        element3 = layout_metadata["oddsidemargin"]
+        margin_width = element1 + element3
 
-        regions = regionprops(labeled_image)
-        bounding_boxes = [region.bbox for region in regions]
+        # x is the left boundary of a column
+        x = margin_width - columnsep
+        for i in range(num_columns - 1):
+            separation = x + columnwidth + columnsep
+            layout_metadata["separations"].append(separation * pt2px * px2img)
+            x += separation
 
-        if len(bounding_boxes) == 0:
-            continue
+        layout_metadata["separations"].append(pdf_width * px2img)
+        log.debug(f"Separations: {layout_metadata['separations']}")
 
-        min_x = min(bounding_boxes, key=lambda x: x[1])[1]
-        min_y = min(bounding_boxes, key=lambda x: x[0])[0]
-        max_x = max(bounding_boxes, key=lambda x: x[4])[4]
-        max_y = max(bounding_boxes, key=lambda x: x[3])[3]
+        return layout_metadata
 
-        element = LTComponent(bbox=(min_x, min_y, max_x, max_y))
-        result[page_index].append(element)
-        # result[page_index].append((min_x, min_y, max_x, max_y))
+    def get_matching_subdirectories(self) -> List[str]:
+        result = []
+        for name in os.listdir(self.directory):
+            if not os.path.isdir(os.path.join(self.directory, name)):
+                continue
+            if not any(name.startswith(prefix) for prefix in envs.complex_env_list):
+                continue
+            result.append(name)
+        return result
 
-    return result
+    def get_category(self, dir: str):
+        dir_name = os.path.basename(dir)
+        env_name = None
+        for env in envs.complex_env_list:
+            if dir_name.startswith(env):
+                env_name = env
 
+        if env_name is None:
+            raise ValueError(f"Invalid directory name: {dir_name}")
 
-def show_annotation(image_pair, bounding_boxes):
-    image_path = image_pair[2]
-    original_image = Image.open(image_path)
+        return config.name2category[env_name]
 
-    # Create a drawing object
-    draw = ImageDraw.Draw(original_image)
+    def generate(self) -> Tuple[Dict, Dict]:
+        # TODO: move this to config
+        threshold = 0.3
+        geometry_info = defaultdict(list)
+        category_info = defaultdict(list)
+        for dir_name in tqdm(self.env_dirs):
+            env_dir = os.path.join(self.directory, dir_name)
+            image_pairs = get_image_pairs(env_dir, self.background_dir)
+            category = self.get_category(dir_name)
+            for image_pair in image_pairs:
+                page_index = image_pair[0]
 
-    # Define the rectangle outline color (in RGB format)
-    outline_color = (255, 0, 0)  # Red
+                image1_array = np.array(plt.imread(image_pair[1]), dtype=np.uint8)
+                image2_array = np.array(plt.imread(image_pair[2]), dtype=np.uint8)
 
-    for bounding_box in bounding_boxes:
-        x1, y1, x2, y2 = bounding_box
+                diff_image = np.abs(image2_array - image1_array, dtype=np.uint8)
+                labeled_image, num = label(diff_image > threshold, return_num=True)
+                log.debug(f"Number of connected components: {num}")
 
-        # Draw the rectangle on the image
-        draw.rectangle((x1, y1, x2, y2), outline=outline_color)
+                regions = regionprops(labeled_image)
+                bounding_boxes = [region.bbox for region in regions]
 
-    original_image.save("output.png")
+                if len(bounding_boxes) == 0:
+                    continue
 
+                separations = self.layout_metadata["separations"]
+                # We do not consider the cross column tables.
+                if config.category2name[category] in [
+                    "Table",
+                    "Caption",
+                    "Algorithm",
+                    "Footnote",
+                ]:
+                    min_x = min(bounding_boxes, key=lambda x: x[1])[1]
+                    min_y = min(bounding_boxes, key=lambda x: x[0])[0]
+                    max_x = max(bounding_boxes, key=lambda x: x[4])[4]
+                    max_y = max(bounding_boxes, key=lambda x: x[3])[3]
 
-def parse_arguments():
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--directory",
-        type=str,
-        help="The directory path where the first set of images is located.",
-    )
-    args = parser.parse_args()
-    main_directory = args.directory
-    return main_directory
+                    element = LTComponent(bbox=(min_x, min_y, max_x, max_y))
+                    geometry_info[page_index].append(element)
+                    category_info[page_index].append(category)
+                    continue
 
+                for column in range(self.layout_metadata["num_columns"]):
+                    log.debug(
+                        f"Processing column {column}, separation: [{separations[column]}: {separations[column + 1]}]"
+                    )
+                    column_boxes = [
+                        bb
+                        for bb in bounding_boxes
+                        if bb[1] >= separations[column]
+                        and bb[4] <= separations[column + 1]
+                    ]
+                    log.debug(f"Column {column}: {column_boxes}")
+                    if not column_boxes:
+                        continue
+                    min_x = min(column_boxes, key=lambda x: x[1])[1]
+                    min_y = min(column_boxes, key=lambda x: x[0])[0]
+                    max_x = max(column_boxes, key=lambda x: x[4])[4]
+                    max_y = max(column_boxes, key=lambda x: x[3])[3]
 
-def get_matching_subdirectories(folder_path):
-    subdirectories = [
-        name
-        for name in os.listdir(folder_path)
-        if os.path.isdir(os.path.join(folder_path, name))
-        and any(name.startswith(prefix) for prefix in envs.complex_env_list)
-    ]
-    return subdirectories
+                    element = LTComponent(bbox=(min_x, min_y, max_x, max_y))
+                    geometry_info[page_index].append(element)
+                    category_info[page_index].append(category)
 
-
-def generate_category(geometry_info: Dict, dir1: str):
-    dir_name = os.path.basename(dir1)
-    name = get_env_from_dir_name(dir_name)
-
-    if name is None:
-        raise ValueError(f"Invalid directory name: {dir_name}")
-
-    category_info = defaultdict(list)
-    for page_index, page_elements in geometry_info.items():
-        if not page_elements:
-            continue
-        for _ in range(len(page_elements)):
-            category_info[page_index].append(config.name2category[name])
-    return category_info
-
-
-def get_env_from_dir_name(dir_name):
-    for env in envs.complex_env_list:
-        if dir_name.startswith(env):
-            return env
-    return None
+        return geometry_info, category_info
 
 
 def run(main_directory):
     layout_metadata = load_json(
         os.path.join(main_directory, "result/layout_metadata.json")
     )
+    layout_annotation = LayoutAnnotation(main_directory, layout_metadata)
+    geometry_info, category_info = layout_annotation.generate()
     return geometry_info, category_info
