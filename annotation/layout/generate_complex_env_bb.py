@@ -157,22 +157,7 @@ def get_env_from_dir_name(dir_name):
 
 
 def run(main_directory):
-    env_dirs = get_matching_subdirectories(main_directory)
-    dir2 = os.path.join(main_directory, "white")
-
-    geometry_info = defaultdict(list)
-    category_info = defaultdict(list)
-    for env_dir in tqdm(env_dirs):
-        dir1 = os.path.join(main_directory, env_dir)
-        log.debug(f"processing dir: {dir1}")
-        image_pairs = get_image_pairs(dir1, dir2)
-        geometry_annotation = generate_bounding_box(image_pairs)
-
-        for key in geometry_annotation.keys():
-            geometry_info[key].extend(geometry_annotation[key])
-
-        category_annotation = generate_category(geometry_annotation, dir1)
-        for key in geometry_annotation.keys():
-            category_info[key].extend(category_annotation[key])
-
+    layout_metadata = load_json(
+        os.path.join(main_directory, "result/layout_metadata.json")
+    )
     return geometry_info, category_info
