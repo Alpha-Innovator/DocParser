@@ -264,7 +264,9 @@ def enclose_footnote(data, color="red") -> None:
             continue
 
         texts["Footnote"].append(item[env])
-        item[env] = r"{\color{" + color + "}{" + item[env] + "}}"
+        footnote_text = item[env][len(env) + 2 : -1]
+        item[env] = "\\" + env + "{" + r"\color{" + color + "}{" + footnote_text + "}}"
+        # item[env] = r"{\color{" + color + "}{" + item[env] + "}}"
 
 
 def is_text_eq(text: str):
