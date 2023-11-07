@@ -232,16 +232,17 @@ def parse_arguments():
 def main():
     main_directory, file_name = parse_arguments()
 
-    geometry_info, category_info = generate_simple_env_bb.run(main_directory, file_name)
-
-    geometry_info_complex, category_info_complex = generate_complex_env_bb.run(
-        main_directory
+    figure_geometry, figure_category = generate_simple_env_bb.run(
+        main_directory, file_name
     )
 
-    geometry_info, category_info = merge_info(
-        geometry_info, geometry_info_complex, category_info, category_info_complex
-    )
-    # category_info = merge_category_info(category_info, category_info_complex)
+    geometry_info, category_info = generate_complex_env_bb.run(main_directory)
+
+    for page_index in geometry_info.keys():
+        geometry_info[page_index].extend(figure_geometry[page_index])
+
+    for page_index in category_info.keys():
+        category_info[page_index].extend(figure_category[page_index])
 
     image_info = generate_image_info(
         file_name, main_directory, geometry_info, category_info
