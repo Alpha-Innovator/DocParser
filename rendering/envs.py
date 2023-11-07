@@ -17,7 +17,7 @@ math_envs = [
     "split",
 ]
 
-inline_math_envs = ['$', 'math']
+inline_math_envs = ["$", "math"]
 
 section_envs = ["section", "subsection", "section*", "subsection*"]
 table_envs = ["table", "table*", "wraptable"]
@@ -51,7 +51,7 @@ non_text_envs = (
 )
 
 
-complex_env_list = ["Algorithm", "Equation", "Table", "List", "Code"]
+complex_env_list = ["Text-EQ", "Algorithm", "Equation", "Table", "List", "Code", "Text", "Title", "Caption", "Footnote"]
 
 
 # these envs or commands will not be parsed
