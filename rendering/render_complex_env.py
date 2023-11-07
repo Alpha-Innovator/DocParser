@@ -68,7 +68,6 @@ def parse_arguments() -> Tuple[str, str]:
 def render_env(tex_file, text_annotation, env):
     suffix = "_white.tex"
     base_name = tex_file[: -len(suffix)]
-    # base_name = os.path.splitext(tex_file)[0]
 
     num_items = len(text_annotation[env])
     for i in range(num_items):
@@ -80,8 +79,6 @@ def render_env(tex_file, text_annotation, env):
 
         # the first one is the color definition, skip it
         new_content = replace_nth(content, env + "_color", "black", i + 2)
-
-        log.debug(f"output_file: {output_file}")
 
         with open(output_file, "w") as f:
             f.write(new_content)
@@ -112,9 +109,7 @@ def run(origin_tex_file):
 
     # save a white complex env for complex env bb generation
     tex_file = os.path.join(original_dir, file_name + "_rendered_colored.tex")
-    log.debug(f"tex_file: {tex_file}")
     white_tex_file = os.path.join(original_dir, file_name + "_rendered_white.tex")
-    log.debug(f"white_tex_file: {white_tex_file}")
     modify_color_definitions(tex_file, white_tex_file)
 
     # load the text annotation information
@@ -123,7 +118,6 @@ def run(origin_tex_file):
     text_annotation = defaultdict(list)
     for key, value in text.items():
         text_annotation[key].extend(value)
-    log.debug(f"text_annotation: {text_annotation}")
 
     # render complex env
     for env in envs.complex_env_list:
