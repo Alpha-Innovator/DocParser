@@ -4,7 +4,7 @@ from rendering import render_simple_env
 from rendering import render_complex_env
 from logger import logger
 
-log = logger.setup_app_level_logger(file_name="app_debug.log", mode="a")
+log = logger.setup_app_level_logger(file_name="app_debug.log")
 
 
 def parse_arguments() -> str:
