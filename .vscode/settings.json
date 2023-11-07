@@ -1,6 +1,8 @@
 {
     "cSpell.words": [
         "arxiv",
+        "columnsep",
+        "columnwidth",
         "definecolor",
         "documentclass",
         "dtype",
@@ -19,6 +21,7 @@
         "subimport",
         "Texsoup",
         "textcolor",
+        "textwidth",
         "tqdm",
         "usepackage",
         "vrdu",
