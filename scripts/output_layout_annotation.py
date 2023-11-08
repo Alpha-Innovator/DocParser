@@ -17,42 +17,6 @@ from annotation.layout import generate_complex_env_bb
 log = logger.setup_app_level_logger(file_name="app_debug.log", mode="a")
 
 
-def merge_env_bboxes(elements: List[LTComponent], ratio=1.0) -> List[LTComponent]:
-    elements.sort(key=lambda x: x.bbox[1])
-    result = []
-
-    for element in elements:
-        x0, y0, x1, y1 = element.bbox
-        center_x = (x0 + x1) / 2
-        center_y = (y0 + y1) / 2
-        height = y1 - y0
-        width = x1 - x0
-
-        has_been_merged = False
-        for item in result:
-            if geometry.inside_bb(element, item):
-                continue
-            item_center_x = (item.bbox[0] + item.bbox[2]) / 2
-            item_center_y = (item.bbox[1] + item.bbox[3]) / 2
-            if (
-                abs(center_y - item_center_y) <= ratio * height
-                and abs(center_x - item_center_x) <= 0.5 * width
-            ):
-                item.bbox = (
-                    min(x0, item.bbox[0]),
-                    min(y0, item.bbox[1]),
-                    max(x1, item.bbox[2]),
-                    max(y1, item.bbox[3]),
-                )
-                has_been_merged = True
-                break
-
-        if not has_been_merged:
-            result.append(element)
-
-    return result
-
-
 def export_to_coco(
     file_elements: Dict[int, List[LTComponent]],
     image_infos: Dict[int, str],
@@ -112,48 +76,6 @@ def export_to_coco(
 
     with open(filename, "w") as f:
         json.dump(result, f)
-
-
-def merge_info(
-    geometry_info, geometry_info_complex, category_info, category_info_complex
-):
-    # TODO: post process
-    for page_index, complex_elements in geometry_info_complex.items():
-        for complex_element in complex_elements:
-            for index, element in enumerate(geometry_info[page_index]):
-                if isinstance(element, LTPage):
-                    continue
-
-                x0, y0, x1, y1 = complex_element.bbox
-                x2, y2, x3, y3 = element.bbox
-
-                if geometry.inside_bb(complex_element, element):
-                    # TODO: delete bbox is it is empty
-                    element.bbox = (x2, y2, x3, y0)
-                    geometry_info[page_index].append(LTComponent(bbox=(x2, y1, x3, y3)))
-                    category_info[page_index].append(category_info[page_index][index])
-                    break
-                
-                # FIXME: still have bugs
-                if geometry.intersects_bb(complex_element, element):
-                    # shrink up
-                    if y0 <= y3 <= y1:
-                        element.bbox = (x2, y2, x3, y0)
-                        break
-                    # shrink down
-                    if y0 <= y2 <= y1:
-                        element.bbox = (x2, y1, x3, y3)
-                        break
-
-        geometry_info[page_index].extend(geometry_info_complex[page_index])
-        category_info[page_index].extend(category_info_complex[page_index])
-    return geometry_info, category_info
-
-
-def merge_category_info(info, info_complex):
-    for page_index, page_elements in info.items():
-        info[page_index].extend(info_complex[page_index])
-    return info
 
 
 def generate_geometry_annotation(
