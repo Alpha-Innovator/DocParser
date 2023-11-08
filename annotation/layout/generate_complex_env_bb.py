@@ -143,7 +143,8 @@ class LayoutAnnotation:
 
                 diff_image = np.abs(image2_array - image1_array, dtype=np.uint8)
                 labeled_image, num = label(diff_image > threshold, return_num=True)
-                log.debug(f"Number of connected components: {num}")
+                if num == 0:
+                    continue
 
                 regions = regionprops(labeled_image)
                 bounding_boxes = [region.bbox for region in regions]
