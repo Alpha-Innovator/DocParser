@@ -170,16 +170,12 @@ class LayoutAnnotation:
                     continue
 
                 for column in range(self.layout_metadata["num_columns"]):
-                    log.debug(
-                        f"Processing column {column}, separation: [{separations[column]}: {separations[column + 1]}]"
-                    )
                     column_boxes = [
                         bb
                         for bb in bounding_boxes
                         if bb[1] >= separations[column]
                         and bb[4] <= separations[column + 1]
                     ]
-                    log.debug(f"Column {column}: {column_boxes}")
                     if not column_boxes:
                         continue
                     min_x = min(column_boxes, key=lambda x: x[1])[1]
