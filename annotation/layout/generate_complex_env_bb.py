@@ -9,7 +9,7 @@ import re
 from tqdm import tqdm
 
 from pdfminer.layout import LTComponent
-from rendering import envs
+from config import envs
 from logger import logger
 from config import config
 from rendering.utils import load_json

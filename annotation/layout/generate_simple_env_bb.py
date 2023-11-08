@@ -9,7 +9,7 @@ from pdfminer.high_level import extract_pages
 from pdfminer.layout import LAParams, LTComponent, LTFigure, LTLine, LTPage
 
 from logger import logger
-from rendering import envs
+from config import envs
 from annotation.layout import geometry
 from config import config
 

@@ -5,7 +5,7 @@ from TexSoup.TexSoup.data import TexEnv, TexText, TexCmd, TexGroup
 
 
 from logger import logger
-from rendering import envs
+from config import envs
 
 log = logger.get_logger(__name__)
 

@@ -7,7 +7,7 @@ import re
 
 import rendering.utils as utils
 import logger.logger as logger
-from rendering import envs
+from config import envs
 
 log = logger.get_logger(__name__)
 

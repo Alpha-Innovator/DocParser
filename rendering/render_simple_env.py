@@ -6,7 +6,7 @@ from typing import Union, List
 from TexSoup.TexSoup.data import TexEnv
 import logger.logger as logger
 from rendering import utils
-from rendering import envs
+from config import envs
 
 from config import config
 from TexSoup.TexSoup import TexSoup
