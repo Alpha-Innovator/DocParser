@@ -86,3 +86,11 @@ text_envs = [
     "solution",
     "abstract",
 ]
+
+# these envs will not cross columns, they always shows as a whole
+one_column_envs = [
+    "Table",
+    "Caption",
+    "Algorithm",
+    "Footnote",
+]

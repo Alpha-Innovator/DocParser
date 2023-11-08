@@ -153,12 +153,7 @@ class LayoutAnnotation:
 
                 separations = self.layout_metadata["separations"]
                 # We do not consider the cross column tables.
-                if config.category2name[category] in [
-                    "Table",
-                    "Caption",
-                    "Algorithm",
-                    "Footnote",
-                ]:
+                if config.category2name[category] in envs.one_column_envs:
                     min_x = min(bounding_boxes, key=lambda x: x[1])[1]
                     min_y = min(bounding_boxes, key=lambda x: x[0])[0]
                     max_x = max(bounding_boxes, key=lambda x: x[4])[4]
