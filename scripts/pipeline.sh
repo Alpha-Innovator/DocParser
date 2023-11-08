@@ -66,7 +66,7 @@ for file in $rendered_tex_files; do
     bash convert_pdf_to_image.sh "$target_dir/${filename%.*}.pdf" "$target_dir"
 done
 
-extract_layout_information --log_file "$input_directory/${output_filename}_colored.log"
+extract_layout_metadata --log_file "$input_directory/${output_filename}_colored.log"
 
 # generate the bounding box and save the result
 bash annotate.sh "$output_directory" "$input_filename"
