@@ -111,20 +111,17 @@ def generate_geometry_annotation(
     return page_image
 
 
-def generate_image_info(filename, path, layout_info):
+def generate_image_info(path, layout_info):
     rendered_path = os.path.join(path, "colored")
     result_path = os.path.join(path, "result")
     image_info = {}  # annotation image info member of COCO
     for page_index in layout_info.keys():
-        page_image_path = os.path.join(
-            rendered_path, f"{filename}_rendered_colored_page_{page_index}.png"
-        )
+        page_image_path = os.path.join(rendered_path, f"{page_index}.png")
         page_image = Image.open(page_image_path)
         annotated_image = generate_geometry_annotation(
-            page_image,
-            layout_info[page_index],
+            page_image, layout_info[page_index]
         )
-        image_name = f"{filename}_annotation_page_{page_index}.png"
+        image_name = f"{page_index}.png"
         annotated_image_path = os.path.join(result_path, image_name)
         image_info[page_index] = annotated_image_path
         annotated_image.save(annotated_image_path)
@@ -151,7 +148,7 @@ def parse_arguments():
 def main():
     path, file_name = parse_arguments()
 
-    simple_layout_info = generate_simple_env_bb.run(path, file_name)
+    simple_layout_info = generate_simple_env_bb.run(path)
 
     # geometry_info, category_info = generate_complex_env_bb.run(path)
     layout_info = generate_complex_env_bb.run(path)
@@ -159,7 +156,7 @@ def main():
     for page_index in layout_info.keys():
         layout_info[page_index].extend(simple_layout_info[page_index])
 
-    image_info = generate_image_info(file_name, path, layout_info)
+    image_info = generate_image_info(path, layout_info)
 
     json_file = os.path.join(path, "result/layout_annotation.json")
     export_to_coco(layout_info, image_info, filename=json_file)

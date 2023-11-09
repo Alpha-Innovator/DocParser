@@ -66,12 +66,10 @@ def parse_arguments() -> Tuple[str, str]:
 
 
 def render_env(tex_file, text_annotation, env):
-    suffix = "_white.tex"
-    base_name = tex_file[: -len(suffix)]
-
+    path = os.path.dirname(tex_file)
     num_items = len(text_annotation[env])
     for i in range(num_items):
-        output_file = base_name + "_" + env + "_" + str(i) + ".tex"
+        output_file = os.path.join(path, f"paper_{env}_{i}.tex")
         shutil.copyfile(tex_file, output_file)
 
         with open(output_file, "r") as f:
@@ -82,7 +80,6 @@ def render_env(tex_file, text_annotation, env):
 
         with open(output_file, "w") as f:
             f.write(new_content)
-    return base_name
 
 
 def modify_color_definitions(input_file, output_file):
@@ -105,15 +102,14 @@ def modify_color_definitions(input_file, output_file):
 
 def run(origin_tex_file):
     original_dir = os.path.dirname(origin_tex_file)
-    file_name = os.path.splitext(os.path.basename(origin_tex_file))[0]
 
     # save a white complex env for complex env bb generation
-    tex_file = os.path.join(original_dir, file_name + "_rendered_colored.tex")
-    white_tex_file = os.path.join(original_dir, file_name + "_rendered_white.tex")
+    tex_file = os.path.join(original_dir, "paper_colored.tex")
+    white_tex_file = os.path.join(original_dir, "paper_white.tex")
     modify_color_definitions(tex_file, white_tex_file)
 
     # load the text annotation information
-    text_file = os.path.join(original_dir, "output/result/" + "texts.json")
+    text_file = os.path.join(original_dir, "output/result/texts.json")
     text = utils.load_json(text_file)
     text_annotation = defaultdict(list)
     for key, value in text.items():

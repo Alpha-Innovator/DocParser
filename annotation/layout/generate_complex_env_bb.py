@@ -45,15 +45,9 @@ def get_image_pairs(dir1: str, dir2: str):
 
     page_indices = []
     for i in range(len(rendered_png_files)):
-        match = re.search(r"_(\d+)\.png$", rendered_png_files[i])
-        page_index = match.group(1)
+        file_name = os.path.basename(rendered_png_files[i])
+        page_index = int(os.path.splitext(file_name)[0])
         page_indices.append(int(page_index))
-
-    for i in range(len(changed_png_files)):
-        match = re.search(r"_(\d+)\.png$", rendered_png_files[i])
-        page_index = match.group(1)
-        if int(page_index) != page_indices[i]:
-            raise FileNotFoundError("Wrong image path or file name or page index!")
 
     image_pairs = list(zip(page_indices, rendered_png_files, changed_png_files))
     return image_pairs
@@ -181,8 +175,6 @@ class LayoutAnnotation:
                         page_index=page_index,
                     )
                     layout_info[page_index].append(element)
-                    # geometry_info[page_index].append(element)
-                    # category_info[page_index].append(category)
                     continue
 
                 elements = []
@@ -209,9 +201,6 @@ class LayoutAnnotation:
                     if elements:
                         element.parent_block = elements[-1].block_id
                     elements.append(element)
-
-                    # geometry_info[page_index].append(element)
-                    # category_info[page_index].append(category)
 
                 for element in elements:
                     layout_info[page_index].append(element)

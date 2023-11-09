@@ -463,8 +463,7 @@ def add_layout_definition(main_content: List):
 
 def run(input_file, debug_mode=False):
     origin_dir = os.path.dirname(input_file)
-    file_name = os.path.splitext(os.path.basename(input_file))[0]
-    output_file = os.path.join(origin_dir, file_name + "_rendered_colored.tex")
+    output_file = os.path.join(origin_dir, "paper" + "_colored.tex")
     shutil.copyfile(input_file, output_file)
     add_color_definition(output_file)
 

@@ -16,10 +16,9 @@ def pdf2jpg(pdf: str, path: str) -> None:
         None
     """
     os.makedirs(path, exist_ok=True)
-    pdf_name = os.path.splitext(os.path.basename(pdf))[0]
     images = convert_from_path(pdf)
     for page_index, image in enumerate(images):
-        image_name = pdf_name + "_page_" + str(page_index) + ".png"
+        image_name = str(page_index) + ".png"
         image.save(os.path.join(path, image_name))
 
 

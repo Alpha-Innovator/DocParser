@@ -13,14 +13,11 @@ from config import config
 log = logger.get_logger(__name__)
 
 
-def generate_bb(
-    main_directory: str, filename: str, laparams=None
-) -> Dict[int, List[LTComponent]]:
+def generate_bb(main_directory: str, laparams=None) -> Dict[int, List[Block]]:
     """
     Generate a bounding box dictionary for each page in a PDF file.
 
     Args:
-        filename (str): The path to the PDF file.
         laparams (Optional[LAParams]): The layout analysis parameters.
             Defaults to None.
 
@@ -38,8 +35,7 @@ def generate_bb(
     See:
         https://pdfminersix.readthedocs.io/en/latest/topic/converting_pdf_to_text.html#layout-analysis-algorithm
     """
-    rendered_path = os.path.join(main_directory, "colored")
-    rendered_pdf = os.path.join(rendered_path, f"{filename}_rendered_colored.pdf")
+    rendered_pdf = os.path.join(main_directory, "colored/paper.pdf")
 
     layout_info = defaultdict(list)
     page_layouts = extract_pages(rendered_pdf, laparams=laparams)
@@ -68,12 +64,10 @@ def generate_bb(
     return layout_info
 
 
-def transform(layout_info, main_directory, filename):
+def transform(layout_info, main_directory):
     rendered_path = os.path.join(main_directory, "colored")
     for page_index in layout_info.keys():
-        page_image_path = os.path.join(
-            rendered_path, f"{filename}_rendered_colored_page_{page_index}.png"
-        )
+        page_image_path = os.path.join(rendered_path, f"{page_index}.png")
         page_image = Image.open(page_image_path)
         image_width, image_height = page_image.size
         page_image.close()
@@ -96,13 +90,9 @@ def transform(layout_info, main_directory, filename):
             layout_info[page_index][index].bbox = BoundingBox(x0, y0, x1, y1)
 
 
-def run(main_directory, filename):
+def run(main_directory) -> Dict[int, List[Block]]:
     laparams = LAParams(**config.config["laparams"])
-    layout_info = generate_bb(
-        main_directory,
-        filename,
-        laparams,
-    )
-    transform(layout_info, main_directory, filename)
+    layout_info = generate_bb(main_directory, laparams)
+    transform(layout_info, main_directory)
 
     return layout_info
