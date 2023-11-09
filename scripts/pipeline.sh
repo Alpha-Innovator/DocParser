@@ -84,9 +84,9 @@ rm "$file"
 done
 
 # Clean up auxiliary files
-rm -f "$input_directory/*.aux" "$input_directory/*.bbl" "$input_directory/*.blg" "$input_directory/*.log" "$input_directory/*.out" 
-rm -f "$input_directory/*.toc" "$input_directory/*.dvi" "$input_directory/*Notes.bib" "$input_directory/*.brf" "$input_directory/*.vtc" 
-rm -f "$input_directory/*.axp" "$input_directory/*.loc" "$input_directory/*.pdfsync" "$input_directory/*.pag"
-rm -f "$input_directory/*.abs" "$input_directory/*.spl" "$input_directory/*.bcf"
+rm -f $input_directory/*.aux $input_directory/*.bbl $input_directory/*.blg $input_directory/*.log $input_directory/*.out
+rm -f $input_directory/*.toc $input_directory/*.dvi $input_directory/*Notes.bib $input_directory/*.brf $input_directory/*.vtc
+rm -f $input_directory/*.axp $input_directory/*.loc $input_directory/*.pdfsync $input_directory/*.pag
+rm -f $input_directory/*.abs $input_directory/*.spl $input_directory/*.bcf
 
 echo "[$script_name] Total execution time: $SECONDS seconds"
