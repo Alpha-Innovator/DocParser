@@ -2,21 +2,20 @@ from collections import defaultdict
 import os
 from PIL import Image
 from typing import Dict, List
-import numpy as np
-import cv2
 
 from pdfminer.high_level import extract_pages
-from pdfminer.layout import LAParams, LTComponent, LTFigure, LTLine, LTPage
+from pdfminer.layout import LAParams, LTComponent, LTFigure
 
+from annotation.reading.block import Block, BoundingBox
 from logger import logger
-from config import envs
-from annotation.layout import geometry
 from config import config
 
 log = logger.get_logger(__name__)
 
 
-def generate_bb(filename: str, laparams=None) -> Dict[int, List[LTComponent]]:
+def generate_bb(
+    main_directory: str, filename: str, laparams=None
+) -> Dict[int, List[LTComponent]]:
     """
     Generate a bounding box dictionary for each page in a PDF file.
 
@@ -39,165 +38,71 @@ def generate_bb(filename: str, laparams=None) -> Dict[int, List[LTComponent]]:
     See:
         https://pdfminersix.readthedocs.io/en/latest/topic/converting_pdf_to_text.html#layout-analysis-algorithm
     """
-    file_elements = {}
-    if laparams is None:
-        laparams = LAParams()
-    page_layouts = extract_pages(filename, laparams=laparams)
-    for page_index, page_layout in enumerate(page_layouts):
-        file_elements[page_index] = []
-        file_elements[page_index].append(page_layout)
-        for element in page_layout:
-            if isinstance(element, LTLine):
-                continue
-            file_elements[page_index].append(element)
-
-    return file_elements
-
-
-def get_category(image: Image.Image, element: LTComponent) -> int:
-    if isinstance(element, LTLine):
-        if element.stroking_color == 0:
-            return config.name2category["Others"]
-        else:
-            # TODO: add log to check if line is table or algorithm
-            return config.name2category["Table"]
-
-    x0, y0, x1, y1 = element.bbox
-    roi = image.crop((x0, y0, x1, y1))
-
-    roi_array = np.array(roi)
-    hsv_roi = cv2.cvtColor(roi_array, cv2.COLOR_RGB2HSV)
-
-    count = 0
-    category = config.name2category["Others"]
-    for key, value in config.category2hsv_bound.items():
-        lower, upper = value
-        mask = cv2.inRange(hsv_roi, lower, upper)
-        if np.sum(mask) > count:
-            count = np.sum(mask)
-            category = key
-
-    return category
-
-
-def color_to_category(
-    image: Image.Image,
-    page_elements: List[LTComponent],
-) -> list:
-    """
-    Generate a dictionary mapping the index of each element
-    in the page_elements list to its corresponding category index.
-
-    Args:
-        image (PIL.Image.Image): The image object representing the page.
-        page_elements (List[LTComponent]): A list of page elements.
-
-    Returns:
-        Dict[int, int]: A dictionary mapping the index of
-        each element to its corresponding category index.
-    """
-    result = []
-
-    for index, element in enumerate(page_elements):
-        if index == 0:  # skip the LTPage element
-            result.append(config.name2category["Others"])
-            continue
-        if isinstance(element, LTFigure):
-            result.append(config.name2category["Figure"])
-            continue
-
-        result.append(get_category(image, element))
-
-    return result
-
-
-def generate_category_info(filename, main_directory, geometry_info):
-    rendered_path = os.path.join(main_directory, "colored")
-    category_info = defaultdict(list)  # map of bb index to category
-    for page_index in geometry_info.keys():
-        page_image_path = os.path.join(
-            rendered_path, f"{filename}_rendered_colored_page_{page_index}.png"
-        )
-        page_image = Image.open(page_image_path)
-
-        category_info[page_index] = color_to_category(
-            page_image, geometry_info[page_index]
-        )
-        page_image.close()
-
-    return category_info
-
-
-def finetune_figures(file_elements):
-    for page_index, page_elements in file_elements.items():
-        for index, figure_element in enumerate(page_elements):
-            if not isinstance(figure_element, LTFigure):
-                continue
-
-            for other_element in page_elements:
-                if isinstance(other_element, LTFigure):
-                    continue
-                if isinstance(other_element, LTPage):
-                    continue
-                if not geometry.intersects_bb(figure_element, other_element):
-                    continue
-
-                x0, y0, x1, y1 = figure_element.bbox
-                x2, y2, x3, y3 = other_element.bbox
-                if y0 <= y3 <= y1:
-                    figure_element.bbox = (x0, y3, x1, y1)
-                    break
-                # shrink down
-                if y0 <= y2 <= y1:
-                    figure_element.bbox = (x0, y0, x1, y2)
-                    break
-
-
-def generate_geometry_info(main_directory, filename):
     rendered_path = os.path.join(main_directory, "colored")
     rendered_pdf = os.path.join(rendered_path, f"{filename}_rendered_colored.pdf")
-    laparams = LAParams(**config.config["laparams"])
-    file_elements = generate_bb(rendered_pdf, laparams)
-    file_elements = geometry.merge_bb(file_elements)
-    finetune_figures(file_elements)
 
-    # generate object detection info
-    geometry_info = defaultdict(list)  # geometry info member of COCO
-    for page_index, page_elements in file_elements.items():
+    layout_info = defaultdict(list)
+    page_layouts = extract_pages(rendered_pdf, laparams=laparams)
+
+    for page_index, page_layout in enumerate(page_layouts):
+        layout_info[page_index].append(
+            Block(
+                bounding_box=BoundingBox(*page_layout.bbox),
+                page_index=page_index,
+                category=-1,
+            )
+        )
+
+        for element in page_layout:
+            # use only figures annotation result
+            if not isinstance(element, LTFigure):
+                continue
+            layout_info[page_index].append(
+                Block(
+                    bounding_box=BoundingBox(*element.bbox),
+                    page_index=page_index,
+                    category=config.name2category["Figure"],
+                )
+            )
+
+    return layout_info
+
+
+def transform(layout_info, main_directory, filename):
+    rendered_path = os.path.join(main_directory, "colored")
+    for page_index in layout_info.keys():
         page_image_path = os.path.join(
             rendered_path, f"{filename}_rendered_colored_page_{page_index}.png"
         )
         page_image = Image.open(page_image_path)
-        geometry_info[page_index] = geometry.transform(page_elements, page_image)
+        image_width, image_height = page_image.size
         page_image.close()
 
-    return geometry_info
+        page_width = layout_info[page_index][0].width
+        page_height = layout_info[page_index][0].height
 
+        if abs(image_width / page_width - image_height / page_height) > 0.001:
+            raise Exception("image size and page size are not scaled")
 
-def filter_results(geometry_info, category_info):
-    f_geometry_info = defaultdict(list)
-    f_category_info = defaultdict(list)
-    for page_index, page_elements in geometry_info.items():
-        for index, element in enumerate(page_elements):
-            # TODO: make this list robust
-            if category_info[page_index][index] in [
-                config.name2category[env] for env in envs.complex_env_list
-            ]:
-                continue
-            f_geometry_info[page_index].append(element)
-            f_category_info[page_index].append(category_info[page_index][index])
-
-    return f_geometry_info, f_category_info
+        pdf2image = image_width / page_width
+        for index, element in enumerate(layout_info[page_index]):
+            x0, y0, x1, y1 = element.bbox
+            # flip the y-axis
+            y0, y1 = page_height - y1, page_height - y0
+            # scale
+            pdf_width, pdf_height = element.width, element.height
+            x0, y0 = x0 * pdf2image, y0 * pdf2image
+            x1, y1 = x0 + pdf_width * pdf2image, y0 + pdf_height * pdf2image
+            layout_info[page_index][index].bbox = BoundingBox(x0, y0, x1, y1)
 
 
 def run(main_directory, filename):
-    # generate geometry info
-    geometry_info = generate_geometry_info(main_directory, filename)
+    laparams = LAParams(**config.config["laparams"])
+    layout_info = generate_bb(
+        main_directory,
+        filename,
+        laparams,
+    )
+    transform(layout_info, main_directory, filename)
 
-    # generate category info
-    category_info = generate_category_info(filename, main_directory, geometry_info)
-
-    # filter results
-    geometry_info, category_info = filter_results(geometry_info, category_info)
-
-    return geometry_info, category_info
+    return layout_info
