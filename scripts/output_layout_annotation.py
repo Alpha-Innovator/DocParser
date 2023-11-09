@@ -6,11 +6,10 @@ import argparse
 from PIL import Image, ImageDraw, ImageFont
 
 
-from annotation.layout import geometry
-from pdfminer.layout import LTPage, LTComponent
 from logger import logger
 from config import config
 
+from annotation.reading.block import Block
 from annotation.layout import generate_simple_env_bb
 from annotation.layout import generate_complex_env_bb
 
@@ -18,9 +17,8 @@ log = logger.setup_app_level_logger(file_name="app_debug.log", mode="a")
 
 
 def export_to_coco(
-    file_elements: Dict[int, List[LTComponent]],
+    layout_info: Dict,
     image_infos: Dict[int, str],
-    category_infos: Dict[int, Dict[int, int]],
     filename: str,
 ) -> None:
     result = {
@@ -46,42 +44,40 @@ def export_to_coco(
             for index, category in config.config["category_name"]
         ],
     }
-    for page_index, page_elements in file_elements.items():
-        for index, element in enumerate(page_elements):
-            if isinstance(element, LTPage):
-                image = {
-                    "id": page_index,
-                    "width": element.bbox[2] - element.bbox[0],
-                    "height": element.bbox[3] - element.bbox[1],
-                    "file_name": image_infos[page_index],
-                    "coco_url": "",  # TODO: modify this
-                    "date_captured": "",  # TODO: modify this
-                    "flickr_url": "",  # TODO: modify this
-                    "license": 0,  # TODO: modify this
-                }
-                result["images"].append(image)
-            else:
-                width = element.bbox[2] - element.bbox[0]
-                height = element.bbox[3] - element.bbox[1]
-                annotation = {
-                    "id": index,
-                    "image_id": page_index,
-                    "category_id": category_infos[page_index][index],
-                    "segmentation": [],
-                    "bbox": [element.bbox[0], element.bbox[1], width, height],
-                    "area": width * height,
-                    "iscrowd": 0,
-                }
-                result["annotations"].append(annotation)
+
+    for page_index, page_elements in layout_info.items():
+        page_layout = page_elements[0]
+        image = {
+            "id": page_index,
+            "width": page_layout.width,
+            "height": page_layout.height,
+            "file_name": image_infos[page_index],
+            "coco_url": "",  # TODO: modify this
+            "date_captured": "",  # TODO: modify this
+            "flickr_url": "",  # TODO: modify this
+            "license": 0,  # TODO: modify this
+        }
+        result["images"].append(image)
+
+        for index, element in enumerate(page_elements[1:]):
+            width, height = element.width, element.height
+            annotation = {
+                "id": index,
+                "image_id": page_index,
+                "category_id": element.category,
+                "segmentation": [],
+                "bbox": [element.bbox[0], element.bbox[1], width, height],
+                "area": width * height,
+                "iscrowd": 0,
+            }
+            result["annotations"].append(annotation)
 
     with open(filename, "w") as f:
         json.dump(result, f)
 
 
 def generate_geometry_annotation(
-    page_image: Image.Image,
-    page_elements: List[LTComponent],
-    category_info: Dict[int, int],
+    page_image: Image.Image, layout_elements: List[Block]
 ) -> Image.Image:
     """
     Generate an annotation for an image.
@@ -100,8 +96,10 @@ def generate_geometry_annotation(
         config.config["annotation_image_font_size"],
     )
 
-    for index, element in enumerate(page_elements):
-        category = category_info[index]
+    for index, element in enumerate(layout_elements):
+        category = element.category
+        if category == -1:  # the page itself is skipped
+            continue
         draw.rectangle(element.bbox, outline="red")
         draw.text(
             (element.bbox[0], element.bbox[1]),
@@ -113,19 +111,18 @@ def generate_geometry_annotation(
     return page_image
 
 
-def generate_image_info(filename, main_directory, geometry_info, category_info):
-    rendered_path = os.path.join(main_directory, "colored")
-    result_path = os.path.join(main_directory, "result")
+def generate_image_info(filename, path, layout_info):
+    rendered_path = os.path.join(path, "colored")
+    result_path = os.path.join(path, "result")
     image_info = {}  # annotation image info member of COCO
-    for page_index in geometry_info.keys():
+    for page_index in layout_info.keys():
         page_image_path = os.path.join(
             rendered_path, f"{filename}_rendered_colored_page_{page_index}.png"
         )
         page_image = Image.open(page_image_path)
         annotated_image = generate_geometry_annotation(
             page_image,
-            geometry_info[page_index],
-            category_info[page_index],
+            layout_info[page_index],
         )
         image_name = f"{filename}_annotation_page_{page_index}.png"
         annotated_image_path = os.path.join(result_path, image_name)
@@ -145,33 +142,27 @@ def parse_arguments():
         "--file_name", type=str, required=True, help="The name of the file"
     )
     args = parser.parse_args()
-    main_directory = args.path
+    path = args.path
     file_name = args.file_name
 
-    return main_directory, file_name
+    return path, file_name
 
 
 def main():
-    main_directory, file_name = parse_arguments()
+    path, file_name = parse_arguments()
 
-    figure_geometry, figure_category = generate_simple_env_bb.run(
-        main_directory, file_name
-    )
+    simple_layout_info = generate_simple_env_bb.run(path, file_name)
 
-    geometry_info, category_info = generate_complex_env_bb.run(main_directory)
+    # geometry_info, category_info = generate_complex_env_bb.run(path)
+    layout_info = generate_complex_env_bb.run(path)
 
-    for page_index in geometry_info.keys():
-        geometry_info[page_index].extend(figure_geometry[page_index])
+    for page_index in layout_info.keys():
+        layout_info[page_index].extend(simple_layout_info[page_index])
 
-    for page_index in category_info.keys():
-        category_info[page_index].extend(figure_category[page_index])
+    image_info = generate_image_info(file_name, path, layout_info)
 
-    image_info = generate_image_info(
-        file_name, main_directory, geometry_info, category_info
-    )
-
-    json_file = os.path.join(main_directory, "result/layout_annotation.json")
-    export_to_coco(geometry_info, image_info, category_info, filename=json_file)
+    json_file = os.path.join(path, "result/layout_annotation.json")
+    export_to_coco(layout_info, image_info, filename=json_file)
 
 
 if __name__ == "__main__":
