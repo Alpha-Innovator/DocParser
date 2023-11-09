@@ -1,14 +1,15 @@
 from collections import defaultdict
 import os
 import glob
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List
 import matplotlib.pyplot as plt
 import numpy as np
 from skimage.measure import label, regionprops
 import re
 from tqdm import tqdm
 
-from pdfminer.layout import LTComponent
+
+from annotation.reading.block import Block, BoundingBox
 from config import envs
 from logger import logger
 from config import config
@@ -22,8 +23,8 @@ def get_image_pairs(dir1: str, dir2: str):
     Generate a list of image pairs based on the directories provided.
 
     Parameters:
-        dir1 (str): The directory path where the first set of images is located.
-        dir2 (str): The directory path where the second set of images is located.
+        dir1 (str): The directory path to the first set of images.
+        dir2 (str): The directory path to the second set of images.
 
     Raises:
         FileNotFoundError: If the number of images in each directory does not
@@ -59,11 +60,17 @@ def get_image_pairs(dir1: str, dir2: str):
 
 
 class LayoutAnnotation:
-    def __init__(self, directory: str, layout_metadata: Dict[str, float]) -> None:
+    def __init__(
+        self,
+        directory: str,
+        layout_metadata: Dict[str, float],
+        text_info: Dict[str, List[str]],
+    ) -> None:
         self.directory = directory
         self.background_dir = os.path.join(directory, "white")
         self.env_dirs = self.get_matching_subdirectories()
         self.layout_metadata = self.parse_metadata(layout_metadata)
+        self.text_info = text_info
 
     def parse_metadata(self, layout_metadata: Dict[str, Any]) -> Dict[str, Any]:
         # TODO: move this to config
@@ -114,27 +121,32 @@ class LayoutAnnotation:
             result.append(name)
         return result
 
+    def extract_text_and_number(self, dir_name: str):
+        match = re.search(r"(\D+)_(\d+)", dir_name)
+        if match:
+            text = match.group(1)
+            number = int(match.group(2))
+            return text, number
+        else:
+            return None, None
+
     def get_category(self, dir: str):
         dir_name = os.path.basename(dir)
-        env_name = None
-        for env in envs.complex_env_list:
-            if dir_name.startswith(env):
-                env_name = env
+        env_name, index = self.extract_text_and_number(dir_name)
 
-        if env_name is None:
+        if env_name not in config.name2category:
             raise ValueError(f"Invalid directory name: {dir_name}")
 
-        return config.name2category[env_name]
+        return config.name2category[env_name], index
 
-    def generate(self) -> Tuple[Dict, Dict]:
+    def generate(self) -> Dict[int, List]:
         # TODO: move this to config
         threshold = 0.3
-        geometry_info = defaultdict(list)
-        category_info = defaultdict(list)
+        layout_info = defaultdict(list)
         for dir_name in tqdm(self.env_dirs):
             env_dir = os.path.join(self.directory, dir_name)
             image_pairs = get_image_pairs(env_dir, self.background_dir)
-            category = self.get_category(dir_name)
+            category, index = self.get_category(dir_name)
             for image_pair in image_pairs:
                 page_index = image_pair[0]
 
@@ -154,17 +166,26 @@ class LayoutAnnotation:
 
                 separations = self.layout_metadata["separations"]
                 # We do not consider the cross column tables.
-                if config.category2name[category] in envs.one_column_envs:
+                category_name = config.category2name[category]
+                if category_name in envs.one_column_envs:
                     min_x = min(bounding_boxes, key=lambda x: x[1])[1]
                     min_y = min(bounding_boxes, key=lambda x: x[0])[0]
                     max_x = max(bounding_boxes, key=lambda x: x[4])[4]
                     max_y = max(bounding_boxes, key=lambda x: x[3])[3]
 
-                    element = LTComponent(bbox=(min_x, min_y, max_x, max_y))
-                    geometry_info[page_index].append(element)
-                    category_info[page_index].append(category)
+                    # element = LTComponent(bbox=(min_x, min_y, max_x, max_y))
+                    element = Block(
+                        bounding_box=BoundingBox(min_x, min_y, max_x, max_y),
+                        source_code=self.text_info[category_name][index],
+                        category=category,
+                        page_index=page_index,
+                    )
+                    layout_info[page_index].append(element)
+                    # geometry_info[page_index].append(element)
+                    # category_info[page_index].append(category)
                     continue
 
+                elements = []
                 for column in range(self.layout_metadata["num_columns"]):
                     column_boxes = [
                         bb
@@ -179,17 +200,33 @@ class LayoutAnnotation:
                     max_x = max(column_boxes, key=lambda x: x[4])[4]
                     max_y = max(column_boxes, key=lambda x: x[3])[3]
 
-                    element = LTComponent(bbox=(min_x, min_y, max_x, max_y))
-                    geometry_info[page_index].append(element)
-                    category_info[page_index].append(category)
+                    element = Block(
+                        bounding_box=BoundingBox(min_x, min_y, max_x, max_y),
+                        source_code=self.text_info[category_name][index],
+                        category=category,
+                        page_index=page_index,
+                    )
+                    if elements:
+                        element.parent_block = elements[-1].block_id
+                    elements.append(element)
 
-        return geometry_info, category_info
+                    # geometry_info[page_index].append(element)
+                    # category_info[page_index].append(category)
+
+                for element in elements:
+                    layout_info[page_index].append(element)
+
+        # return geometry_info, category_info
+        return layout_info
 
 
 def run(main_directory):
     layout_metadata = load_json(
         os.path.join(main_directory, "result/layout_metadata.json")
     )
-    layout_annotation = LayoutAnnotation(main_directory, layout_metadata)
-    geometry_info, category_info = layout_annotation.generate()
-    return geometry_info, category_info
+    text_info = load_json(os.path.join(main_directory, "result/texts.json"))
+    layout_annotation = LayoutAnnotation(main_directory, layout_metadata, text_info)
+    # geometry_info, category_info = layout_annotation.generate()
+    layout_info = layout_annotation.generate()
+    # return geometry_info, category_info
+    return layout_info
