@@ -49,7 +49,7 @@ cd "$original_dir"
 
 # Check if the shell script execution was successful
 if [ "$?" -ne 0 ]; then
-    echo "[$0] Failed to compile the $output_filename into a PDF."
+    echo "[$0] Failed to compile the $main_file into a PDF."
     exit 1
 fi
 
