@@ -421,7 +421,7 @@ def render_env(main_content):
 
     # extract_figures(main_content)
 
-    enclose_code(main_content, color=name2color["Code"])
+    # enclose_code(main_content, color=name2color["Code"])
 
     enclose_text(
         main_content, text_color=name2color["Text"], text_eq_color=name2color["Text-EQ"]

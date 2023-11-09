@@ -31,11 +31,13 @@ algorithm_envs = [
     "algorithmic*",
     "algorithm2e",
 ]
+code_envs = ["verbatim", "verbatim*", "lstlisting", "lstinputlisting"]
+algorithm_envs += code_envs
+
 list_envs = ["itemize", "enumerate", "description"]
 reference_envs = ["bibliography"]
 caption_envs = ["caption", "caption*"]
 footnote_envs = ["footnote", "footnote*", "footnote**"]
-code_envs = ["verbatim", "verbatim*", "lstlisting", "lstinputlisting"]
 non_text_envs = (
     math_envs
     + table_envs
@@ -57,7 +59,6 @@ complex_env_list = [
     "Equation",
     "Table",
     "List",
-    "Code",
     "Text",
     "Title",
     "Caption",
@@ -85,6 +86,7 @@ text_envs = [
     "question",
     "solution",
     "abstract",
+    "quote",
 ]
 
 # these envs will not cross columns, they always shows as a whole
