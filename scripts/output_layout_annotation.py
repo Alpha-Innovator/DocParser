@@ -100,7 +100,7 @@ def generate_geometry_annotation(
         category = element.category
         if category == -1:  # the page itself is skipped
             continue
-        draw.rectangle(element.bbox, outline="red")
+        draw.rectangle(element.bbox, outline=config.colors_map[category], width=3)
         draw.text(
             (element.bbox[0], element.bbox[1]),
             config.category2name[category],
@@ -135,32 +135,28 @@ def parse_arguments():
     parser.add_argument(
         "--path", type=str, required=True, help="The path to the main directory"
     )
-    parser.add_argument(
-        "--file_name", type=str, required=True, help="The name of the file"
-    )
     args = parser.parse_args()
     path = args.path
-    file_name = args.file_name
 
-    return path, file_name
+    return path
 
 
-def main():
-    path, file_name = parse_arguments()
-
-    simple_layout_info = generate_simple_env_bb.run(path)
+def main(path):
+    output_path = os.path.join(path, "output")
+    simple_layout_info = generate_simple_env_bb.run(output_path)
 
     # geometry_info, category_info = generate_complex_env_bb.run(path)
-    layout_info = generate_complex_env_bb.run(path)
+    layout_info = generate_complex_env_bb.run(output_path)
 
     for page_index in layout_info.keys():
         layout_info[page_index].extend(simple_layout_info[page_index])
 
-    image_info = generate_image_info(path, layout_info)
+    image_info = generate_image_info(output_path, layout_info)
 
-    json_file = os.path.join(path, "result/layout_annotation.json")
+    json_file = os.path.join(output_path, "result/layout_annotation.json")
     export_to_coco(layout_info, image_info, filename=json_file)
 
 
 if __name__ == "__main__":
-    main()
+    path = parse_arguments()
+    main(path)
