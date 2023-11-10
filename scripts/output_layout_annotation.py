@@ -12,6 +12,7 @@ from config import config
 from annotation.reading.block import Block
 from annotation.layout import generate_simple_env_bb
 from annotation.layout import generate_complex_env_bb
+from rendering.utils import export_to_json
 
 log = logger.setup_app_level_logger(file_name="app_debug.log", mode="a")
 
@@ -155,6 +156,12 @@ def main(path):
 
     json_file = os.path.join(output_path, "result/layout_annotation.json")
     export_to_coco(layout_info, image_info, filename=json_file)
+
+    result = {
+        key: [block.to_dict() for block in value] for key, value in layout_info.items()
+    }
+
+    export_to_json(result, os.path.join(output_path, "result/layout.json"))
 
 
 if __name__ == "__main__":
