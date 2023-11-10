@@ -18,9 +18,22 @@ name2rgbcolor = {
 }
 category2color = {k: v for k, v in config["category_color"]}
 
-name2color = {}
-for name in name2rgbcolor.keys():
-    name2color[name] = name + "_color"
+name2color = {name: name + "_color" for name in name2category.keys()}
+
+colors_map = {
+    0: "magenta",
+    1: "cyan",
+    2: "yellow",
+    3: "blue",
+    4: "green",
+    5: "red",
+    6: "teal",
+    7: "purple",
+    8: "orange",
+    9: "brown",
+    10: "pink",
+    11: "olive",
+}
 
 
 category2hsv_bound = {}  # category: (lower_bound, upper_bound)
