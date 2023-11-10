@@ -133,7 +133,7 @@ class LayoutAnnotation:
 
         return config.name2category[env_name], index
 
-    def generate(self) -> Dict[int, List]:
+    def generate(self) -> Dict[int, List[Block]]:
         # TODO: move this to config
         threshold = 0.3
         layout_info = defaultdict(list)
@@ -209,7 +209,7 @@ class LayoutAnnotation:
         return layout_info
 
 
-def run(main_directory):
+def run(main_directory) -> Dict[int, List[Block]]:
     layout_metadata = load_json(
         os.path.join(main_directory, "result/layout_metadata.json")
     )
