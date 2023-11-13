@@ -2,7 +2,7 @@
 This repository is used to process paper with `.tex` source files.
 
 
-# Install
+# Installation
 First create a conda environment (if Anaconda has not been installed, see [installation](https://docs.anaconda.com/free/anaconda/install/index.html))
 ```shell
 conda create --name vrdu 
@@ -15,45 +15,47 @@ pip install -e .
 ```
 
 # Usage
-```shell
-pipeline.sh path_to_paper/paper.tex
+```python
+python main.py --file_name path_to_paper/paper.tex
 ```
-where directory contains all files (must contain a main `.tex` file) related to a paper.
-
 the script then generates the bounding box of the following categories and their corresponding content (if there are text inside the bounding box):
+1. layout annotation, with a bounding box around each semantic element, such as table, text paragraph, equation, etc.
+2. reading annotation, which is a pair that links the bounding box and corresponding latex source code.
 
-the result is stored in the `output` directory inside the `path_to_paper`, the structure is given as follows:
+the result is stored in the `path_to_paper/output/result`, the folder structure is given as follows:
 ```shell
 path_to_paper
 ├── output
-│   ├── original
-│   │   ├── paper.pdf
-│   │   ├── paper_page_0.jpg
-│   │   ├── paper_page_1.jpg
 │   └── result
 │       ├── layout_annotation.json
 │       ├── text.json
 │       ├── paper_annotation_page_0.jpg
 │       └── paper_annotation_page_1.jpg
 ```
-- The `original` folder contains the original PDF of paper and the screenshot of each page of the paper, naming convention: `${tex_file_name}_page_${index}.jpg`
-- The result contains three parts:
-
-    1. the `layout_annotation.json` gives the bounding box of each element in the given categories, it is represented as [COCO format](https://cocodataset.org/#format-data)
-    2. the `text.json` gives the text (if there exists) inside each bounding box in `annotation.json`, the `id` in `text.json` is consistent with `annotation.json`.
+The result contains three parts:
+1. the `layout_annotation.json` gives the bounding box of each element in the given categories, it is represented as [COCO format](https://cocodataset.org/#format-data)
+2. the `reading_annotation.json` gives the source code of text (if there exists) inside each bounding box in `layout_annotation.json`.
 
 
 
 # Category
 each bounding box is classified into one the following category.
 
-| index   | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 |  11 | 
-| -------- | -------- | -------- | -------- | -------- | -------- | -------- | -------- | -------- | ---------- | ---------- | ---------- |---------- |
-| Content | Text  | Text-EQ  | Title  |  Caption  | Equation  |  List | Table | Figure | Algorithm | Footnote | Reference | Others | 
+| Category   | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 |  11 | 
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |--- |
+| Name | Algorithm  | Caption | Equation | Figure | Footnote | List | Others | Table | Text | Text-EQ | Title | Reference | 
 
 Explanation:  
-`Text` refers to a paragraph of texts without no inline equations, while `Text-EQ` refers to text with equations
+-  `Algorithm` contains Algorithm environment and Code listing environments;
+-  `Caption` contains Figure caption, Table caption and Algorithm caption
+-  `Equation` contains all display equations such as `equation`, `align` environments.
+-  `List` contains `itemize`, `enumerate` and `description`.
+-  `Others` Currently there is no element that is classified into Others
+-  `Text` refers to a paragraph of texts without inline equations, 
+-  `Text-EQ` refers to text with equations, such as `$a$`. 
+-  `Title` contains section title, subsection title. Others titles are ignored.
 
+For more details, see `config/envs.py`.
 
 # Pipeline
 1. Use `TexSoup` to parse the `.tex` source file into a `list`, whose elements may be `dict` or `str`
@@ -66,6 +68,16 @@ Explanation:
 
 
 # Update log
+## 2023.11
+- [x] release v0.2 that correctly annotate all environments.
+    - [x] fix pdf figure bounding box generation error
+    - [x] fix cross column environments bounding box generation error
+    - [x] fix pdfminer cannot match source with bb error
+    - [x] fix pdfminer cannot accurately generate bounding box error
+
+    - [x] feat: add bb-source_code match algorithm 
+
+
 ## 2023.10
 - [x] release v0.1 that can handle algorithm, equation, table environments.
 
