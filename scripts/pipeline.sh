@@ -16,10 +16,15 @@ filename_with_extension=$(basename -- "$input_tex")
 input_filename="${filename_with_extension%.*}"
 output_filename="paper"
 
+# cp the original .tex file
+original_tex="$input_directory/${output_filename}_original.tex"
+cp "$input_tex" "$original_tex"
+file_name_with_extension=$(basename -- "$original_tex")
+
 # resolve imputs, remove comments, reduce empty lines
 clean_tex --input "$input_directory" --output "$input_directory" --tex "$filename_with_extension"
 # crop pdf image and convert into png files
-process_images --input_tex "$input_tex"
+process_images --input_tex "$original_tex"
 
 # store the result
 output_directory="$input_directory/output"
@@ -28,19 +33,16 @@ mkdir -p $output_directory/original
 mkdir -p $output_directory/result
 
 # Run the Python script to render the .tex file
-run_rendering --input_tex_file "$input_tex"
+run_rendering --input_tex_file "$original_tex"
 
-echo "[$script_name] Successfully rendered the $input_tex."
+echo "[$script_name] Successfully rendered the $original_tex."
 
-# compile the original .tex file into a PDF and save to images
-bash compile_latex.sh "$input_directory" "$input_filename"
-mv "$input_directory/${input_filename}.pdf" "$output_directory/original/${output_filename}.pdf"
-bash convert_pdf_to_image.sh "$output_directory/original/${output_filename}.pdf" "$output_directory/original"
 
-# compile rendered .tex file, pattern: "*_rendered_*.tex"
-rendered_tex_files=$(find "$input_directory" -type f -name "${output_filename}_*.tex")
+# compile .tex file into pdf and convert to png files
 prefix="${output_filename}_"
-for file in $rendered_tex_files; do
+tex_files=$(find "$input_directory" -type f -name "${prefix}*.tex")
+
+for file in $tex_files; do
     filename=$(basename "$file")
     echo "[$script_name] Processing $filename"
     bash compile_latex.sh "$input_directory" "${filename%.*}"
@@ -60,7 +62,7 @@ bash annotate.sh "$output_directory" "$input_filename"
 echo "[$script_name] Script completed successfully, result is stored in $output_directory/result."
 
 echo "[$script_name] Removing rendunded files, this may take a while..."
-for file in $rendered_tex_files; do
+for file in $tex_files; do
     filename=$(basename "$file")
     target_dir="${filename#$prefix}"
     target_dir="$output_directory/${target_dir%.*}"
