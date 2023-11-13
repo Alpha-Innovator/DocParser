@@ -58,14 +58,17 @@ Explanation:
 For more details, see `config/envs.py`.
 
 # Pipeline
-1. Use `TexSoup` to parse the `.tex` source file into a `list`, whose elements may be `dict` or `str`
-2. Use Rule-based method to render elements that belong to different categories. 
-3. Compile the rendered `.tex` file  into PDF
-4. Use `pdfminer` to generate candidate bounding boxes
-5. Processing candidate bounding boxes (merge by rules)
-6. Use `opencv` to identify the color of content in each bounding box and classify bounding boxes
-7. Build the relationship between source file and the bounding boxes
-
+1. Preprocess the original tex file (copy), this includes two substeps:
+    - resolve inputs and clean comments with `arxiv_cleaner`
+    - convert all pdf figures into png format
+2. render tex file, this process first call `TexSoup` to parse tex files into a list, then add a color to each semantic element. This process generates a bunch of tex files, each tex file is different with the original colored tex file in a small part 
+3. Compile these tex files into PDFs and further transform the PDFs into png images.
+4. Extract the layout metadata of PDF, so that one-column and multi-column can be classified.
+5. Generating bounding box for each semantic elements, generation is composed of two methods:
+    - For `Figure` elements, we use `PDFMiner` to get the bounding box
+    - For other semantic elements, we use the difference of two images to get the bounding box
+6. By linking the bounding box and its related latex source code, we obtain the reading annotations.
+7. After processing, we remove all redundant files.
 
 # Update log
 ## 2023.11
