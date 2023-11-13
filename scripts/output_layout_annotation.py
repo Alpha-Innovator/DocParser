@@ -1,3 +1,4 @@
+from collections import defaultdict
 import json
 import os
 from typing import Dict, List
@@ -142,6 +143,29 @@ def parse_arguments():
     return path
 
 
+def output_reading_annotation(path: str, layout_info: Dict[int, List[Block]]):
+    rendered_path = os.path.join(path, "colored")
+    result_path = os.path.join(path, "result")
+    reading_annotation = defaultdict(list)
+    for page_index in layout_info.keys():
+        # wrong images
+        page_image_path = os.path.join(rendered_path, f"{page_index}.png")
+        page_image = Image.open(page_image_path)
+        for block in layout_info[page_index]:
+            if block.category == -1:  # the page itself is skipped
+                continue
+            cropped_image = page_image.crop(block.bbox)
+            image_name = f"{config.category2name[block.category]}_{block.id}.png"
+            image_path = os.path.join(result_path, image_name)
+            cropped_image.save(image_path)
+            reading_annotation[page_index].append(
+                {"source_code": block.source_code, "image_path": image_path}
+            )
+        page_image.close()
+
+    return reading_annotation
+
+
 def main(path):
     output_path = os.path.join(path, "output")
     simple_layout_info = generate_simple_env_bb.run(output_path)
@@ -156,6 +180,9 @@ def main(path):
 
     json_file = os.path.join(output_path, "result/layout_annotation.json")
     export_to_coco(layout_info, image_info, filename=json_file)
+
+    reading_annotation = output_reading_annotation(output_path, layout_info)
+    export_to_json(reading_annotation, os.path.join(output_path, "result/reading_annotation.json"))
 
     result = {
         key: [block.to_dict() for block in value] for key, value in layout_info.items()
