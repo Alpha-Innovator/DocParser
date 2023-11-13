@@ -10,8 +10,6 @@ fi
 folder="$1"
 main_file="$2"
 
-echo "[$0] Compiling $folder/$main_file.tex into a PDF."
-
 main_file="${main_file%.*}" # Remove the ".tex" extension
 
 # Store the current directory and change to the folder directory
@@ -52,5 +50,3 @@ if [ "$?" -ne 0 ]; then
     echo "[$0] Failed to compile the $main_file into a PDF."
     exit 1
 fi
-
-echo "[$0] Successfully compiled the $main_file.tex file into a PDF."
