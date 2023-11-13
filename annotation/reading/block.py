@@ -107,12 +107,24 @@ class Block:
         self._page_index = value
 
     @property
+    def source_code(self) -> str:
+        return self._source_code
+
+    @property
     def parent_block(self) -> int:
         return self._parent_block
 
     @parent_block.setter
     def parent_block(self, value: int) -> None:
         self._parent_block = value
+
+    @property
+    def previous_block(self) -> int:
+        return self._previous_block
+
+    @property
+    def next_block(self) -> int:
+        return self._next_block
 
     @property
     def height(self) -> float:
@@ -127,13 +139,15 @@ class Block:
         data.update(
             {
                 "block_id": self.block_id,
-                "type": self._category,
-                "previous_block": self._previous_block,
-                "parent_block": self._parent_block,
-                "next_block": self._next_block,
-                "source_code": self._source_code,
+                "category": self.category,
+                "page_index": self.page_index,
+                "previous_block": self.previous_block,
+                "parent_block": self.parent_block,
+                "next_block": self.next_block,
+                "source_code": self.source_code,
             }
         )
+        return data
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]):
