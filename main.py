@@ -3,13 +3,10 @@ import glob
 import os
 import re
 import shutil
-import subprocess
 from typing import Dict
-
 from tqdm import tqdm
 
 from arxiv_cleaner.cleaner import Cleaner
-from pdf2image import pdf2image, generators
 
 from rendering.utils import export_to_json
 from rendering import render_simple_env, render_complex_env
@@ -72,13 +69,10 @@ def replace_pdf_figures_with_png(tex_file):
         # crop the pdf image
         pdf_image_name = match[1]
         pdf_image = os.path.join(path, pdf_image_name)
-        subprocess.run(["pdfcrop", pdf_image, pdf_image])
-
-        # convert the pdf image into png
         png_image_name = os.path.splitext(pdf_image_name)[0] + ".png"
         png_image = os.path.join(path, png_image_name)
-        images = pdf2image.convert_from_path(pdf_image)
-        images[0].save(png_image)
+
+        utils.convert_pdf_figure_to_png_image(pdf_image, png_image)
 
         # replace the reference in tex file
         content = content.replace(match[1], png_image_name)
@@ -106,25 +100,6 @@ def parse_file_name(filename) -> str:
     return match.group(1)
 
 
-def pdf2jpg(pdf: str, path: str) -> None:
-    """
-    Convert a PDF file into a series of JPEG images.
-
-    Parameters:
-        pdf (str): The path of the PDF file to be converted.
-        path (str): The directory where the converted images will be saved.
-
-    Returns:
-        None
-    """
-    os.makedirs(path, exist_ok=True)
-    images = pdf2image.convert_from_path(pdf, fmt="png")
-
-    for page_index, image in enumerate(images):
-        image_name = str(page_index) + ".png"
-        image.save(os.path.join(path, image_name))
-
-
 def transform_tex_to_images(path):
     files = glob.glob(f"{path}/paper_*.tex")
     print("Transforming from TEX to images, this may take a while...")
@@ -140,7 +115,7 @@ def transform_tex_to_images(path):
         shutil.move(pdf_file, output_pdf)
 
         # convert into images
-        pdf2jpg(output_pdf, os.path.dirname(output_pdf))
+        utils.pdf2jpg(output_pdf, os.path.dirname(output_pdf))
 
 
 def extract_metadata(log_file) -> Dict[str, float]:
@@ -192,7 +167,7 @@ def remove_redundant_files(path: str) -> None:
 
 def parse_arguments():
     """
-    Parses the command line arguments and returns the value of the `file_name` argument.
+    Parses the command line arguments.
 
     Returns:
     - `file_name` (str): The name of the test file with full path.
