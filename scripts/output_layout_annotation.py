@@ -148,7 +148,6 @@ def output_reading_annotation(path: str, layout_info: Dict[int, List[Block]]):
     result_path = os.path.join(path, "result")
     reading_annotation = defaultdict(list)
     for page_index in layout_info.keys():
-        # wrong images
         page_image_path = os.path.join(rendered_path, f"{page_index}.png")
         page_image = Image.open(page_image_path)
         for block in layout_info[page_index]:

@@ -446,7 +446,7 @@ def render_env(main_content):
 
     enclose_algorithm(main_content, color=name2color["Algorithm"])
 
-    # extract_figures(main_content)
+    extract_figures(main_content)
 
     # enclose_code(main_content, color=name2color["Code"])
 

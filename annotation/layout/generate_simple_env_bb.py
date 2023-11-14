@@ -9,6 +9,7 @@ from pdfminer.layout import LAParams, LTComponent, LTFigure
 from annotation.reading.block import Block, BoundingBox
 from logger import logger
 from config import config
+from rendering.utils import load_json
 
 log = logger.get_logger(__name__)
 
@@ -36,6 +37,9 @@ def generate_bb(main_directory: str, laparams=None) -> Dict[int, List[Block]]:
         https://pdfminersix.readthedocs.io/en/latest/topic/converting_pdf_to_text.html#layout-analysis-algorithm
     """
     rendered_pdf = os.path.join(main_directory, "colored/paper.pdf")
+    text_info = load_json(os.path.join(main_directory, "result/texts.json"))
+    figure_list = text_info["Figure"]
+    index = 0
 
     layout_info = defaultdict(list)
     page_layouts = extract_pages(rendered_pdf, laparams=laparams)
@@ -58,8 +62,10 @@ def generate_bb(main_directory: str, laparams=None) -> Dict[int, List[Block]]:
                     bounding_box=BoundingBox(*element.bbox),
                     page_index=page_index,
                     category=config.name2category["Figure"],
+                    source_code=figure_list[index],
                 )
             )
+            index += 1
 
     return layout_info
 
