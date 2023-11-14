@@ -37,7 +37,7 @@ algorithm_envs += code_envs
 list_envs = ["itemize", "enumerate", "description"]
 reference_envs = ["bibliography"]
 caption_envs = ["caption", "caption*"]
-footnote_envs = ["footnote", "footnote*", "footnote**"]
+footnote_envs = ["footnote", "footnotetext", "tablefootnote"]
 non_text_envs = (
     math_envs
     + table_envs
@@ -67,7 +67,7 @@ complex_env_list = [
 
 
 # these envs or commands will not be parsed
-ignore_envs = ["cite", "eqref", "ref", "emph", "textbf", "textit"]
+ignore_envs = ["cite", "eqref", "ref", "emph", "textbf", "textit"] + footnote_envs
 
 
 text_envs = [

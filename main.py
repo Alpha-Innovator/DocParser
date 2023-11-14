@@ -201,6 +201,7 @@ def main() -> None:
     path = os.path.dirname(file_name)
     os.makedirs(os.path.join(path, "output/result"), exist_ok=True)
 
+    # make a copy of the original tex file
     original_tex = os.path.join(path, "paper_original.tex")
     shutil.copyfile(file_name, original_tex)
 

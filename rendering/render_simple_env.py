@@ -4,6 +4,7 @@ import re
 import shutil
 from typing import Union, List
 from TexSoup.TexSoup.data import TexEnv
+from TexSoup.app import conversion
 import logger.logger as logger
 from rendering import utils
 from config import envs
@@ -252,21 +253,47 @@ def enclose_footnote(data, color="red") -> None:
     Raises:
         None
     """
-    for item in data:
-        if not isinstance(item, dict):
-            continue
-        env = find_env(item, envs.footnote_envs)
-        if env is None:
+    for index, item in enumerate(data):
+        if not isinstance(item, str):
+            if not isinstance(item, dict):
+                continue
             for key, value in item.items():
+                if key.lower() not in envs.text_envs:
+                    continue
                 if not isinstance(value, list):
                     continue
                 enclose_footnote(value[CONTENT_INDEX], color)
             continue
 
-        texts["Footnote"].append(item[env])
-        footnote_text = item[env][len(env) + 2 : -1]
-        item[env] = "\\" + env + "{" + r"\color{" + color + "}{" + footnote_text + "}}"
-        # item[env] = r"{\color{" + color + "}{" + item[env] + "}}"
+        env_name = None
+        for env in envs.footnote_envs:
+            if env in item:
+                env_name = env
+                break
+
+        if env_name is None:
+            continue
+
+        parsed = TexSoup(item).expr.all
+        for element in parsed:
+            if element.name not in envs.footnote_envs:
+                continue
+
+            extra_len = 2
+            footnote = str(element.args[0])
+            if len(element.args) > 1:
+                extra_len += len(str(element.args[0]))
+                footnote = str(element.args[1])
+
+            texts["Footnote"].append(str(element))
+            color_footnote = r"\color{" + color + "}" + footnote
+
+            if len(element.args) > 1:
+                element.args[1].string = color_footnote
+            else:
+                element.args[0].string = color_footnote
+
+        data[index] = conversion.to_latex(conversion.to_list(parsed))
 
 
 def is_text_eq(text: str):
