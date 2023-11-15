@@ -3,7 +3,8 @@ import json
 import cv2
 import numpy as np
 
-file_path = os.path.expanduser("config/config.json")
+dirname = os.path.dirname(__file__)
+file_path = os.path.join(dirname, "config.json")
 
 with open(file_path, "r") as json_file:
     config = json.load(json_file)

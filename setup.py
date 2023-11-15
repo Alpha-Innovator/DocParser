@@ -23,22 +23,9 @@ setup(
         "setuptools==68.0.0",
     ],
     scripts=[
-        "scripts/pipeline.sh",
-        "scripts/annotate.sh",
-        "scripts/compile_latex.sh",
-        "scripts/convert_pdf_to_image.sh",
+        "vrdu/compile_latex.sh",
     ],
     entry_points={
-        "console_scripts": [
-            "batch_process = scripts.batch_process:main",
-            "run_rendering = scripts.run_rendering:main",
-            "pdf2png = scripts.pdf2png:main",
-            "output_layout_annotation = scripts.output_layout_annotation:main",
-            "output_reading_annotation = scripts.output_reading_annotation:main",
-            "visualize = scripts.visualize:main",
-            "process_images = scripts.process_images:main",
-            "clean_tex = arxiv_cleaner.main:main",
-            "extract_layout_metadata = scripts.extract_layout_metadata:main",
-        ],
+        "console_scripts": [],
     },
 )

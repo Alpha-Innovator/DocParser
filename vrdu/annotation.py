@@ -5,15 +5,18 @@ from typing import Any, Dict, List
 import matplotlib.pyplot as plt
 import numpy as np
 from skimage.measure import label, regionprops
+from PIL import Image, ImageDraw, ImageFont
 import re
 from tqdm import tqdm
 
+from pdfminer.high_level import extract_pages
+from pdfminer.layout import LAParams, LTFigure
 
-from annotation.reading.block import Block, BoundingBox
-from config import envs
-from logger import logger
-from config import config
-from rendering.utils import load_json
+
+from vrdu.block import Block, BoundingBox
+from vrdu.config import config, envs
+from vrdu import logger
+from vrdu.utils import load_json
 
 log = logger.get_logger(__name__)
 
@@ -40,6 +43,8 @@ def get_image_pairs(dir1: str, dir2: str):
     file_pattern = os.path.join(dir2, "*.png")
     changed_png_files = sorted(glob.glob(file_pattern))
 
+    log.debug(f"rendered_png_files: {rendered_png_files}")
+    log.debug(f"changed_png_files: {changed_png_files}")
     if len(rendered_png_files) != len(changed_png_files):
         raise FileNotFoundError("Wrong image path or file name or page index!")
 
@@ -65,9 +70,11 @@ class LayoutAnnotation:
         self.env_dirs = self.get_matching_subdirectories()
         self.layout_metadata = self.parse_metadata(layout_metadata)
         self.text_info = text_info
+        self.threshold = 0.3
 
     def parse_metadata(self, layout_metadata: Dict[str, Any]) -> Dict[str, Any]:
-        # TODO: move this to config
+        # FIXME: move this to config
+        # TODO: save the layout_metadata in a json file
         ppi = 72
         ONE_INCH = 72.27
         pt2px = ppi / ONE_INCH
@@ -101,7 +108,6 @@ class LayoutAnnotation:
             x += separation
 
         layout_metadata["separations"].append(pdf_width * px2img)
-        log.debug(f"Separations: {layout_metadata['separations']}")
 
         return layout_metadata
 
@@ -133,9 +139,91 @@ class LayoutAnnotation:
 
         return config.name2category[env_name], index
 
-    def generate(self) -> Dict[int, List[Block]]:
-        # TODO: move this to config
-        threshold = 0.3
+    def generate_figure_bb(self, laparams=None) -> Dict[int, List[Block]]:
+        """
+        Generate a bounding box dictionary for each page in a PDF file.
+
+        Args:
+            laparams (Optional[LAParams]): The layout analysis parameters.
+                Defaults to None.
+
+        Returns:
+            Dict[int, List[LTComponent]]: A dictionary where the keys are the page
+                indices and the values are lists of bounding boxes.
+
+        Note:
+            the bounding boxes are in the form of (x0, y0, x1, y1), where (x0, y0)
+            is the lower_left corner and (x1, y1) is the upper_right corner.
+
+            The origin of the coordinate system is the lower-left corner
+            of the each page.
+
+        See:
+            https://pdfminersix.readthedocs.io/en/latest/topic/converting_pdf_to_text.html#layout-analysis-algorithm
+        """
+        if laparams is None:
+            laparams = LAParams(**config.config["laparams"])
+
+        rendered_pdf = os.path.join(self.directory, "colored/paper.pdf")
+        text_info = load_json(os.path.join(self.directory, "result/texts.json"))
+        figure_list = text_info["Figure"]
+        index = 0
+
+        layout_info = defaultdict(list)
+        page_layouts = extract_pages(rendered_pdf, laparams=laparams)
+
+        for page_index, page_layout in enumerate(page_layouts):
+            layout_info[page_index].append(
+                Block(
+                    bounding_box=BoundingBox(*page_layout.bbox),
+                    page_index=page_index,
+                    category=-1,
+                )
+            )
+
+            for element in page_layout:
+                # use only figures annotation result
+                if not isinstance(element, LTFigure):
+                    continue
+                layout_info[page_index].append(
+                    Block(
+                        bounding_box=BoundingBox(*element.bbox),
+                        page_index=page_index,
+                        category=config.name2category["Figure"],
+                        source_code=figure_list[index],
+                    )
+                )
+                index += 1
+
+        self.transform(layout_info, self.directory)
+        return layout_info
+
+    def transform(self, layout_info, main_directory):
+        rendered_path = os.path.join(main_directory, "colored")
+        for page_index in layout_info.keys():
+            page_image_path = os.path.join(rendered_path, f"{page_index}.png")
+            page_image = Image.open(page_image_path)
+            image_width, image_height = page_image.size
+            page_image.close()
+
+            page_width = layout_info[page_index][0].width
+            page_height = layout_info[page_index][0].height
+
+            if abs(image_width / page_width - image_height / page_height) > 0.001:
+                raise Exception("image size and page size are not scaled")
+
+            pdf2image = image_width / page_width
+            for index, element in enumerate(layout_info[page_index]):
+                x0, y0, x1, y1 = element.bbox
+                # flip the y-axis
+                y0, y1 = page_height - y1, page_height - y0
+                # scale
+                pdf_width, pdf_height = element.width, element.height
+                x0, y0 = x0 * pdf2image, y0 * pdf2image
+                x1, y1 = x0 + pdf_width * pdf2image, y0 + pdf_height * pdf2image
+                layout_info[page_index][index].bbox = BoundingBox(x0, y0, x1, y1)
+
+    def generate_non_figure_bb(self):
         layout_info = defaultdict(list)
         for dir_name in tqdm(self.env_dirs):
             env_dir = os.path.join(self.directory, dir_name)
@@ -148,7 +236,7 @@ class LayoutAnnotation:
                 image2_array = np.array(plt.imread(image_pair[2]), dtype=np.uint8)
 
                 diff_image = np.abs(image2_array - image1_array, dtype=np.uint8)
-                labeled_image, num = label(diff_image > threshold, return_num=True)
+                labeled_image, num = label(diff_image > self.threshold, return_num=True)
                 if num == 0:
                     continue
 
@@ -158,7 +246,6 @@ class LayoutAnnotation:
                 if len(bounding_boxes) == 0:
                     continue
 
-                separations = self.layout_metadata["separations"]
                 # We do not consider the cross column tables.
                 category_name = config.category2name[category]
                 if category_name in envs.one_column_envs:
@@ -178,6 +265,7 @@ class LayoutAnnotation:
                     continue
 
                 elements = []
+                separations = self.layout_metadata["separations"]
                 for column in range(self.layout_metadata["num_columns"]):
                     column_boxes = [
                         bb
@@ -205,17 +293,87 @@ class LayoutAnnotation:
                 for element in elements:
                     layout_info[page_index].append(element)
 
-        # return geometry_info, category_info
+        return layout_info
+
+    def generate(self) -> Dict[int, List[Block]]:
+        figure_layout_info = self.generate_figure_bb()
+        layout_info = self.generate_non_figure_bb()
+        for page_index in layout_info.keys():
+            layout_info[page_index].extend(figure_layout_info[page_index])
         return layout_info
 
 
-def run(main_directory) -> Dict[int, List[Block]]:
-    layout_metadata = load_json(
-        os.path.join(main_directory, "result/layout_metadata.json")
+def generate_reading_annotation(path: str, layout_info: Dict[int, List[Block]]):
+    rendered_path = os.path.join(path, "colored")
+    result_path = os.path.join(path, "result")
+    reading_annotation = defaultdict(list)
+    for page_index in layout_info.keys():
+        page_image_path = os.path.join(rendered_path, f"{page_index}.png")
+        page_image = Image.open(page_image_path)
+        for block in layout_info[page_index]:
+            if block.category == -1:  # the page itself is skipped
+                continue
+            cropped_image = page_image.crop(block.bbox)
+            image_name = f"{config.category2name[block.category]}_{block.id}.png"
+            image_path = os.path.join(result_path, image_name)
+            cropped_image.save(image_path)
+            reading_annotation[page_index].append(
+                {"source_code": block.source_code, "image_path": image_path}
+            )
+        page_image.close()
+
+    return reading_annotation
+
+
+def generate_geometry_annotation(
+    page_image: Image.Image, layout_elements: List[Block]
+) -> Image.Image:
+    """
+    Generate an annotation for an image.
+
+    Args:
+        page_image (Image.Image): The image to annotate.
+        page_elements (List[LTComponent]): A list of elements to be annotated.
+
+    Returns:
+        Image.Image: The annotated image.
+    """
+    draw = ImageDraw.Draw(page_image)
+    # use `locate .ttf` to find the available fonts
+    font = ImageFont.truetype(
+        config.config["annotation_image_font_type"],
+        config.config["annotation_image_font_size"],
     )
-    text_info = load_json(os.path.join(main_directory, "result/texts.json"))
-    layout_annotation = LayoutAnnotation(main_directory, layout_metadata, text_info)
-    # geometry_info, category_info = layout_annotation.generate()
-    layout_info = layout_annotation.generate()
-    # return geometry_info, category_info
-    return layout_info
+
+    for index, element in enumerate(layout_elements):
+        category = element.category
+        if category == -1:  # the page itself is skipped
+            continue
+        draw.rectangle(element.bbox, outline=config.colors_map[category], width=3)
+        draw.text(
+            (element.bbox[0], element.bbox[1]),
+            config.category2name[category],
+            fill=(255, 0, 0),
+            font=font,
+        )
+
+    return page_image
+
+
+def generate_image_annotation(path, layout_info):
+    rendered_path = os.path.join(path, "colored")
+    result_path = os.path.join(path, "result")
+    image_info = {}  # annotation image info member of COCO
+    for page_index in layout_info.keys():
+        page_image_path = os.path.join(rendered_path, f"{page_index}.png")
+        page_image = Image.open(page_image_path)
+        annotated_image = generate_geometry_annotation(
+            page_image, layout_info[page_index]
+        )
+        image_name = f"{page_index}.png"
+        annotated_image_path = os.path.join(result_path, image_name)
+        image_info[page_index] = annotated_image_path
+        annotated_image.save(annotated_image_path)
+        page_image.close()
+
+    return image_info

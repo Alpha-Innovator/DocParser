@@ -59,13 +59,13 @@ class Block:
 
     def __init__(
         self,
-        bounding_box: Optional[BoundingBox] = None,
-        category: Optional[int] = None,
-        page_index: Optional[int] = None,
-        previous_block: Optional[int] = None,
-        parent_block: Optional[int] = None,
-        next_block: Optional[int] = None,
-        source_code: Optional[str] = None,
+        bounding_box: BoundingBox = None,
+        category: int = None,
+        page_index: int = None,
+        previous_block: int = None,
+        parent_block: int = None,
+        next_block: int = None,
+        source_code: str = None,
     ) -> None:
         self.id = Block.current_id
         Block.current_id += 1

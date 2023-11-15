@@ -12,13 +12,13 @@ def setup_app_level_logger(
     """create a logger
 
     Args:
-        logger_name (str, optional): name of the logger. 
+        logger_name (str, optional): name of the logger.
             Defaults to APP_LOGGER_NAME.
-        level (str, optional): controls the output level. 
+        level (str, optional): controls the output level.
             Defaults to 'DEBUG'.
-        file_name (str, optional): path where the log is saved. 
+        file_name (str, optional): path where the log is saved.
             Defaults to "app_debug.log".
-        mode (str, optional): mode of the file. 
+        mode (str, optional): mode of the file.
             Defaults to 'w'.
 
         level option: {

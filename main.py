@@ -8,13 +8,11 @@ from tqdm import tqdm
 
 from arxiv_cleaner.cleaner import Cleaner
 
-from rendering.utils import export_to_json
-from rendering import render_simple_env, render_complex_env
 
-from scripts import output_layout_annotation
-
-from logger import logger
-import utils
+from vrdu import output_layout_annotation
+from vrdu import logger
+from vrdu import utils
+from vrdu import renderer
 
 
 log = logger.setup_app_level_logger(file_name="app_debug.log")
@@ -102,7 +100,6 @@ def parse_file_name(filename) -> str:
 
 def transform_tex_to_images(path):
     files = glob.glob(f"{path}/paper_*.tex")
-    print("Transforming from TEX to images, this may take a while...")
     for file in tqdm(files):
         log.debug(f"Processing file: {file}")
         utils.compile_latex(file)
@@ -138,7 +135,7 @@ def extract_layout_metadata(path: str) -> None:
     log_file = os.path.join(path, "paper_colored.log")
     out_path = os.path.join(path, "output/result/layout_metadata.json")
     extracted_data = extract_metadata(log_file)
-    export_to_json(extracted_data, out_path)
+    utils.export_to_json(extracted_data, out_path)
 
 
 def remove_redundant_files(path: str) -> None:
@@ -209,10 +206,11 @@ def main() -> None:
     preprocess(original_tex)
 
     # run rendering
-    render_simple_env.run(original_tex)
-    render_complex_env.run(original_tex)
+    vrdu_renderer = renderer.Renderer()
+    vrdu_renderer.render(original_tex)
 
     # compile into PDFs, and then convert into images
+    print("Transforming from TEX to images, this may take a while...")
     transform_tex_to_images(path)
 
     # extract layout metadata

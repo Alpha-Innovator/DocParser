@@ -3,6 +3,7 @@ This repository is used to process paper with `.tex` source files.
 
 
 # Installation
+## Step 1 Install package
 First create a conda environment (if Anaconda has not been installed, see [installation](https://docs.anaconda.com/free/anaconda/install/index.html))
 ```shell
 conda create --name vrdu 
@@ -13,6 +14,15 @@ Then activate the environment and install packages:
 conda activate vrdu
 pip install -e .
 ```
+
+## Step 2 Install TexLive
+To compile latex, we need to install **Tex Live Distribution**, where you can find installation guide on [this page](https://www.tug.org/texlive/).
+
+For Ubuntu, we recommend install `texlive-full` by running the following command on terminal (Requires ~5.4GB disk space)
+```shell
+sudo apt-get install texlive-full 
+``` 
+this version avoids missing package error, to see differences among versions, see [Differences between texlive packages in Linux](https://tex.stackexchange.com/a/504566)
 
 # Usage
 ```python
