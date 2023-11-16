@@ -101,6 +101,11 @@ For more details, see `config/envs.py`.
 - [x] fix list environment parsing error
 
 
+# Known Issues
+1. Some customized environments will not be annotated, for example, `\newtheorem{defn}[thm]{Definition}`. This can be solved by adding the customized environment to `envs.text_envs`, then the environment will be annotated.
+2. Rendering error, this happens when we render a environment successfully, but we cannot compile the rendered tex file into a PDF. This is still an open problem.
+3. Some figures such as `tikz` format, will not be correctly classified, this may cause further error.
+
 # Acknowledgements
 This project is based on the following python packages:
 - [Texsoup](https://texsoup.alvinwan.com/)  
