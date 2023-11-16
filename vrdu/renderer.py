@@ -515,6 +515,11 @@ class Renderer:
 
         # use colors to enclose all semantic elements
         data, start, end = utils.data_from_tex_file(color_tex_file)
+
+        # Save the raw parsed data for debugging purposes
+        raw_data_file = os.path.join(original_dir, "output/result/raw_parsed_data.json")
+        utils.export_to_json(data, raw_data_file)
+
         self.render_all_env(data)
         utils.tex_file_from_data(data, color_tex_file, start=start, end=end)
 
