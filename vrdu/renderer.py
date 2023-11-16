@@ -423,7 +423,7 @@ class Renderer:
 
         with open(latex_file, "r") as f:
             content = f.read()
-        package_re = r"(\\end{document})\n"
+        package_re = r"\\end{document}"
         match = re.search(package_re, content)
         if not match:
             raise ValueError("end of document not found")
