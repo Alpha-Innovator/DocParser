@@ -166,10 +166,13 @@ class LayoutAnnotation:
 
         rendered_pdf = os.path.join(self.directory, "colored/paper.pdf")
         text_info = load_json(os.path.join(self.directory, "result/texts.json"))
+
+        layout_info = defaultdict(list)
+        if "Figure" not in text_info:
+            return layout_info
         figure_list = text_info["Figure"]
         index = 0
 
-        layout_info = defaultdict(list)
         page_layouts = extract_pages(rendered_pdf, laparams=laparams)
 
         for page_index, page_layout in enumerate(page_layouts):
