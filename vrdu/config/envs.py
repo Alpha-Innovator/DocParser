@@ -87,6 +87,10 @@ text_envs = [
     "solution",
     "abstract",
     "quote",
+    "note",
+    "assumption",
+    "fact",
+    "observation",
 ]
 
 # these envs will not cross columns, they always shows as a whole
