@@ -30,9 +30,7 @@ def main(path):
     reading_annotation = annotation.generate_reading_annotation(
         output_path, layout_info
     )
-    order_annotation = {
-        key: [block.to_dict() for block in value] for key, value in layout_info.items()
-    }
+    order_annotation = annotation.generate_order_annotation(layout_info)
 
     layout_annotation_file = os.path.join(output_path, "result/layout_annotation.json")
     reading_annotation_file = os.path.join(

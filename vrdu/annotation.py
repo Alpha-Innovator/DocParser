@@ -390,3 +390,10 @@ def generate_image_annotation(path, layout_info):
         page_image.close()
 
     return image_info
+
+
+def generate_order_annotation(layout_info):
+    order_annotation = {
+        key: [block.to_dict() for block in value] for key, value in layout_info.items()
+    }
+    return order_annotation
