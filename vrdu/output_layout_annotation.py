@@ -21,14 +21,9 @@ def parse_arguments():
 
 def main(path):
     output_path = os.path.join(path, "output")
-    layout_metadata = utils.load_json(
-        os.path.join(output_path, "result/layout_metadata.json")
-    )
     text_info = utils.load_json(os.path.join(output_path, "result/texts.json"))
 
-    layout_annotation = annotation.LayoutAnnotation(
-        output_path, layout_metadata, text_info
-    )
+    layout_annotation = annotation.LayoutAnnotation(output_path, text_info)
     layout_info = layout_annotation.generate()
 
     image_annotation = annotation.generate_image_annotation(output_path, layout_info)

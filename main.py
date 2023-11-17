@@ -80,7 +80,6 @@ def replace_pdf_figures_with_png(tex_file):
 
 
 def preprocess(original_tex: str) -> None:
-    pass
     # Step 1: clean tex
     clean_tex(original_tex)
 
@@ -113,29 +112,6 @@ def transform_tex_to_images(path):
 
         # convert into images
         utils.pdf2jpg(output_pdf, os.path.dirname(output_pdf))
-
-
-def extract_metadata(log_file) -> Dict[str, float]:
-    regex_pattern = r"\[vrdu_data_process: The (.*) is: ([-+]?\d+\.\d+)pt\]"
-
-    extracted_data = {}
-
-    with open(log_file, "r", encoding="latin-1") as file:
-        log_content = file.read()
-
-        for match in re.findall(regex_pattern, log_content):
-            key = match[0]
-            value = float(match[1])
-            extracted_data[key] = value
-
-    return extracted_data
-
-
-def extract_layout_metadata(path: str) -> None:
-    log_file = os.path.join(path, "paper_colored.log")
-    out_path = os.path.join(path, "output/result/layout_metadata.json")
-    extracted_data = extract_metadata(log_file)
-    utils.export_to_json(extracted_data, out_path)
 
 
 def remove_redundant_files(path: str) -> None:
@@ -213,15 +189,13 @@ def main() -> None:
     print("Transforming from TEX to images, this may take a while...")
     transform_tex_to_images(path)
 
-    # extract layout metadata
-    extract_layout_metadata(path)
-
     # generate annotations
     print("Generating annotations, this may take a while...")
     output_layout_annotation.main(path)
 
     # remove redundant files
-    remove_redundant_files(path)
+    # remove_redundant_files(path)
+    print(f"Finished processing {file_name}, result saved in {path}/output/result")
 
 
 if __name__ == "__main__":
