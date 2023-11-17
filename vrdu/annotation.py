@@ -317,18 +317,21 @@ def generate_reading_annotation(path: str, layout_info: Dict[int, List[Block]]):
     rendered_path = os.path.join(path, "colored")
     result_path = os.path.join(path, "result")
     reading_annotation = defaultdict(list)
+    count = 0
     for page_index in layout_info.keys():
         page_image_path = os.path.join(rendered_path, f"{page_index}.png")
         page_image = Image.open(page_image_path)
         for block in layout_info[page_index]:
-            if block.category == -1:  # the page itself is skipped
-                continue
             cropped_image = page_image.crop(block.bbox)
-            image_name = f"{config.category2name[block.category]}_{block.id}.png"
+
+            image_name = "block_" + str(count).zfill(4) + ".png"
+            count += 1
             image_path = os.path.join(result_path, image_name)
             cropped_image.save(image_path)
             reading_annotation[page_index].append(
-                {"source_code": block.source_code, "image_path": image_path}
+                {
+                    "source_code": block.source_code,
+                    "image_path": image_name,
             )
         page_image.close()
 
@@ -380,9 +383,9 @@ def generate_image_annotation(path, layout_info):
         annotated_image = generate_geometry_annotation(
             page_image, layout_info[page_index]
         )
-        image_name = f"{page_index}.png"
+        image_name = "page_" + str(page_index).zfill(4) + ".png"
         annotated_image_path = os.path.join(result_path, image_name)
-        image_info[page_index] = annotated_image_path
+        image_info[page_index] = image_name
         annotated_image.save(annotated_image_path)
         page_image.close()
 
