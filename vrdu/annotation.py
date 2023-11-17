@@ -262,17 +262,11 @@ class LayoutAnnotation:
                 if len(bounding_boxes) == 0:
                     continue
 
-                # We do not consider the cross column tables.
+                # We do not consider the cross column case for these envs.
                 category_name = config.category2name[category]
                 if category_name in envs.one_column_envs:
-                    min_x = min(bounding_boxes, key=lambda x: x[1])[1]
-                    min_y = min(bounding_boxes, key=lambda x: x[0])[0]
-                    max_x = max(bounding_boxes, key=lambda x: x[4])[4]
-                    max_y = max(bounding_boxes, key=lambda x: x[3])[3]
-
-                    # element = LTComponent(bbox=(min_x, min_y, max_x, max_y))
                     element = Block(
-                        bounding_box=BoundingBox(min_x, min_y, max_x, max_y),
+                        bounding_box=BoundingBox.from_list(bounding_boxes),
                         source_code=self.text_info[category_name][index],
                         category=category,
                         page_index=page_index,
@@ -280,6 +274,7 @@ class LayoutAnnotation:
                     layout_info[page_index].append(element)
                     continue
 
+                # consider possible cross column case
                 elements = []
                 separations = self.layout_metadata[page_index]["separations"]
                 for column in range(self.layout_metadata["num_columns"]):
@@ -291,13 +286,9 @@ class LayoutAnnotation:
                     ]
                     if not column_boxes:
                         continue
-                    min_x = min(column_boxes, key=lambda x: x[1])[1]
-                    min_y = min(column_boxes, key=lambda x: x[0])[0]
-                    max_x = max(column_boxes, key=lambda x: x[4])[4]
-                    max_y = max(column_boxes, key=lambda x: x[3])[3]
 
                     element = Block(
-                        bounding_box=BoundingBox(min_x, min_y, max_x, max_y),
+                        bounding_box=BoundingBox.from_list(column_boxes),
                         source_code=self.text_info[category_name][index],
                         category=category,
                         page_index=page_index,

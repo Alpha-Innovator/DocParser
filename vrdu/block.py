@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Dict, Optional
+from typing import Dict, List, Tuple
 
 from pyparsing import Any
 
@@ -52,6 +52,14 @@ class BoundingBox:
             x1=data["bbox"][2],
             y1=data["bbox"][3],
         )
+
+    @classmethod
+    def from_list(cls, data: List[Tuple[float, float, float, float, float, float]]):
+        min_x = min(data, key=lambda x: x[1])[1]
+        min_y = min(data, key=lambda x: x[0])[0]
+        max_x = max(data, key=lambda x: x[4])[4]
+        max_y = max(data, key=lambda x: x[3])[3]
+        return cls(x0=min_x, y0=min_y, x1=max_x, y1=max_y)
 
 
 class Block:
