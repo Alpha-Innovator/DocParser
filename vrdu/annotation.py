@@ -332,8 +332,15 @@ def generate_reading_annotation(path: str, layout_info: Dict[int, List[Block]]):
                 {
                     "source_code": block.source_code,
                     "image_path": image_name,
+                    "category": block.category,
+                }
             )
         page_image.close()
+
+    reading_annotation["categories"] = [
+        {"id": index, "name": category}
+        for index, category in config.config["category_name"]
+    ]
 
     return reading_annotation
 
@@ -360,8 +367,6 @@ def generate_geometry_annotation(
 
     for index, element in enumerate(layout_elements):
         category = element.category
-        if category == -1:  # the page itself is skipped
-            continue
         draw.rectangle(element.bbox, outline=config.colors_map[category], width=3)
         draw.text(
             (element.bbox[0], element.bbox[1]),
@@ -396,4 +401,9 @@ def generate_order_annotation(layout_info):
     order_annotation = {
         key: [block.to_dict() for block in value] for key, value in layout_info.items()
     }
+    reading_annotation["categories"] = [
+        {"id": index, "name": category}
+        for index, category in config.config["category_name"]
+    ]
+
     return order_annotation
