@@ -99,13 +99,9 @@ class LayoutAnnotation:
         element1 = ONE_INCH + layout_metadata["hoffset"]
         element3 = layout_metadata["oddsidemargin"]
         margin_width = element1 + element3
-
-        # x is the left boundary of a column
-        x = margin_width - columnsep
-        for i in range(num_columns - 1):
-            separation = x + columnwidth + columnsep
-            layout_metadata["separations"].append(separation * pt2px * px2img)
-            x += separation
+            # x is initialize as left boundary of a column minus a half of column separation width
+            # this can make sure the separation is in the middle of two columns
+            x = margin_width - 0.5 * columnsep
 
         layout_metadata["separations"].append(pdf_width * px2img)
 
@@ -274,7 +270,7 @@ class LayoutAnnotation:
                         bb
                         for bb in bounding_boxes
                         if bb[1] >= separations[column]
-                        and bb[4] <= separations[column + 1]
+                        and bb[1] <= separations[column + 1]
                     ]
                     if not column_boxes:
                         continue
