@@ -412,7 +412,7 @@ class Renderer:
             "oddsidemargin",
         ]
 
-        definitions = []
+        definitions = ["\\message{[vrdu_data_process: Info]}"]
         for key in keys:
             definition = (
                 "\\message{{[vrdu_data_process: The {0} is: \\the\\{0}]}}".format(key)
