@@ -59,17 +59,47 @@ def get_image_pairs(dir1: str, dir2: str):
     return image_pairs
 
 
+def generate_geometry_annotation(
+    page_image: Image.Image, layout_elements: List[Block]
+) -> Image.Image:
+    """
+    Generate an annotation for an image.
+
+    Args:
+        page_image (Image.Image): The image to annotate.
+        page_elements (List[LTComponent]): A list of elements to be annotated.
+
+    Returns:
+        Image.Image: The annotated image.
+    """
+    draw = ImageDraw.Draw(page_image)
+    # use `locate .ttf` to find the available fonts
+    font = ImageFont.truetype(
+        config.config["annotation_image_font_type"],
+        config.config["annotation_image_font_size"],
+    )
+
+    for index, element in enumerate(layout_elements):
+        category = element.category
+        draw.rectangle(element.bbox, outline=config.colors_map[category], width=3)
+        draw.text(
+            (element.bbox[0], element.bbox[1]),
+            config.category2name[category],
+            fill=(255, 0, 0),
+            font=font,
+        )
+
+    return page_image
+
+
 class LayoutAnnotation:
-    def __init__(
-        self,
-        directory: str,
-        text_info: Dict[str, List[str]],
-    ) -> None:
-        self.directory = directory
-        self.background_dir = os.path.join(directory, "white")
+    def __init__(self, path: str) -> None:
+        output_dir = os.path.join(path, "output")
+        self.directory = output_dir
+        self.background_dir = os.path.join(output_dir, "white")
         self.env_dirs = self.get_matching_subdirectories()
         self.layout_metadata = None
-        self.text_info = text_info
+        self.text_info = utils.load_json(os.path.join(output_dir, "result/texts.json"))
         # TODO: move this to config
         self.threshold = 0.3
         self.ppi = 72
@@ -80,23 +110,6 @@ class LayoutAnnotation:
         rendered_pdf = os.path.join(self.directory, "colored/paper.pdf")
         page_layouts = extract_pages(rendered_pdf, laparams=laparams)
         return page_layouts
-
-    def extract_layout_metadata(self):
-        path = os.path.dirname(self.directory)
-        log_file = os.path.join(path, "paper_colored.log")
-        regex_pattern = r"\[vrdu_data_process: The (.*) is: ([-+]?\d+\.\d+)pt\]"
-
-        extracted_data = {}
-
-        with open(log_file, "r", encoding="latin-1") as file:
-            log_content = file.read()
-
-            for match in re.findall(regex_pattern, log_content):
-                key = match[0]
-                value = float(match[1])
-                extracted_data[key] = value
-
-        return extracted_data
 
     def parse_metadata(self, pdf_layouts: Iterator[LTPage]) -> None:
         pt2px = self.ppi / self.ONE_INCH
@@ -302,7 +315,7 @@ class LayoutAnnotation:
 
         return layout_info
 
-    def generate(self) -> Dict[int, List[Block]]:
+    def generate_layout_info(self) -> Dict[int, List[Block]]:
         pdf_layouts = self.extract_pdf_layouts()
         self.parse_metadata(pdf_layouts)
         figure_layout_info = self.generate_figure_bb(pdf_layouts)
@@ -312,98 +325,86 @@ class LayoutAnnotation:
             layout_info[page_index].extend(figure_layout_info[page_index])
         return layout_info
 
+    def generate_reading_annotation(self, layout_info: Dict[int, List[Block]]):
+        rendered_path = os.path.join(self.directory, "colored")
+        result_path = os.path.join(self.directory, "result")
+        reading_annotation = defaultdict(list)
+        count = 0
+        for page_index in layout_info.keys():
+            page_image_path = os.path.join(rendered_path, f"{page_index}.png")
+            page_image = Image.open(page_image_path)
+            for block in layout_info[page_index]:
+                cropped_image = page_image.crop(block.bbox)
 
-def generate_reading_annotation(path: str, layout_info: Dict[int, List[Block]]):
-    rendered_path = os.path.join(path, "colored")
-    result_path = os.path.join(path, "result")
-    reading_annotation = defaultdict(list)
-    count = 0
-    for page_index in layout_info.keys():
-        page_image_path = os.path.join(rendered_path, f"{page_index}.png")
-        page_image = Image.open(page_image_path)
-        for block in layout_info[page_index]:
-            cropped_image = page_image.crop(block.bbox)
+                image_name = "block_" + str(count).zfill(4) + ".png"
+                count += 1
+                image_path = os.path.join(result_path, image_name)
+                cropped_image.save(image_path)
+                reading_annotation[page_index].append(
+                    {
+                        "source_code": block.source_code,
+                        "image_path": image_name,
+                        "category": block.category,
+                    }
+                )
+            page_image.close()
 
-            image_name = "block_" + str(count).zfill(4) + ".png"
-            count += 1
-            image_path = os.path.join(result_path, image_name)
-            cropped_image.save(image_path)
-            reading_annotation[page_index].append(
-                {
-                    "source_code": block.source_code,
-                    "image_path": image_name,
-                    "category": block.category,
-                }
+        reading_annotation["categories"] = [
+            {"id": index, "name": category}
+            for index, category in config.config["category_name"]
+        ]
+
+        return reading_annotation
+
+    def generate_image_annotation(self, layout_info):
+        rendered_path = os.path.join(self.directory, "colored")
+        result_path = os.path.join(self.directory, "result")
+        image_info = {}  # annotation image info member of COCO
+        for page_index in layout_info.keys():
+            page_image_path = os.path.join(rendered_path, f"{page_index}.png")
+            page_image = Image.open(page_image_path)
+            annotated_image = generate_geometry_annotation(
+                page_image, layout_info[page_index]
             )
-        page_image.close()
+            image_name = "page_" + str(page_index).zfill(4) + ".png"
+            annotated_image_path = os.path.join(result_path, image_name)
+            image_info[page_index] = image_name
+            annotated_image.save(annotated_image_path)
+            page_image.close()
 
-    reading_annotation["categories"] = [
-        {"id": index, "name": category}
-        for index, category in config.config["category_name"]
-    ]
+        return image_info
 
-    return reading_annotation
+    def generate_order_annotation(self, layout_info):
+        order_annotation = {
+            key: [block.to_dict() for block in value]
+            for key, value in layout_info.items()
+        }
+        order_annotation["categories"] = [
+            {"id": index, "name": category}
+            for index, category in config.config["category_name"]
+        ]
 
+        return order_annotation
 
-def generate_geometry_annotation(
-    page_image: Image.Image, layout_elements: List[Block]
-) -> Image.Image:
-    """
-    Generate an annotation for an image.
+    def annotate(self):
+        layout_info = self.generate_layout_info()
 
-    Args:
-        page_image (Image.Image): The image to annotate.
-        page_elements (List[LTComponent]): A list of elements to be annotated.
+        image_annotation = self.generate_image_annotation(layout_info)
+        reading_annotation = self.generate_reading_annotation(layout_info)
+        order_annotation = self.generate_order_annotation(layout_info)
 
-    Returns:
-        Image.Image: The annotated image.
-    """
-    draw = ImageDraw.Draw(page_image)
-    # use `locate .ttf` to find the available fonts
-    font = ImageFont.truetype(
-        config.config["annotation_image_font_type"],
-        config.config["annotation_image_font_size"],
-    )
-
-    for index, element in enumerate(layout_elements):
-        category = element.category
-        draw.rectangle(element.bbox, outline=config.colors_map[category], width=3)
-        draw.text(
-            (element.bbox[0], element.bbox[1]),
-            config.category2name[category],
-            fill=(255, 0, 0),
-            font=font,
+        layout_annotation_file = os.path.join(
+            self.directory, "result/layout_annotation.json"
+        )
+        reading_annotation_file = os.path.join(
+            self.directory, "result/reading_annotation.json"
+        )
+        order_annotation_file = os.path.join(
+            self.directory, "result/order_annotation.json"
         )
 
-    return page_image
-
-
-def generate_image_annotation(path, layout_info):
-    rendered_path = os.path.join(path, "colored")
-    result_path = os.path.join(path, "result")
-    image_info = {}  # annotation image info member of COCO
-    for page_index in layout_info.keys():
-        page_image_path = os.path.join(rendered_path, f"{page_index}.png")
-        page_image = Image.open(page_image_path)
-        annotated_image = generate_geometry_annotation(
-            page_image, layout_info[page_index]
+        utils.export_to_coco(
+            layout_info, image_annotation, filename=layout_annotation_file
         )
-        image_name = "page_" + str(page_index).zfill(4) + ".png"
-        annotated_image_path = os.path.join(result_path, image_name)
-        image_info[page_index] = image_name
-        annotated_image.save(annotated_image_path)
-        page_image.close()
-
-    return image_info
-
-
-def generate_order_annotation(layout_info):
-    order_annotation = {
-        key: [block.to_dict() for block in value] for key, value in layout_info.items()
-    }
-    reading_annotation["categories"] = [
-        {"id": index, "name": category}
-        for index, category in config.config["category_name"]
-    ]
-
-    return order_annotation
+        utils.export_to_json(reading_annotation, reading_annotation_file)
+        utils.export_to_json(order_annotation, order_annotation_file)

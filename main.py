@@ -9,10 +9,10 @@ from tqdm import tqdm
 from arxiv_cleaner.cleaner import Cleaner
 
 
-from vrdu import output_layout_annotation
 from vrdu import logger
 from vrdu import utils
 from vrdu import renderer
+from vrdu.annotation import LayoutAnnotation
 
 
 log = logger.setup_app_level_logger(file_name="app_debug.log")
@@ -191,10 +191,11 @@ def main() -> None:
 
     # generate annotations
     print("Generating annotations, this may take a while...")
-    output_layout_annotation.main(path)
+    vrdu_annotation = LayoutAnnotation(path)
+    vrdu_annotation.annotate()
 
     # remove redundant files
-    # remove_redundant_files(path)
+    remove_redundant_files(path)
     print(f"Finished processing {file_name}, result saved in {path}/output/result")
 
 
