@@ -55,6 +55,8 @@ def replace_pdf_figures_with_png(tex_file):
     with open(tex_file) as f:
         content = f.read()
 
+    graphic_path = utils.get_graphicspath(content)
+
     # Regular expression pattern to match \includegraphics
     # commands with PDF files
     pattern = r"\\includegraphics(\[.*?\])?\{(.*?\.pdf)\}"
@@ -66,9 +68,9 @@ def replace_pdf_figures_with_png(tex_file):
     for match in matches:
         # crop the pdf image
         pdf_image_name = match[1]
-        pdf_image = os.path.join(path, pdf_image_name)
+        pdf_image = os.path.join(path, graphic_path + pdf_image_name)
         png_image_name = os.path.splitext(pdf_image_name)[0] + ".png"
-        png_image = os.path.join(path, png_image_name)
+        png_image = os.path.join(path, graphic_path + png_image_name)
 
         utils.convert_pdf_figure_to_png_image(pdf_image, png_image)
 

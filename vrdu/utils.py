@@ -1,5 +1,6 @@
 import datetime
 import os
+import re
 import subprocess
 import json
 from typing import Any, Dict
@@ -258,3 +259,13 @@ def export_to_coco(
 
     with open(filename, "w") as f:
         json.dump(result, f)
+
+
+def get_graphicspath(latex):
+    graphicspath_re = r"\\graphicspath\{\{(.+?)}"
+
+    match = re.search(graphicspath_re, latex, re.DOTALL)
+    if match:
+        return match.group(1)
+    else:
+        return ""
