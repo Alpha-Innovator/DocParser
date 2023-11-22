@@ -96,10 +96,7 @@ class Renderer:
                 continue
 
             self.texts["Title"].append(item[env])
-            title_text = item[env][len(env) + 2 : -1]
-            item[env] = (
-                "\\" + env + "{" + r"\textcolor{" + color + "}{" + title_text + "}}"
-            )
+            item[env] = r"{\color{" + color + "}" + item[env] + "}"
 
     def enclose_list(self, data: List, color: str = "yellow") -> None:
         """
