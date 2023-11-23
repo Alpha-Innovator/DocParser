@@ -3,6 +3,7 @@ import glob
 import os
 import re
 import shutil
+import subprocess
 from typing import Dict
 from tqdm import tqdm
 
@@ -184,8 +185,31 @@ def parse_arguments():
     return file_name
 
 
-def main() -> None:
-    file_name = parse_arguments()
+def cd_wrapper(func):
+    def wrapped(*args, **kwargs):
+        # Get file path argument
+        file_path = args[0]
+
+        # Get directory and save current working dir
+        directory = os.path.dirname(file_path)
+        cwd = os.getcwd()
+
+        # Change to directory
+        os.chdir(directory)
+
+        # Call original function
+        result = func(*args, **kwargs)
+
+        # Change back to original dir
+        os.chdir(cwd)
+
+        return result
+
+    return wrapped
+
+
+@cd_wrapper
+def main(file_name) -> None:
     path = os.path.dirname(file_name)
     os.makedirs(os.path.join(path, "output/result"), exist_ok=True)
 
@@ -215,4 +239,5 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    file_name = parse_arguments()
+    main(file_name)
