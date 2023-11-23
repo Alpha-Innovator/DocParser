@@ -314,7 +314,7 @@ class Renderer:
             if not isinstance(item, dict):
                 continue
 
-            env = find_env(item, envs.graphic_envs)
+            env = find_env(item, envs.figure_envs)
             if env is None:
                 for key, value in item.items():
                     if not isinstance(value, list):

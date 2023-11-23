@@ -208,15 +208,7 @@ class LayoutAnnotation:
 
     def generate_figure_bb(self, pdf_layouts: List[LTPage]) -> Dict[int, List[Block]]:
         layout_info = defaultdict(list)
-        figure_list = []
-        if "Figure" in text_info:
-            figure_list = text_info["Figure"]
-        index = 0
-
         for page_index, page_layout in enumerate(pdf_layouts):
-            if index >= len(figure_list):
-                continue
-
             for element in page_layout:
                 # use only figures annotation result
                 if not isinstance(element, LTFigure):
@@ -226,10 +218,10 @@ class LayoutAnnotation:
                         bounding_box=BoundingBox(*element.bbox),
                         page_index=page_index,
                         category=config.name2category["Figure"],
-                        source_code=figure_list[index],
+                        # currently, figure block will have no source code match
+                        source_code="",
                     )
                 )
-                index += 1
 
         return layout_info
 
