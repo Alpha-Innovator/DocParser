@@ -105,13 +105,13 @@ class LayoutAnnotation:
         self.ppi = 72
         self.ONE_INCH = 72.27
 
-    def extract_pdf_layouts(self) -> Iterator[LTPage]:
+    def extract_pdf_layouts(self) -> List[LTPage]:
         laparams = LAParams(**config.config["laparams"])
         rendered_pdf = os.path.join(self.directory, "colored/paper.pdf")
         page_layouts = extract_pages(rendered_pdf, laparams=laparams)
-        return page_layouts
+        return list(page_layouts)
 
-    def parse_metadata(self, pdf_layouts: Iterator[LTPage]) -> None:
+    def parse_metadata(self, pdf_layouts: List[LTPage]) -> None:
         pt2px = self.ppi / self.ONE_INCH
 
         layout_metadata = dict()
@@ -206,11 +206,7 @@ class LayoutAnnotation:
 
         return config.name2category[env_name], index
 
-    def generate_figure_bb(
-        self, pdf_layouts: Iterator[LTPage]
-    ) -> Dict[int, List[Block]]:
-        text_info = load_json(os.path.join(self.directory, "result/texts.json"))
-
+    def generate_figure_bb(self, pdf_layouts: List[LTPage]) -> Dict[int, List[Block]]:
         layout_info = defaultdict(list)
         figure_list = []
         if "Figure" in text_info:
