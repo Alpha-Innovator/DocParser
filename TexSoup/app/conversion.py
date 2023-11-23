@@ -44,8 +44,13 @@ def to_list(tex_tree):
                 + envs.algorithm_envs
                 + envs.tabular_envs
                 + envs.list_envs
+                + envs.nonexpand_envs
             ):
                 str_tree.append({i.name: str(i)})
+            elif (
+                str_tree and isinstance(str_tree[-1], str) and str_tree[-1][-1] != "\n"
+            ):
+                str_tree.append(str_tree.pop() + str(i))
             else:
                 str_tree.append(
                     {
@@ -65,6 +70,10 @@ def to_list(tex_tree):
                 str_tree.append({i.name: "\\" + i.name + macro_name + parameter_text})
             elif i.name in envs.ignore_envs:
                 str_tree.append(str(i))
+            elif (
+                str_tree and isinstance(str_tree[-1], str) and str_tree[-1][-1] != "\n"
+            ):
+                str_tree.append(str_tree.pop() + str(i))
             else:
                 str_tree.append({i.name: "\\" + i.name + str(i.args)})
         elif isinstance(i, TexText):
