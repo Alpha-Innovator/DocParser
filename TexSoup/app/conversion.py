@@ -21,16 +21,12 @@ def remove_outer_curly_brackets(text):
 
 def split_on_double_newline(text):
     if text == "\n\n":
-        return text, None, None
+        return [text]
 
-    match = re.search(r"(\n\n)", text)
-    if match:
-        before = text[: match.start()]
-        delimiter = match.group(1)
-        after = text[match.end() :]
-        return before, delimiter, after
-    else:
-        return text, None, None
+    # https://www.overleaf.com/learn/latex/Paragraphs_and_new_lines
+    modified_text = text.replace("\\par", "\n\n")
+    result = re.split(r"(\n\n)", modified_text)
+    return result
 
 
 def to_list(tex_tree):
