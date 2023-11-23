@@ -24,7 +24,7 @@ def split_on_double_newline(text):
         return [text]
 
     # https://www.overleaf.com/learn/latex/Paragraphs_and_new_lines
-    modified_text = text.replace("\\par", "\n\n")
+    modified_text = text.replace(r"(\\par)", r"\n\n")
     result = re.split(r"(\n\n)", modified_text)
     return result
 
