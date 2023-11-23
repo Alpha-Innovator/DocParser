@@ -455,6 +455,7 @@ class Renderer:
 
     def render_all_env(self, data):
         name2color = config.name2color
+        self.enclose_title(data, color=name2color["Title"])
         self.enclose_section(data, color=name2color["Title"])
 
         self.enclose_list(data, color=name2color["List"])

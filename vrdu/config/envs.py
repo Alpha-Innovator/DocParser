@@ -15,15 +15,54 @@ math_envs = [
     "alignat",
     "alignat*",
     "split",
+    "eqnarray",
+    "eqnarray*",
+    "subequations",
+    # chemical envs
+    "chem",
+    "chem*",
+    "ceqn",
+    "ceqn*",
 ]
 
-inline_math_envs = ["$", "math"]
+inline_math_envs = [
+    "$",
+    "math",
+]
 
-section_envs = ["section", "subsection", "section*", "subsection*"]
-table_envs = ["table", "table*", "wraptable"]
-tabular_envs = ["tabular", "tabularx", "tabulary", "longtable"]
-figure_envs = ["figure", "minipage"]
-graphic_envs = ["centerline", "includegraphics", "subfigure"]
+section_envs = [
+    "chapter",
+    "chapter*",
+    "section*",
+    "section",
+    "subsection",
+    "subsection*",
+]
+
+table_envs = [
+    "table",
+    "table*",
+    "wraptable",
+]
+tabular_envs = [
+    "tabular",
+    "tabularx",
+    "tabulary",
+    "longtable",
+    "rotatebox",
+]
+figure_envs = [
+    "figure",
+    "minipage",
+    "subfigure",
+    "subfigure*",
+]
+graphic_envs = [
+    "centerline",
+    "includegraphics",
+    "subfigure",
+    "gridline",
+]
 algorithm_envs = [
     "algorithm",
     "algorithm*",
@@ -31,13 +70,31 @@ algorithm_envs = [
     "algorithmic*",
     "algorithm2e",
 ]
-code_envs = ["verbatim", "verbatim*", "lstlisting", "lstinputlisting"]
+code_envs = [
+    "verbatim",
+    "verbatim*",
+    "lstlisting",
+    "lstinputlisting",
+]
 algorithm_envs += code_envs
 
-list_envs = ["itemize", "enumerate", "description"]
-reference_envs = ["bibliography"]
-caption_envs = ["caption", "caption*"]
-footnote_envs = ["footnote", "footnotetext", "tablefootnote"]
+list_envs = [
+    "itemize",
+    "enumerate",
+    "description",
+]
+reference_envs = [
+    "bibliography",
+]
+caption_envs = [
+    "caption",
+    "caption*",
+]
+footnote_envs = [
+    "footnote",
+    "footnotetext",
+    "tablefootnote",
+]
 non_text_envs = (
     math_envs
     + table_envs
@@ -67,8 +124,43 @@ complex_env_list = [
 
 
 # these envs or commands will not be parsed
-ignore_envs = ["cite", "eqref", "ref", "emph", "textbf", "textit"] + footnote_envs
+# https://journals.aas.org/natbib/
+ignore_envs = [
+    "cite",
+    "citet",
+    "citet*",
+    "citep",
+    "citep*",
+    "citealt",
+    "citealt*",
+    "citealp",
+    "citealp*",
+    "citeauthor",
+    "citeauthor*",
+    "citeyear",
+    "citeyearpar",
+    "eqref",
+    "ref",
+    "emph",
+    "textbf",
+    "textit",
+    "textsc",
+    "textsl",
+    "texttt",
+    "textup",
+    "textbf",
+    "textit",
+    "textsc",
+    "textsl",
+    "texttt",
+    "textup",
+    "message",
+] + footnote_envs
 
+nonexpand_envs = [
+    "thebibliography",
+    "abstract",
+]
 
 text_envs = [
     "theorem",
@@ -85,12 +177,16 @@ text_envs = [
     "exercise",
     "question",
     "solution",
-    "abstract",
     "quote",
     "note",
     "assumption",
     "fact",
     "observation",
+    "justify",
+    "subsubsection",
+    "acknowledgements",
+    "flushleft",
+    "flushright",
 ]
 
 # these envs will not cross columns, they always shows as a whole

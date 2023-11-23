@@ -85,12 +85,9 @@ def to_list(tex_tree):
 
         # split texts into paragraphs with '\n\n'
         if isinstance(str_tree[-1], str):
-            before, delimiter, after = split_on_double_newline(str_tree[-1])
-            str_tree[-1] = before
-            if delimiter:
-                str_tree.append(delimiter)
-            if after:
-                str_tree.append(after)
+            result = split_on_double_newline(str_tree[-1])
+            str_tree.pop()
+            str_tree.extend([r for r in result if r])
 
     return str_tree
 
