@@ -82,6 +82,12 @@ def replace_pdf_figures_with_png(tex_file):
 
 
 def preprocess(original_tex: str) -> None:
+    # Step 0: check if the file is compilable
+    try:
+        subprocess.check_call(["pdflatex", "-interaction=nonstopmode", original_tex])
+    except subprocess.CalledProcessError:
+        raise RuntimeError(f"Level 1: {original_tex} is not compilable")
+
     # Step 1: clean tex
     clean_tex(original_tex)
 
@@ -100,6 +106,13 @@ def parse_file_name(filename) -> str:
 
 
 def transform_tex_to_images(path):
+    try:
+        subprocess.check_call(
+            ["pdflatex", "-interaction=nonstopmode", "paper_colored.tex"]
+        )
+    except subprocess.CalledProcessError:
+        raise RuntimeError(f"Level 2: {path}/paper_colored.tex is not compilable")
+
     files = glob.glob(f"{path}/paper_*.tex")
     for file in tqdm(files):
         log.debug(f"Processing file: {file}")
