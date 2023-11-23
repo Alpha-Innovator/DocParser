@@ -58,7 +58,7 @@ def is_text_eq(text: str):
     for element in parsed:
         if not isinstance(element, TexEnv):
             continue
-        if element.name in ["math", "$"]:
+        if element.name in envs.inline_math_envs:
             return True
 
     return False
