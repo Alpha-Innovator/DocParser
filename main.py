@@ -174,6 +174,7 @@ def parse_arguments():
     """
     parser = argparse.ArgumentParser()
     parser.add_argument(
+        "-f",
         "--file_name",
         type=str,
         required=True,
