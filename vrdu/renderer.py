@@ -69,8 +69,19 @@ class Renderer:
         self.texts = defaultdict(list)
 
     def enclose_title(self, data, color="red") -> None:
-        # TODO: add title rendering
-        pass
+        for item in data:
+            if not isinstance(item, dict):
+                continue
+
+            env = find_env(item, ["title"])
+            if env is None:
+                continue
+
+            self.texts["Title"].append(item[env])
+            title_text = item[env][len(env) + 2 : -1]
+            item[env] = (
+                "\\" + env + "{" + r"\textcolor{" + color + "}{" + title_text + "}}"
+            )
 
     def enclose_section(self, data, color="red") -> None:
         """
