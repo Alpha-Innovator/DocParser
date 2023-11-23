@@ -195,7 +195,10 @@ def pdf2jpg(pdf: str, path: str) -> None:
 
 
 def convert_pdf_figure_to_png_image(pdf_image: str, png_image: str):
-    subprocess.run(["pdfcrop", pdf_image, pdf_image])
+    subprocess.run(
+        ["pdfcrop", pdf_image, pdf_image],
+        stdout=subprocess.DEVNULL,
+    )
     # convert the pdf image into png
     images = pdf2image.convert_from_path(pdf_image, dpi=72)
     images[0].save(png_image)
