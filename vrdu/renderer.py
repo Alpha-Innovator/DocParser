@@ -493,25 +493,56 @@ class Renderer:
             text_eq_color=name2color["Text-EQ"],
         )
 
+    def get_env_orders(self, tex_file):
+        with open(tex_file) as f:
+            contents = f.read()
+        colors = list(config.name2color.values())
+        matches = []
+
+        log.debug(f"colors={colors}")
+        pattern = "|".join(rf"\b{re.escape(term)}\b" for term in colors)
+        for m in re.finditer(pattern, contents):
+            matches.append(m.group(0))
+
+        # the definitions are discarded
+        return matches[len(colors) :]
+
     def render_one_env(self, original_dir):
         color_tex_file = os.path.join(original_dir, "paper_colored.tex")
         white_tex_file = os.path.join(original_dir, "paper_white.tex")
         self.modify_color_definitions(color_tex_file, white_tex_file)
         path = os.path.dirname(white_tex_file)
+        env_orders = self.get_env_orders(white_tex_file)
+
         for env in envs.complex_env_list:
             num_items = len(self.texts[env])
-            for i in range(num_items):
-                output_file = os.path.join(path, f"paper_{env}_{i}.tex")
+            order_ids = [
+                i for i, _ in enumerate(env_orders) if env + "_color" == env_orders[i]
+            ]
+            if num_items != len(order_ids):
+                raise ValueError(
+                    f"num_items {num_items} != len(order_ids) {len(order_ids)}"
+                )
+            for index, order_id in enumerate(order_ids):
+                output_file = os.path.join(
+                    path, "paper_block_" + str(order_id).zfill(5) + ".tex"
+                )
                 shutil.copyfile(white_tex_file, output_file)
 
                 with open(output_file, "r") as f:
                     content = f.read()
 
                 # the first one is the color definition, skip it
-                new_content = utils.replace_nth(content, env + "_color", "black", i + 2)
+                new_content = utils.replace_nth(
+                    content, env + "_color", "black", index + 2
+                )
 
                 with open(output_file, "w") as f:
                     f.write(new_content)
+
+        # save env orders
+        orders_file = os.path.join(original_dir, "output/result/env_orders.json")
+        utils.export_to_json(env_orders, orders_file)
 
     def render(self, origin_tex_file):
         original_dir = os.path.dirname(origin_tex_file)
