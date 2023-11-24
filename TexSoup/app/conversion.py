@@ -68,8 +68,12 @@ def to_list(tex_tree):
                 macro_name = remove_outer_curly_brackets(str(i.args[0]))
                 parameter_text = i.args[1].string
                 str_tree.append({i.name: "\\" + i.name + macro_name + parameter_text})
+            elif i.name == "label":
+                str_tree.append({i.name: "\\" + i.name + str(i.args)})
             elif i.name in envs.ignore_envs:
                 str_tree.append(str(i))
+            # if this cmd is an inline command, ignore it
+            # https://en.wikibooks.org/wiki/LaTeX/Special_Characters
             elif (
                 str_tree and isinstance(str_tree[-1], str) and str_tree[-1][-1] != "\n"
             ):
