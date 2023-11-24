@@ -37,6 +37,8 @@ section_envs = [
     "section",
     "subsection",
     "subsection*",
+    "subsubsection",
+    "subsubsection*",
 ]
 
 table_envs = [
@@ -44,6 +46,7 @@ table_envs = [
     "table*",
     "wraptable",
 ]
+
 tabular_envs = [
     "tabular",
     "tabularx",
@@ -51,18 +54,23 @@ tabular_envs = [
     "longtable",
     "rotatebox",
 ]
+
 figure_envs = [
     "figure",
     "minipage",
     "subfigure",
     "subfigure*",
 ]
+
 graphic_envs = [
     "centerline",
     "includegraphics",
     "subfigure",
     "gridline",
+    "rotatebox",
+    "rotatebox*",
 ]
+
 algorithm_envs = [
     "algorithm",
     "algorithm*",
@@ -70,12 +78,14 @@ algorithm_envs = [
     "algorithmic*",
     "algorithm2e",
 ]
+
 code_envs = [
     "verbatim",
     "verbatim*",
     "lstlisting",
     "lstinputlisting",
 ]
+
 algorithm_envs += code_envs
 
 list_envs = [
@@ -83,31 +93,21 @@ list_envs = [
     "enumerate",
     "description",
 ]
+
 reference_envs = [
     "bibliography",
 ]
+
 caption_envs = [
     "caption",
     "caption*",
 ]
+
 footnote_envs = [
     "footnote",
     "footnotetext",
     "tablefootnote",
 ]
-non_text_envs = (
-    math_envs
-    + table_envs
-    + figure_envs
-    + reference_envs
-    + caption_envs
-    + algorithm_envs
-    + list_envs
-    + section_envs
-    + ["abstract"]
-    + ["bibliography"]
-    + ["newcolumntype", "label"]  # corner case
-)
 
 
 complex_env_list = [
@@ -154,7 +154,6 @@ ignore_envs = [
     "textsl",
     "texttt",
     "textup",
-    "message",
 ] + footnote_envs
 
 nonexpand_envs = [
@@ -183,7 +182,6 @@ text_envs = [
     "fact",
     "observation",
     "justify",
-    "subsubsection",
     "acknowledgements",
     "flushleft",
     "flushright",
