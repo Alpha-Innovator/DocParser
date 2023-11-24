@@ -44,8 +44,6 @@ def get_image_pairs(dir1: str, dir2: str):
     file_pattern = os.path.join(dir2, "*.png")
     changed_png_files = sorted(glob.glob(file_pattern))
 
-    log.debug(f"rendered_png_files: {rendered_png_files}")
-    log.debug(f"changed_png_files: {changed_png_files}")
     if len(rendered_png_files) != len(changed_png_files):
         raise FileNotFoundError("Wrong image path or file name or page index!")
 
@@ -180,26 +178,32 @@ class LayoutAnnotation:
 
     def get_matching_subdirectories(self) -> List[str]:
         result = []
+        # TODO: move this to config
+        prefix = "block_"
         for name in os.listdir(self.directory):
             if not os.path.isdir(os.path.join(self.directory, name)):
                 continue
-            if not any(name.startswith(prefix) for prefix in envs.complex_env_list):
+            if not name.startswith(prefix):
                 continue
             result.append(name)
         return result
 
-    def extract_text_and_number(self, dir_name: str):
-        match = re.search(r"(\D+)_(\d+)", dir_name)
-        if match:
-            text = match.group(1)
-            number = int(match.group(2))
-            return text, number
-        else:
-            return None, None
-
-    def get_category(self, dir: str):
+    def get_category(self, env_orders: List[str], dir: str):
         dir_name = os.path.basename(dir)
-        env_name, index = self.extract_text_and_number(dir_name)
+        # TODO: move this to config
+        prefix = "block_"
+        order_id = int(dir_name[len(prefix) :])
+        env_name = env_orders[order_id]
+
+        index = -1
+        for i, name in enumerate(env_orders):
+            if name == env_name:
+                index += 1
+            if i == order_id:
+                break
+
+        suffix = "_color"
+        env_name = env_name[: -len(suffix)]
 
         if env_name not in config.name2category:
             raise ValueError(f"Invalid directory name: {dir_name}")
@@ -241,11 +245,16 @@ class LayoutAnnotation:
 
     def generate_non_figure_bb(self) -> Dict[int, List[Block]]:
         layout_info = defaultdict(list)
-        for dir_name in tqdm(self.env_dirs):
+        env_orders = utils.load_json(
+            os.path.join(self.directory, "result/env_orders.json")
+        )
+        for dir_name in tqdm(sorted(self.env_dirs)):
             log.debug(f"Processing {dir_name}")
             env_dir = os.path.join(self.directory, dir_name)
             image_pairs = get_image_pairs(env_dir, self.background_dir)
-            category, index = self.get_category(dir_name)
+            category, index = self.get_category(env_orders, dir_name)
+            log.debug(f"category: {category}, index: {index}")
+
             for image_pair in image_pairs:
                 page_index = image_pair[0]
 
@@ -344,7 +353,7 @@ class LayoutAnnotation:
 
         return reading_annotation
 
-    def generate_image_annotation(self, layout_info):
+    def generate_image_annotation(self, layout_info: Dict[int, List[Block]]):
         rendered_path = os.path.join(self.directory, "colored")
         result_path = os.path.join(self.directory, "result")
         image_info = {}  # annotation image info member of COCO
@@ -362,7 +371,9 @@ class LayoutAnnotation:
 
         return image_info
 
-    def generate_order_annotation(self, layout_info):
+    def generate_order_annotation(self, layout_info: Dict[int, List[Block]]):
+        relation_types = ["contains", "identical", "next"]
+
         order_annotation = {
             key: [block.to_dict() for block in value]
             for key, value in layout_info.items()
