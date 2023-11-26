@@ -86,6 +86,9 @@ class Block:
         self._next_block = next_block
         self._source_code = source_code
 
+    def __repr__(self) -> str:
+        return f"Block(id={self.id}, category={self.category}, page_index={self.page_index}, bbox={self.bbox}), source_code={self.source_code}"
+
     @property
     def bbox(self):
         return self._bounding_box
