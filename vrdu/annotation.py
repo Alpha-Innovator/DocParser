@@ -315,9 +315,9 @@ class LayoutAnnotation:
     def generate_layout_info(self) -> Dict[int, List[Block]]:
         pdf_layouts = self.extract_pdf_layouts()
         self.parse_metadata(pdf_layouts)
+        layout_info = self.generate_non_figure_bb()
         figure_layout_info = self.generate_figure_bb(pdf_layouts)
         self.transform(figure_layout_info)
-        layout_info = self.generate_non_figure_bb()
         for page_index in layout_info.keys():
             layout_info[page_index].extend(figure_layout_info[page_index])
         return layout_info
