@@ -63,7 +63,7 @@ def extract_tar_gz(file_path, extract_path):
 if __name__ == "__main__":
     path = os.path.expanduser("~/vrdu_data/")
     data = []
-    with open("category_count.csv", "r") as f:
+    with open("scripts/category_count.csv", "r") as f:
         reader = csv.DictReader(f)
         for row in reader:
             data.append(row)
