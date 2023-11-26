@@ -371,19 +371,131 @@ class LayoutAnnotation:
 
         return image_info
 
+    def extract_title_name(self, title):
+        # TODO: move this to utils.py
+        match = re.search(
+            r"\\(chapter|section|subsection|subsubsection)(\*?){(.*)}", title
+        )
+        if match:
+            return match.group(1)
+        else:
+            return ""
+
     def generate_order_annotation(self, layout_info: Dict[int, List[Block]]):
-        relation_types = ["contains", "identical", "next"]
+        relation_types = ["adj", "identical", "sub", "ref"]
 
-        order_annotation = {
-            key: [block.to_dict() for block in value]
-            for key, value in layout_info.items()
-        }
-        order_annotation["categories"] = [
-            {"id": index, "name": category}
-            for index, category in config.config["category_name"]
+        sortable_envs = ["Title", "Text", "Text-EQ", "Equation", "Footnote", "List"]
+        sortable_catgory = [config.name2category[name] for name in sortable_envs]
+        category2name = config.category2name
+
+        sortable_elements = [
+            block
+            for page_index in layout_info.keys()
+            for block in layout_info[page_index]
+            if block.category in sortable_catgory
         ]
+        # TODO: move this to config
+        relation_map = {
+            ("Text", "Text"): "adj",
+            ("Text", "Text-EQ"): "adj",
+            ("Text", "Equation"): "adj",
+            ("Text", "List"): "adj",
+            ("Text", "Footnote"): "ref",
+            ("Text-EQ", "Text"): "adj",
+            ("Text-EQ", "Text-EQ"): "adj",
+            ("Text-EQ", "Equation"): "adj",
+            ("Text-EQ", "List"): "adj",
+            ("Text-EQ", "Footnote"): "ref",
+            ("Equation", "Text"): "adj",
+            ("Equation", "Text-EQ"): "adj",
+            ("Equation", "Equation"): "adj",
+            ("Equation", "List"): "adj",
+            ("Equation", "Footnote"): "ref",
+            ("List", "Text"): "adj",
+            ("List", "Text-EQ"): "adj",
+            ("List", "Equation"): "adj",
+            ("List", "List"): "adj",
+            ("List", "Footnote"): "ref",
+            ("Title", "Text"): "sub",
+            ("Title", "Text-EQ"): "sub",
+            ("Title", "Equation"): "sub",
+            ("Title", "List"): "sub",
+            ("Title", "Footnote"): "ref",
+            ("chapter", "chapter"): "adj",
+            ("chapter", "section"): "sub",
+            ("section", "section"): "adj",
+            ("section", "subsection"): "sub",
+            ("subsection", "subsection"): "adj",
+            ("subsection", "subsubsection"): "sub",
+            ("subsubsection", "subsubsection"): "adj",
+        }
 
-        return order_annotation
+        result = []
+        annotations = []
+
+        for index, element in enumerate(sortable_elements):
+            log.debug(f"index={index}, element={element}")
+
+            if index == 0:
+                result.append(element)
+
+            elif category2name[element.category] == "Title":
+                while result and category2name[result[-1].category] != "Title":
+                    result.pop()
+
+                cur_title = self.extract_title_name(element.source_code)
+                prev_title = self.extract_title_name(result[-1].source_code)
+                log.debug(f"prev_title={prev_title}, cur_title={cur_title}")
+                while result and (prev_title, cur_title) not in relation_map:
+                    result.pop()
+                    prev_title = self.extract_title_name(result[-1].source_code)
+                    log.debug(f"prev_title={prev_title}, cur_title={cur_title}")
+
+                log.debug(f"prev_title={prev_title}, cur_title={cur_title}")
+                if result:
+                    annotations.append(
+                        {
+                            "type": relation_map.get(
+                                (prev_title, cur_title),
+                                "unknown",
+                            ),
+                            "from": element.block_id,
+                            "to": result[-1].block_id,
+                        }
+                    )
+                    log.debug(f"annotation={annotations[-1]}")
+                result.append(element)
+            elif category2name[element.category] == "Footnote":
+                if result:
+                    log.debug(f"result[-1]={result[-1]}")
+                    annotations.append(
+                        {
+                            "type": "ref",
+                            "from": result[-1].block_id,
+                            "to": element.block_id,
+                        }
+                    )
+                    log.debug(f"annotation={annotations[-1]}")
+            else:
+                prev_element = result[-1]
+                log.debug(f"result[-1]={result[-1]}")
+                annotations.append(
+                    {
+                        "type": relation_map.get(
+                            (
+                                category2name[prev_element.category],
+                                category2name[element.category],
+                            ),
+                            "unknown",
+                        ),
+                        "from": element.block_id,
+                        "to": result[-1].block_id,
+                    }
+                )
+                log.debug(f"annotation={annotations[-1]}")
+                result.append(element)
+
+        return annotations
 
     def annotate(self):
         layout_info = self.generate_layout_info()
