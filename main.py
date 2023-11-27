@@ -84,10 +84,6 @@ def replace_pdf_figures_with_png(tex_file):
 
 def preprocess(original_tex: str) -> None:
     # Step 0: check if the file is compilable
-    try:
-        subprocess.check_call(["pdflatex", "-interaction=nonstopmode", original_tex])
-    except subprocess.CalledProcessError:
-        raise RuntimeError(f"Level 1: {original_tex} is not compilable")
 
     # Step 1: clean tex
     clean_tex(original_tex)
