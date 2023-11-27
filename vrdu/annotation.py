@@ -496,6 +496,11 @@ class LayoutAnnotation:
 
     def annotate(self):
         layout_info = self.generate_layout_info()
+        layout_info_file = os.path.join(self.directory, "result/layout_info.json")
+        serialized_layout_info = [
+            block.to_dict() for blocks in layout_info.values() for block in blocks
+        ]
+        utils.export_to_json(serialized_layout_info, layout_info_file)
 
         image_annotation = self.generate_image_annotation(layout_info)
         reading_annotation = self.generate_reading_annotation(layout_info)
