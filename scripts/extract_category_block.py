@@ -41,11 +41,21 @@ def extract_category(path, category_name, output_path):
 
 
 if __name__ == "__main__":
-    directory = os.path.expanduser("/home/PJLAB/maosong/vrdu_data")
-    for root, dirs, files in os.walk(directory):
+    category_name = "Table"
+    input_directory = os.path.expanduser("/home/PJLAB/maosong/vrdu_data")
+    output_path = os.path.expanduser(f"~/Desktop/sample_data/{category_name}")
+    if os.path.exists(output_path):
+        shutil.rmtree(output_path)
+    os.makedirs(output_path)
+
+    count = 0
+    for root, dirs, files in os.walk(input_directory):
         if "reading_annotation.json" not in files:
             continue
+        count += 1
 
-        category_name = "Table"
-        output_path = os.path.expanduser(f"~/Desktop/sample_data/{category_name}")
         extract_category(root, category_name, output_path)
+
+    num_of_sanples = len(os.listdir(output_path)) - 1
+
+    print(f"extracted {count} files, {num_of_sanples} samples obtained.")
