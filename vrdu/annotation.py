@@ -434,8 +434,6 @@ class LayoutAnnotation:
         annotations = []
 
         for index, element in enumerate(sortable_elements):
-            log.debug(f"index={index}, element={element}")
-
             if index == 0:
                 result.append(element)
 
@@ -444,15 +442,15 @@ class LayoutAnnotation:
                     result.pop()
 
                 cur_title = self.extract_title_name(element.source_code)
-                prev_title = self.extract_title_name(result[-1].source_code)
-                log.debug(f"prev_title={prev_title}, cur_title={cur_title}")
-                while result and (prev_title, cur_title) not in relation_map:
+                while (
+                    result
+                    and (self.extract_title_name(result[-1].source_code), cur_title)
+                    not in relation_map
+                ):
                     result.pop()
-                    prev_title = self.extract_title_name(result[-1].source_code)
-                    log.debug(f"prev_title={prev_title}, cur_title={cur_title}")
 
-                log.debug(f"prev_title={prev_title}, cur_title={cur_title}")
                 if result:
+                    prev_title = self.extract_title_name(result[-1].source_code)
                     annotations.append(
                         {
                             "type": relation_map.get(
@@ -463,7 +461,6 @@ class LayoutAnnotation:
                             "to": result[-1].block_id,
                         }
                     )
-                    log.debug(f"annotation={annotations[-1]}")
                 result.append(element)
             elif category2name[element.category] == "Footnote":
                 if result:
@@ -475,7 +472,7 @@ class LayoutAnnotation:
                             "to": element.block_id,
                         }
                     )
-                    log.debug(f"annotation={annotations[-1]}")
+
             else:
                 prev_element = result[-1]
                 log.debug(f"result[-1]={result[-1]}")
@@ -492,7 +489,7 @@ class LayoutAnnotation:
                         "to": result[-1].block_id,
                     }
                 )
-                log.debug(f"annotation={annotations[-1]}")
+
                 result.append(element)
 
         return annotations
