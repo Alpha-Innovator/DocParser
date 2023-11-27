@@ -149,9 +149,8 @@ def remove_redundant_files(path: str) -> None:
     output_path = os.path.join(path, "output")
     for root, dirs, files in os.walk(output_path):
         for dir in dirs:
-            if dir == "result":
-                continue
-            shutil.rmtree(os.path.join(root, dir))
+            if dir.startswith("block_"):
+                shutil.rmtree(os.path.join(root, dir))
 
 
 def parse_arguments():
