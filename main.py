@@ -149,6 +149,21 @@ def remove_redundant_files(path: str) -> None:
                 shutil.rmtree(os.path.join(root, dir))
 
 
+def remove_existing_files(path):
+    # remove generated tex related files
+    files = glob.glob(f"{path}/paper_*")
+    for file in files:
+        os.remove(file)
+
+    # remove log file
+    if os.path.exists(os.path.join(path, "paper_output.log")):
+        os.remove(os.path.join(path, "paper_output.log"))
+
+    # remove output folder
+    if os.path.exists(os.path.join(path, "output")):
+        shutil.rmtree(os.path.join(path, "output"))
+
+
 def parse_arguments():
     """
     Parses the command line arguments.
@@ -218,7 +233,11 @@ def cd_wrapper(func):
 @cd_wrapper
 def main(file_name) -> None:
     path = os.path.dirname(file_name)
-    os.makedirs(os.path.join(path, "output/result"), exist_ok=True)
+    # remove redundant files
+    remove_existing_files(path)
+
+    # create output folder
+    os.makedirs(os.path.join(path, "output/result"))
 
     # make a copy of the original tex file
     original_tex = os.path.join(path, "paper_original.tex")
