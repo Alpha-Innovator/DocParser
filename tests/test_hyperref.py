@@ -36,7 +36,7 @@ class TestHyperref(unittest.TestCase):
             self.renderer.remove_hyperref_color(file_mock)
             file_mock.assert_called_with(file_mock, "w")
             file_mock().write.assert_called_with(
-                """\\documentclass{article}\\usepackage{hyperref}\\hypersetup{colorlinks=false}\\begin{document}\\end{document}"""
+                """\\documentclass{article}\\usepackage{hyperref}\\hypersetup{colorlinks=false}\n\\begin{document}\\end{document}"""
             )
 
     def test3(self):
@@ -48,7 +48,7 @@ class TestHyperref(unittest.TestCase):
             self.renderer.remove_hyperref_color(file_mock)
             file_mock.assert_called_with(file_mock, "w")
             file_mock().write.assert_called_with(
-                """\\documentclass{article}\\usepackage[color_links=true]{hyperref}\\hypersetup{colorlinks=false}\\begin{document}\\end{document}"""
+                """\\documentclass{article}\\usepackage[color_links=true]{hyperref}\\hypersetup{colorlinks=false}\n\\begin{document}\\end{document}"""
             )
 
     def test4(self):
@@ -60,5 +60,5 @@ class TestHyperref(unittest.TestCase):
             self.renderer.remove_hyperref_color(file_mock)
             file_mock.assert_called_with(file_mock, "w")
             file_mock().write.assert_called_with(
-                """\\documentclass{article}\\usepackage[color_links=true]{hyperref}\\usepackage{amsmath}\\hypersetup{colorlinks=false}\\begin{document}\\end{document}"""
+                """\\documentclass{article}\\usepackage[color_links=true]{hyperref}\\usepackage{amsmath}\\hypersetup{colorlinks=false}\n\\begin{document}\\end{document}"""
             )
