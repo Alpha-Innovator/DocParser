@@ -476,10 +476,10 @@ class Renderer:
         preamble_loc = preamble.start()
 
         # forbidden the color used by hyperref
-        hyper_setup = r"\\hypersetup{colorlinks=false}"
+        hyper_setup = "\\hypersetup{colorlinks=false}\n"
         if re.search(pattern, content[:preamble_loc]):
             content = (
-                content[: preamble_loc - 1] + hyper_setup + content[preamble_loc - 1 :]
+                content[: preamble_loc] + hyper_setup + content[preamble_loc :]
             )
 
         # Write the modified content back to the input file
