@@ -447,6 +447,45 @@ class Renderer:
         with open(latex_file, "w") as f:
             f.write(content)
 
+    def remove_hyperref_color(self, input_file):
+        """
+        Remove hyperref color from the input file.
+
+        Parameters:
+            input_file (str): The path to the input file.
+
+        Raises:
+            ValueError: If the `\\begin{document}` is not found in the input file.
+
+        Returns:
+            None
+
+        Reference:
+            https://www.overleaf.com/learn/latex/Hyperlinks
+        """
+        # Read the content of the input file
+        with open(input_file, "r") as file:
+            content = file.read()
+
+        # Define the pattern to match the color definitions
+        pattern = r"\\usepackage{hyperref}|\\usepackage(\[)?\[.*?\]?(\])?{hyperref}"
+
+        preamble = re.search(r"\\begin{document}", content)
+        if not preamble:
+            raise ValueError("begin of document not found")
+        preamble_loc = preamble.start()
+
+        # forbidden the color used by hyperref
+        hyper_setup = r"\\hypersetup{colorlinks=false}"
+        if re.search(pattern, content[:preamble_loc]):
+            content = (
+                content[: preamble_loc - 1] + hyper_setup + content[preamble_loc - 1 :]
+            )
+
+        # Write the modified content back to the input file
+        with open(input_file, "w") as file:
+            file.write(content)
+
     def modify_color_definitions(self, input_file, output_file):
         # Read the content of the input file
         with open(input_file, "r") as file:
@@ -552,6 +591,7 @@ class Renderer:
 
         self.add_color_definition(color_tex_file)
         self.add_layout_definition(color_tex_file)
+        self.remove_hyperref_color(color_tex_file)
 
         # use colors to enclose all semantic elements
         data, start, end = utils.data_from_tex_file(color_tex_file)
