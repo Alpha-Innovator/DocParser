@@ -593,6 +593,8 @@ class Renderer:
         self.add_layout_definition(color_tex_file)
         self.remove_hyperref_color(color_tex_file)
 
+        self.render_caption(color_tex_file)
+
         # use colors to enclose all semantic elements
         data, start, end = utils.data_from_tex_file(color_tex_file)
 
@@ -608,3 +610,45 @@ class Renderer:
 
         text_file = os.path.join(original_dir, "output/result/texts.json")
         utils.export_to_json(self.texts, text_file)
+
+    def render_caption(self, tex_file):
+        with open(tex_file) as f:
+            content = f.read()
+
+        pattern = r"\\caption"
+        matches = re.finditer(pattern, content)
+
+        indexes = [(0, 0, "")]
+        for match in matches:
+            brackets = []
+            start = match.start()
+            end = match.end()
+            complete = False
+            while True:
+                if content[end] == "{":
+                    brackets.append("{")
+                    complete = True
+                elif content[end] == "}":
+                    brackets.pop()
+                if complete and len(brackets) == 0:
+                    break
+                end += 1
+
+            end += 1
+            caption = content[start:end]
+
+            self.texts["Caption"].append(caption)
+            colored_caption = utils.colorize(caption, "Caption")
+            indexes.append((start, end, colored_caption))
+
+        result = ""
+        for i, _ in enumerate(indexes):
+            if i == 0:
+                continue
+            result += content[indexes[i - 1][1] : indexes[i][0]]
+            result += indexes[i][2]
+
+        result += content[indexes[-1][1] :]
+
+        with open(tex_file, "w") as f:
+            f.write(result)

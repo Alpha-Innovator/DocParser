@@ -272,3 +272,11 @@ def get_graphicspath(latex):
         return match.group(1)
     else:
         return ""
+
+
+def colorize(text: str, category_name: str) -> str:
+    color = config.name2color[category_name]
+    if category_name == "Caption":
+        print(text)
+        return "{\\color{" + color + "}{" + text + "}}"
+    return ""
