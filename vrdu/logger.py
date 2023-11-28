@@ -39,9 +39,17 @@ def setup_app_level_logger(
         "[%(levelname)-s]:%(filename)s %(funcName)s [Line %(lineno)s] - %(message)s"
     )
 
+    # create file handler which logs even debug messages
     fh = logging.FileHandler(file_name, mode=mode)
+    fh.setLevel(logging.DEBUG)
     fh.setFormatter(formatter)
     logger.addHandler(fh)
+
+    # create console handler with a higher log level
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.INFO)
+    ch.setFormatter(formatter)
+    logger.addHandler(ch)
 
     return logger
 
