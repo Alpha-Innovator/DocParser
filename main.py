@@ -104,11 +104,16 @@ def parse_file_name(filename) -> str:
 
 def transform_tex_to_images(path):
     try:
-        subprocess.check_call(
-            ["pdflatex", "-interaction=nonstopmode", "paper_colored.tex"]
-        )
+        with open("paper_output.log", "a") as f:
+            subprocess.check_call(
+                ["pdflatex", "-interaction=nonstopmode", "paper_colored.tex"],
+                stdout=f,
+                stderr=f,
+            )
     except subprocess.CalledProcessError:
-        raise RuntimeError(f"Level 2: {path}/paper_colored.tex is not compilable")
+        raise RuntimeError(
+            f"[VRDU] Level 2: {path}/paper_colored.tex is not compilable"
+        )
 
     files = glob.glob(f"{path}/paper_*.tex")
     for file in tqdm(files):
@@ -233,6 +238,8 @@ def cd_wrapper(func):
 @cd_wrapper
 def main(file_name) -> None:
     path = os.path.dirname(file_name)
+    log.info(f"[VRDU] processing file {file_name}")
+
     # remove redundant files
     remove_existing_files(path)
 
@@ -244,6 +251,7 @@ def main(file_name) -> None:
     shutil.copyfile(file_name, original_tex)
 
     # preprocess
+    log.info(f"[VRDU] Pre-processing file {original_tex}")
     preprocess(original_tex)
 
     # run rendering
@@ -251,17 +259,19 @@ def main(file_name) -> None:
     vrdu_renderer.render(original_tex)
 
     # compile into PDFs, and then convert into images
-    print("Transforming from TEX to images, this may take a while...")
+    log.info("[VRDU] Transforming from TEX to images, this may take a while...")
     transform_tex_to_images(path)
 
     # generate annotations
-    print("Generating annotations, this may take a while...")
+    log.info("[VRDU] Generating annotations, this may take a while...")
     vrdu_annotation = LayoutAnnotation(path)
     vrdu_annotation.annotate()
 
     # remove redundant files
     remove_redundant_files(path)
-    print(f"Finished processing {file_name}, result saved in {path}/output/result")
+    log.info(
+        f"[VRDU] Results of processing {file_name} are saved in {path}/output/result"
+    )
 
 
 if __name__ == "__main__":
