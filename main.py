@@ -182,6 +182,17 @@ def parse_arguments():
 
 
 def cd_wrapper(func):
+    """
+    Wraps a function with a decorator that changes the current working directory to the directory of the file path argument,
+    calls the original function, and then changes the directory back to the original directory.
+
+    Parameters:
+        func (function): The function to be wrapped.
+
+    Returns:
+        function: The wrapped function.
+    """
+
     def wrapped(*args, **kwargs):
         # Get file path argument
         file_path = args[0]
