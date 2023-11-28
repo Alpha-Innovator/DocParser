@@ -1,16 +1,10 @@
 import os
 import subprocess
-import multiprocessing
 import argparse
+import random
 
 
-def run_script(file):
-    os.system(f"python main.py --file_name {file}")
-
-
-def main(start, end):
-    path = os.path.expanduser("~/vrdu_data")
-
+def extract_tex_files(path):
     tex_files = []
 
     for root, dirs, files in os.walk(path):
@@ -31,8 +25,15 @@ def main(start, end):
                 continue
 
             tex_files.append(tex_file)
+    return tex_files
 
-    for tex_file in sorted(tex_files)[start:end]:
+
+def main(start, end):
+    path = os.path.expanduser("~/vrdu_data")
+    tex_files = extract_tex_files(path)
+    random.shuffle(tex_files)
+
+    for tex_file in tex_files[start:end]:
         subprocess.run(["python", "main.py", "--file_name", tex_file])
 
 
