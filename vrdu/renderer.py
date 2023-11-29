@@ -478,9 +478,7 @@ class Renderer:
         # forbidden the color used by hyperref
         hyper_setup = "\\hypersetup{colorlinks=false}\n"
         if re.search(pattern, content[:preamble_loc]):
-            content = (
-                content[: preamble_loc] + hyper_setup + content[preamble_loc :]
-            )
+            content = content[:preamble_loc] + hyper_setup + content[preamble_loc:]
 
         # Write the modified content back to the input file
         with open(input_file, "w") as file:
@@ -510,13 +508,13 @@ class Renderer:
 
         self.enclose_list(data, color=name2color["List"])
 
-        self.enclose_caption(data, color=name2color["Caption"])
+        # self.enclose_caption(data, color=name2color["Caption"])
 
         self.enclose_equation(data, color=name2color["Equation"])
 
         self.enclose_tabular(data, color=name2color["Table"])
 
-        self.enclose_footnote(data, color=name2color["Footnote"])
+        # self.enclose_footnote(data, color=name2color["Footnote"])
 
         self.enclose_reference(data, color=name2color["Reference"])
 
@@ -594,6 +592,7 @@ class Renderer:
         self.remove_hyperref_color(color_tex_file)
 
         self.render_caption(color_tex_file)
+        self.render_footnote(color_tex_file)
 
         # use colors to enclose all semantic elements
         data, start, end = utils.data_from_tex_file(color_tex_file)
@@ -648,6 +647,50 @@ class Renderer:
             result += content[indexes[i - 1][1] : indexes[i][0]]
             result += indexes[i][2]
 
+        result += content[indexes[-1][1] :]
+
+        with open(tex_file, "w") as f:
+            f.write(result)
+
+    def render_footnote(self, tex_file):
+        with open(tex_file) as f:
+            content = f.read()
+
+        pattern = r"\\footnote"
+        matches = re.finditer(pattern, content)
+
+        indexes = [(0, 0, "")]
+        for match in matches:
+            brackets = []
+            start = match.start()
+            end = match.end()
+            complete = False
+            while True:
+                if content[end] == "{":
+                    brackets.append("{")
+                    complete = True
+                elif content[end] == "}":
+                    brackets.pop()
+                if complete and len(brackets) == 0:
+                    break
+                end += 1
+
+            end += 1
+            footnote = content[start:end]
+            self.texts["Footnote"].append(footnote)
+            print("footnote: ", footnote)
+            colored_footnote = utils.colorize(footnote, "Footnote")
+            print(f"colored_footnote: {colored_footnote}")
+            indexes.append((start, end, colored_footnote))
+
+        result = ""
+        for i, _ in enumerate(indexes):
+            if i == 0:
+                continue
+            result += content[indexes[i - 1][1] : indexes[i][0]]
+            result += indexes[i][2]
+
+        print("residual content: ", content[indexes[-1][1] :])
         result += content[indexes[-1][1] :]
 
         with open(tex_file, "w") as f:
