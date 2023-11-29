@@ -277,7 +277,8 @@ def get_graphicspath(latex):
 def colorize(text: str, category_name: str) -> str:
     color = config.name2color[category_name]
     if category_name == "Caption":
-        return "{\\color{" + color + "}{" + text + "}}"
+        index = text.find("{")
+        return text[: index + 1] + "{\\color{" + color + "}" + text[index + 1 :] + "}"
     if category_name == "Footnote":
         index = text.find("{")
         return text[: index + 1] + "\\color{" + color + "}" + text[index + 1 :]
