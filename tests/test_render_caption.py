@@ -38,7 +38,7 @@ class TestHyperref(unittest.TestCase):
             self.renderer.render_caption(file_mock)
             file_mock.assert_called_with(file_mock, "w")
             file_mock().write.assert_called_with(
-                """\\documentclass{article}\\begin{document}{\\color{Caption_color}{\\caption{A figure without list entry.}}}\\end{document}"""
+                """\\documentclass{article}\\begin{document}\\caption{{\\color{Caption_color}A figure without list entry.}}\\end{document}"""
             )
 
     def test_one_caption2(self):
@@ -50,7 +50,7 @@ class TestHyperref(unittest.TestCase):
             self.renderer.render_caption(file_mock)
             file_mock.assert_called_with(file_mock, "w")
             file_mock().write.assert_called_with(
-                """\\documentclass{article}\\begin{document}{\\color{Caption_color}{\\caption[]{A figure without list entry.}}}\\end{document}"""
+                """\\documentclass{article}\\begin{document}\\caption[]{{\\color{Caption_color}A figure without list entry.}}\\end{document}"""
             )
 
     def test_multiple_caption(self):
@@ -62,7 +62,7 @@ class TestHyperref(unittest.TestCase):
             self.renderer.render_caption(file_mock)
             file_mock.assert_called_with(file_mock, "w")
             file_mock().write.assert_called_with(
-                """\\documentclass{article}\\begin{document}{\\color{Caption_color}{\\caption{A figure without list entry.}}}{\\color{Caption_color}{\\caption{A figure without list entry.}}}\\end{document}"""
+                """\\documentclass{article}\\begin{document}\\caption{{\\color{Caption_color}A figure without list entry.}}\\caption{{\\color{Caption_color}A figure without list entry.}}\\end{document}"""
             )
 
     def test_table_caption(self):
@@ -74,5 +74,5 @@ class TestHyperref(unittest.TestCase):
             self.renderer.render_caption(file_mock)
             file_mock.assert_called_with(file_mock, "w")
             file_mock().write.assert_called_with(
-                r"""\documentclass{article}\begin{document}Table \ref{demo-table} has a caption:\begin{table}[!h]\begin{center}\begin{tabular}{||c c c c||}  \hline Col1 & Col2 & Col2 & Col3 \\ [0.5ex]  \hline\hline 1 & 6 & 87837 & 787 \\  \hline 2 & 7 & 78 & 5415 \\ \hline 3 & 545 & 778 & 7507 \\ \hline 4 & 545 & 18744 & 7560 \\ \hline 5 & 88 & 788 & 6344 \\ [1ex]  \hline\end{tabular}{\color{Caption_color}{\caption{\label{demo-table}Your caption.}}}\end{center}\end{table}\end{document}"""
+                r"""\documentclass{article}\begin{document}Table \ref{demo-table} has a caption:\begin{table}[!h]\begin{center}\begin{tabular}{||c c c c||}  \hline Col1 & Col2 & Col2 & Col3 \\ [0.5ex]  \hline\hline 1 & 6 & 87837 & 787 \\  \hline 2 & 7 & 78 & 5415 \\ \hline 3 & 545 & 778 & 7507 \\ \hline 4 & 545 & 18744 & 7560 \\ \hline 5 & 88 & 788 & 6344 \\ [1ex]  \hline\end{tabular}\caption{{\color{Caption_color}\label{demo-table}Your caption.}}\end{center}\end{table}\end{document}"""
             )
