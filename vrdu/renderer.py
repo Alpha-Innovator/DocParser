@@ -593,6 +593,7 @@ class Renderer:
 
         self.render_caption(color_tex_file)
         self.render_footnote(color_tex_file)
+        self.extract_graphics(color_tex_file)
 
         # use colors to enclose all semantic elements
         data, start, end = utils.data_from_tex_file(color_tex_file)
@@ -720,3 +721,15 @@ class Renderer:
 
         with open(tex_file, "w") as f:
             f.write(result)
+    def extract_graphics(self, tex_file):
+        with open(tex_file, "r") as file:
+            content = file.read()
+
+        pattern = r"\\includegraphics(?:\[(.*?)\])?{(.*?)}"
+        matches = re.findall(pattern, content)
+        for match in matches:
+            graphic = "\\includegraphics"
+            if match[0]:
+                graphic += f"[{match[0]}]"
+            graphic += f"{{{match[1]}}}"
+            self.texts["Figure"].append(graphic)
