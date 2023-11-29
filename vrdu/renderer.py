@@ -653,12 +653,14 @@ class Renderer:
             f.write(result)
 
     def render_footnote(self, tex_file):
+        # TODO: use envs.footnote_envs
         with open(tex_file) as f:
             content = f.read()
 
         pattern = r"\\footnote"
         matches = re.finditer(pattern, content)
 
+        # TODO: use tabular like way to enclose this part
         indexes = [(0, 0, "")]
         for match in matches:
             brackets = []
@@ -678,9 +680,7 @@ class Renderer:
             end += 1
             footnote = content[start:end]
             self.texts["Footnote"].append(footnote)
-            print("footnote: ", footnote)
             colored_footnote = utils.colorize(footnote, "Footnote")
-            print(f"colored_footnote: {colored_footnote}")
             indexes.append((start, end, colored_footnote))
 
         result = ""
@@ -689,6 +689,11 @@ class Renderer:
                 continue
             result += content[indexes[i - 1][1] : indexes[i][0]]
             result += indexes[i][2]
+
+        result += content[indexes[-1][1] :]
+
+        with open(tex_file, "w") as f:
+            f.write(result)
 
     def render_tabular(self, tex_file):
         with open(tex_file) as f:
