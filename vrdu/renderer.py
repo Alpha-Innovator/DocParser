@@ -690,7 +690,27 @@ class Renderer:
             result += content[indexes[i - 1][1] : indexes[i][0]]
             result += indexes[i][2]
 
-        print("residual content: ", content[indexes[-1][1] :])
+    def render_tabular(self, tex_file):
+        with open(tex_file) as f:
+            content = f.read()
+
+        tabular_pattern = r"\\begin{tabular}.*?\\end{tabular}"
+        indexes = [
+            (m.start(), m.end())
+            for m in re.finditer(tabular_pattern, content, re.DOTALL)
+        ]
+
+        if not indexes:
+            return
+
+        result = content[: indexes[0][0]]
+        for i, _ in enumerate(indexes):
+            if i > 0:
+                result += content[indexes[i - 1][1] : indexes[i][0]]
+            tabular = content[indexes[i][0] : indexes[i][1]]
+            colored_tabular = utils.colorize(tabular, "Table")
+            result += colored_tabular
+
         result += content[indexes[-1][1] :]
 
         with open(tex_file, "w") as f:

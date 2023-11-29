@@ -280,5 +280,7 @@ def colorize(text: str, category_name: str) -> str:
         return "{\\color{" + color + "}{" + text + "}}"
     if category_name == "Footnote":
         index = text.find("{")
-        return text[:index + 1] + "\\color{" + color + "}" + text[index + 1 :]
+        return text[: index + 1] + "\\color{" + color + "}" + text[index + 1 :]
+    if category_name == "Table":
+        return "{\\color{" + color + "}" + text + "}"
     return ""
