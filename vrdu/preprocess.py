@@ -90,9 +90,7 @@ def delete_table_of_contents(original_tex):
         latex_content = file.read()
 
     # TODO: move this to envs
-    commands_pattern = (
-        r"\\(tableofcontents|listoffigures|listoftables|listofalgorithms)"
-    )
+    commands_pattern = r"\\(tableofcontents|listoffigures|listoftables|listofalgorithms|lstlistoflistings)"
     modified_content = re.sub(commands_pattern, "", latex_content)
 
     with open(original_tex, "w") as file:
