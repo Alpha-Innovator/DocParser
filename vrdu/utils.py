@@ -274,13 +274,13 @@ def colorize(text: str, category_name: str) -> str:
         index = text.find("\\", len("\\begin{algorithm}"))
         return text[:index] + "\\color{" + color + "}" + text[index:]
     if category_name == "Title":
-        return r"{\color{" + color + "}" + text + "}"
+        return "{\\color{" + color + "}" + text + "}"
     if category_name == "List":
-        return r"{\color{" + color + "}" + text + "}"
+        return "{\\color{" + color + "}" + text + "}"
     if category_name == "Text":
         return "\\textcolor{" + color + "}{" + text + "}"
     if category_name == "Text-EQ":
-        return r"\textcolor{" + color + "}{" + text + "}"
+        return "\\textcolor{" + color + "}{" + text + "}"
     if category_name == "PaperTitle":
         index = text.find("{")
         return (
@@ -288,6 +288,7 @@ def colorize(text: str, category_name: str) -> str:
         )
     if category_name == "Abstract":
         index = len("\\begin{abstract}")
+        return text[:index] + "\\color{" + color + "}" + text[index:]
     if category_name == "Code":
         return "{\\color{" + color + "}" + text + "}"
 
