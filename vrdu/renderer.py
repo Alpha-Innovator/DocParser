@@ -5,7 +5,6 @@ from typing import List, Union
 import re
 
 
-from TexSoup.app import conversion
 from TexSoup.TexSoup import TexSoup
 from TexSoup.TexSoup.data import TexEnv
 
@@ -513,7 +512,8 @@ class Renderer:
         matches = re.finditer(pattern, content)
 
         # TODO: use tabular like way to enclose this part
-        indexes = [(0, 0, "")]
+        indexes = []
+        indexes.append((0, 0, ""))
         for match in matches:
             brackets = []
             start = match.start()
