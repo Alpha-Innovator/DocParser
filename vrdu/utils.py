@@ -286,5 +286,8 @@ def colorize(text: str, category_name: str) -> str:
         return (
             text[: index + 1] + "\\textcolor{" + color + "}{" + text[index + 1 :] + "}"
         )
+    if category_name == "Abstract":
+        index = len(r"\\begin{abstract}")
+        return text[: index + 1] + "\\color{" + color + "}" + text[index + 1 :]
 
     raise NotImplementedError(f"Invalid category name: {category_name}")

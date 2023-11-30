@@ -337,6 +337,7 @@ class Renderer:
         self.render_algorithm(tex_file)
         self.render_tabular(tex_file)
         self.render_title(tex_file)
+        self.render_abstract(tex_file)
         # self.enclose_code(data, color=name2color["Code"])
 
     def render_simple_envs(self, tex_file):
@@ -542,6 +543,28 @@ class Renderer:
             result += indexes[i][2]
 
         result += content[indexes[-1][1] :]
+
+        with open(tex_file, "w") as f:
+            f.write(result)
+
+    def render_abstract(self, tex_file):
+        with open(tex_file) as f:
+            content = f.read()
+
+        pattern = r"\\begin{abstract}.*?\\end{abstract}"
+        indexes = [(m.start(), m.end()) for m in re.finditer(pattern, content)]
+
+        if len(indexes) > 1:
+            raise ValueError("more than one title found")
+        if not indexes:
+            log.debug("no abstract found")
+            return
+
+        start, end = indexes[0]
+        abstract = content[start:end]
+        self.texts["Abstract"].append(abstract)
+        colored_abstract = utils.colorize(abstract, "Abstract")
+        result = content[:start] + colored_abstract + content[end:]
 
         with open(tex_file, "w") as f:
             f.write(result)
