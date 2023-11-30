@@ -1,7 +1,6 @@
 import os
 import re
-import shutil
-from glob import glob
+import glob
 
 from vrdu import utils
 from arxiv_cleaner.cleaner import Cleaner
@@ -37,21 +36,6 @@ def clean_tex(original_tex):
 
     # Run the cleaner
     cleaner.clean()
-
-
-def remove_existing_files(path):
-    # remove generated tex related files
-    files = glob.glob(f"{path}/paper_*")
-    for file in files:
-        os.remove(file)
-
-    # remove log file
-    if os.path.exists(os.path.join(path, "paper_output.log")):
-        os.remove(os.path.join(path, "paper_output.log"))
-
-    # remove output folder
-    if os.path.exists(os.path.join(path, "output")):
-        shutil.rmtree(os.path.join(path, "output"))
 
 
 def replace_pdf_figures_with_png(tex_file):
@@ -99,9 +83,6 @@ def delete_table_of_contents(original_tex):
 
 def run(original_tex: str) -> None:
     path = os.path.dirname(original_tex)
-    # remove redundant files
-    remove_existing_files(path)
-
     # Step 0: check if the file is compilable
 
     # Step 1: clean tex
