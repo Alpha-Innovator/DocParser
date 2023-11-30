@@ -328,6 +328,7 @@ class Renderer:
             content = file.read()
 
         # Define the pattern to match the color definitions
+        # FIXME: use defined color
         pattern = r"\\definecolor{([^}]+)}{RGB}{(\d+), (\d+), (\d+)}"
 
         # Replace the color definitions with pure white
@@ -568,7 +569,9 @@ class Renderer:
             content = f.read()
 
         pattern = r"\\begin{abstract}.*?\\end{abstract}"
-        indexes = [(m.start(), m.end()) for m in re.finditer(pattern, content, re.DOTALL)]
+        indexes = [
+            (m.start(), m.end()) for m in re.finditer(pattern, content, re.DOTALL)
+        ]
 
         if len(indexes) > 1:
             raise ValueError("more than one title found")
