@@ -45,11 +45,9 @@ def transform_tex_to_images(path):
         log.debug(f"Processing file: {file}")
         utils.compile_latex(file)
         pdf_file = os.path.splitext(file)[0] + ".pdf"
-        log.debug(f"pdf_file: {pdf_file}")
         output_dir = parse_file_name(file)
         os.makedirs(os.path.join(path, f"output/{output_dir}"), exist_ok=True)
         output_pdf = os.path.join(path, f"output/{output_dir}/paper.pdf")
-        log.debug(f"output_pdf: {output_pdf}")
         shutil.move(pdf_file, output_pdf)
 
         # convert into images
