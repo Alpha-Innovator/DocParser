@@ -49,10 +49,12 @@ table_envs = [
 
 tabular_envs = [
     "tabular",
+    "tabular*",
     "tabularx",
     "tabulary",
     "longtable",
-    "rotatebox",
+    "tabu",
+    "longtabu",
 ]
 
 figure_envs = [
@@ -76,7 +78,7 @@ algorithm_envs = [
     "algorithm*",
     "algorithmic",
     "algorithmic*",
-    "algorithm2e",
+    "program",
 ]
 
 code_envs = [
@@ -193,4 +195,11 @@ one_column_envs = [
     "Caption",
     "Algorithm",
     "Footnote",
+]
+
+list_of_tables = [
+    "tableofcontents",
+    "listoffigures",
+    "listoftables",
+    "listofalgorithms",
 ]
