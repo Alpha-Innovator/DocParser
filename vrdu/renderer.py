@@ -715,6 +715,7 @@ class Renderer:
             if i > 0:
                 result += content[indexes[i - 1][1] : indexes[i][0]]
             tabular = content[indexes[i][0] : indexes[i][1]]
+            self.texts["Table"].append(tabular)
             colored_tabular = utils.colorize(tabular, "Table")
             result += colored_tabular
 
