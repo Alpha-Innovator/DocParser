@@ -13,4 +13,4 @@ name2rgbcolor = {name: tuple([0, 0, 0]) for name in name2category.keys()}
 name2color = {name: name + "_color" for name in name2category.keys()}
 
 # used to annotate the object detection result
-colors_map = {category: color for category, color in config["annotation_color"]}
+colors_map = config["annotation_color"]

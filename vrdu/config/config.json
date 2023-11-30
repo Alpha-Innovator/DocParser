@@ -58,7 +58,7 @@
         [
             11,
             "Reference",
-            "Reference",
+            "Reference"
         ],
         [
             12,
@@ -78,67 +78,42 @@
     ],
     "annotation_image_font_type": "DejaVuSans.ttf",
     "annotation_image_font_size": 24,
-    "annotation_color": [
-        [
-            0,
-            "magenta"
-        ],
-        [
-            1,
-            "cyan"
-        ],
-        [
-            2,
-            "yellow"
-        ],
-        [
-            3,
-            "blue"
-        ],
-        [
-            4,
-            "green"
-        ],
-        [
-            5,
-            "red"
-        ],
-        [
-            6,
-            "teal"
-        ],
-        [
-            7,
-            "purple"
-        ],
-        [
-            8,
-            "orange"
-        ],
-        [
-            9,
-            "brown"
-        ],
-        [
-            10,
-            "pink"
-        ],
-        [
-            11,
-            "olive"
-        ],
-        [
-            12,
-            "pink"
-        ],
-        [
-            13,
-            "magenta"
-        ],
-        [
-            14,
-            "brown"
-        ]
-    ]
-
+    "annotation_color": {
+        "0": "magenta",
+        "1": "cyan",
+        "2": "yellow",
+        "3": "blue",
+        "4": "green",
+        "5": "red",
+        "6": "teal",
+        "7": "purple",
+        "8": "orange",
+        "9": "brown",
+        "10": "pink",
+        "11": "olive",
+        "12": "pink",
+        "13": "magenta",
+        "14": "brown"
+    },
+    "coco_info": {
+        "year": 2023,
+        "version": "1.0",
+        "description": "Visually Rich Document Understanding data process",
+        "contributor": "manual",
+        "url": "https://github.com/MaoSong2022/vrdu_data_process",
+        "date_created": "2023-12-01"
+    },
+    "coco_licenses": [
+        {
+            "url": "http://creativecommons.org/licenses/by/2.0/",
+            "id": 4,
+            "name": "Attribution License"
+        }
+    ],
+    "coco_image_info": {
+        "coco_url": "https://github.com/MaoSong2022/vrdu_data_process",
+        "date_captured": "2023-12-01",
+        "flickr_url": "",
+        "licenses": 4
+    }
 }

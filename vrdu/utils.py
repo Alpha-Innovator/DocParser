@@ -214,21 +214,8 @@ def export_to_coco(
         for index, category, supercategory in config.config["category_name"]
     ]
     result = {
-        "info": {
-            "year": 2023,
-            "version": "1.0",
-            "description": "Visually Rich Document Understanding data process",
-            "contributor": "manual",
-            "url": "https://github.com/MaoSong2022/vrdu_data_process",
-            "date_created": f"{datetime.datetime.now()}",
-        },
-        "licenses": [  # TODO: modify this
-            {
-                "url": "http://creativecommons.org/licenses/by/2.0/",
-                "id": 4,
-                "name": "Attribution License",
-            }
-        ],
+        "info": config.config["coco_info"],
+        "licenses": config.config["coco_licenses"],
         "images": [],
         "annotations": [],
         "categories": category_info,
@@ -241,11 +228,8 @@ def export_to_coco(
             "width": page_layout.width,
             "height": page_layout.height,
             "file_name": image_infos[page_index],
-            "coco_url": "",  # TODO: modify this
-            "date_captured": "",  # TODO: modify this
-            "flickr_url": "",  # TODO: modify this
-            "license": 0,  # TODO: modify this
         }
+        image.update(config.config["coco_images"])
         result["images"].append(image)
 
         for index, element in enumerate(page_elements[1:]):
