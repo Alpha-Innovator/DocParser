@@ -308,6 +308,20 @@ class Renderer:
         with open(input_file, "w") as file:
             file.write(content)
 
+    def remove_lstlisting_color(self, input_file):
+        # Read the content of the input file
+        with open(input_file, "r") as file:
+            content = file.read()
+
+        pattern = r"\\lstset\{.*\}"
+
+        # Replace the color definitions with pure white
+        modified_content = re.sub(pattern, "", content)
+
+        # Write the modified content to the output file
+        with open(input_file, "w") as file:
+            file.write(modified_content)
+
     def modify_color_definitions(self, input_file, output_file):
         # Read the content of the input file
         with open(input_file, "r") as file:
@@ -335,9 +349,10 @@ class Renderer:
         self.extract_graphics(tex_file)
         self.render_algorithm(tex_file)
         self.render_tabular(tex_file)
+        self.render_code(tex_file)
+        # the following two envs are placed here because they use string regex to render
         self.render_title(tex_file)
         self.render_abstract(tex_file)
-        # self.enclose_code(data, color=name2color["Code"])
 
     def render_simple_envs(self, tex_file):
         data, start, end = utils.data_from_tex_file(tex_file)
@@ -416,6 +431,7 @@ class Renderer:
         self.add_color_definition(color_tex_file)
         self.add_layout_definition(color_tex_file)
         self.remove_hyperref_color(color_tex_file)
+        self.remove_lstlisting_color(color_tex_file)
 
         self.render_all_env(color_tex_file)
 
@@ -635,3 +651,37 @@ class Renderer:
                 graphic += f"[{match[0]}]"
             graphic += f"{{{match[1]}}}"
             self.texts["Figure"].append(graphic)
+
+    def render_code(self, tex_file):
+        with open(tex_file, "r") as file:
+            content = file.read()
+        # pattern 1: code environment
+        # pattern 2: lstinputlisting to input a file
+        # TODO: test arviv_cleaner to see if it can handle lstinputlisting
+        pattern = (
+            r"\\begin{(verbatim|lstlisting)[*]?}(.*?)\\end{\1[*]?}"
+            + "|"
+            + r"\\lstinputlisting\[[^\]]*\]{[^\}]*}"
+        )
+        indexes = [
+            (m.start(), m.end()) for m in re.finditer(pattern, content, re.DOTALL)
+        ]
+
+        if not indexes:
+            return
+
+        result = content[: indexes[0][0]]
+        for i, _ in enumerate(indexes):
+            if i > 0:
+                result += content[indexes[i - 1][1] : indexes[i][0]]
+            code = content[indexes[i][0] : indexes[i][1]]
+            self.texts["Code"].append(code)
+            colored_code = utils.colorize(code, "Code")
+            result += colored_code
+
+        result += content[indexes[-1][1] :]
+
+        content = result
+
+        with open(tex_file, "w") as f:
+            f.write(result)
