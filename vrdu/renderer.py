@@ -339,34 +339,36 @@ class Renderer:
         with open(output_file, "w") as file:
             file.write(modified_content)
 
-    def render_all_env(self, data):
-        name2color = config.name2color
-        self.enclose_title(data, color=name2color["Title"])
-        self.enclose_section(data, color=name2color["Title"])
+    def render_all_env(self, tex_file):
+        self.render_simple_envs(tex_file)
+        self.render_float_envs(tex_file)
 
-        self.enclose_list(data, color=name2color["List"])
+    def render_float_envs(self, tex_file):
+        self.render_caption(tex_file)
+        self.render_footnote(tex_file)
+        self.extract_graphics(tex_file)
+        self.render_algorithm(tex_file)
+        self.render_tabular(tex_file)
+        # self.enclose_code(data, color=name2color["Code"])
 
-        # self.enclose_caption(data, color=name2color["Caption"])
+    def render_simple_envs(self, tex_file):
+        data, start, end = utils.data_from_tex_file(tex_file)
 
-        self.enclose_equation(data, color=name2color["Equation"])
+        self.enclose_title(data)
+        self.enclose_section(data)
+        self.enclose_list(data)
+        self.enclose_equation(data)
+        self.enclose_text(data)
+        # self.enclose_reference(data, color=name2color["Reference"])
 
-        self.enclose_tabular(data, color=name2color["Table"])
-
-        # self.enclose_footnote(data, color=name2color["Footnote"])
-
-        self.enclose_reference(data, color=name2color["Reference"])
-
-        self.enclose_algorithm(data, color=name2color["Algorithm"])
-
-        self.extract_figures(data)
-
-        # enclose_code(data, color=name2color["Code"])
-
-        self.enclose_text(
-            data,
-            text_color=name2color["Text"],
-            text_eq_color=name2color["Text-EQ"],
+        # Save the raw parsed data for debugging purposes
+        raw_data_file = os.path.join(
+            os.path.dirname(tex_file), "output/result/raw_parsed_data.json"
         )
+        utils.export_to_json(data, raw_data_file)
+
+        # Write the modified data back to the TeX file
+        utils.tex_file_from_data(data, tex_file, start=start, end=end)
 
     def get_env_orders(self, tex_file):
         with open(tex_file) as f:
@@ -429,21 +431,7 @@ class Renderer:
         self.add_layout_definition(color_tex_file)
         self.remove_hyperref_color(color_tex_file)
 
-        self.render_caption(color_tex_file)
-        self.render_footnote(color_tex_file)
-        self.extract_graphics(color_tex_file)
-        self.render_algorithm(color_tex_file)
-        self.render_tabular(color_tex_file)
-
-        # use colors to enclose all semantic elements
-        data, start, end = utils.data_from_tex_file(color_tex_file)
-
-        # Save the raw parsed data for debugging purposes
-        raw_data_file = os.path.join(original_dir, "output/result/raw_parsed_data.json")
-        utils.export_to_json(data, raw_data_file)
-
-        self.render_all_env(data)
-        utils.tex_file_from_data(data, color_tex_file, start=start, end=end)
+        self.render_all_env(color_tex_file)
 
         # change the enclose color of semantic elements one by one and generate corresponding tex files
         self.render_one_env(original_dir)
