@@ -702,10 +702,9 @@ class Renderer:
         with open(tex_file) as f:
             content = f.read()
 
-        tabular_pattern = r"\\begin{tabular}.*?\\end{tabular}"
+        pattern = r"\\begin{tabular}.*?\\end{tabular}"
         indexes = [
-            (m.start(), m.end())
-            for m in re.finditer(tabular_pattern, content, re.DOTALL)
+            (m.start(), m.end()) for m in re.finditer(pattern, content, re.DOTALL)
         ]
 
         if not indexes:
