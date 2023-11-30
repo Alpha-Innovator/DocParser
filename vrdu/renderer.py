@@ -68,19 +68,6 @@ class Renderer:
     def __init__(self) -> None:
         self.texts = defaultdict(list)
 
-    def enclose_title(self, data) -> None:
-        for item in data:
-            if not isinstance(item, dict):
-                continue
-
-            env = find_env(item, ["title"])
-            if env is None:
-                continue
-
-            self.texts["Title"].append(item[env])
-            title_text = item[env][len(env) + 2 : -1]
-            item[env] = utils.colorize(title_text, "Title")
-
     def enclose_section(self, data) -> None:
         """
         Encloses a section of data in curly braces with a specified color.
@@ -349,12 +336,11 @@ class Renderer:
         self.extract_graphics(tex_file)
         self.render_algorithm(tex_file)
         self.render_tabular(tex_file)
+        self.render_title(tex_file)
         # self.enclose_code(data, color=name2color["Code"])
 
     def render_simple_envs(self, tex_file):
         data, start, end = utils.data_from_tex_file(tex_file)
-
-        self.enclose_title(data)
         self.enclose_section(data)
         self.enclose_list(data)
         self.enclose_equation(data)
@@ -480,6 +466,42 @@ class Renderer:
 
         with open(tex_file, "w") as f:
             f.write(result)
+
+    def render_title(self, tex_file):
+        with open(tex_file) as f:
+            content = f.read()
+
+        pattern = r"\\title"
+        indexes = [(m.start(), m.end()) for m in re.finditer(pattern, content)]
+
+        if len(indexes) > 1:
+            raise ValueError("more than one title found")
+
+        if len(indexes) == 0:
+            log.debug("no title found")
+            return
+
+        brackets = []
+        start, end = indexes[0]
+        complete = False
+        while True:
+            if content[end] == "{":
+                brackets.append("{")
+                complete = True
+            elif content[end] == "}":
+                brackets.pop()
+            if complete and len(brackets) == 0:
+                break
+            end += 1
+
+        end += 1
+        title = content[start:end]
+        self.texts["PaperTitle"].append(title)
+        colored_title = utils.colorize(title, "PaperTitle")
+        content = content[:start] + colored_title + content[end:]
+
+        with open(tex_file, "w") as f:
+            f.write(content)
 
     def render_footnote(self, tex_file):
         # TODO: use envs.footnote_envs

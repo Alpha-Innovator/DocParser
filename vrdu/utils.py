@@ -281,5 +281,10 @@ def colorize(text: str, category_name: str) -> str:
         return "\\textcolor{" + color + "}{" + text + "}"
     if category_name == "Text-EQ":
         return r"\textcolor{" + color + "}{" + text + "}"
+    if category_name == "PaperTitle":
+        index = text.find("{")
+        return (
+            text[: index + 1] + "\\textcolor{" + color + "}{" + text[index + 1 :] + "}"
+        )
 
     raise NotImplementedError(f"Invalid category name: {category_name}")
