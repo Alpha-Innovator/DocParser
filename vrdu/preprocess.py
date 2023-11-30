@@ -95,4 +95,4 @@ def run(original_tex: str) -> None:
     delete_table_of_contents(original_tex)
 
     # create output folder
-    os.makedirs(os.path.join(path, "output/result"))
+    os.makedirs(os.path.join(path, "output/result"), exist_ok=True)
