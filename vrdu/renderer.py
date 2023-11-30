@@ -594,6 +594,8 @@ class Renderer:
         self.render_caption(color_tex_file)
         self.render_footnote(color_tex_file)
         self.extract_graphics(color_tex_file)
+        self.render_algorithm(color_tex_file)
+        self.render_tabular(color_tex_file)
 
         # use colors to enclose all semantic elements
         data, start, end = utils.data_from_tex_file(color_tex_file)
@@ -721,6 +723,35 @@ class Renderer:
 
         with open(tex_file, "w") as f:
             f.write(result)
+
+    def render_algorithm(self, tex_file):
+        pass
+        # TODO: add color, and detect if there are nested color definition, if it exists, delete it
+        with open(tex_file) as f:
+            content = f.read()
+
+        pattern = r"\\begin{algorithm[*]?}(.*?)\\end{algorithm[*]?}"
+        indexes = [
+            (m.start(), m.end()) for m in re.finditer(pattern, content, re.DOTALL)
+        ]
+
+        if not indexes:
+            return
+
+        result = content[: indexes[0][0]]
+        for i, _ in enumerate(indexes):
+            if i > 0:
+                result += content[indexes[i - 1][1] : indexes[i][0]]
+            algorithm = content[indexes[i][0] : indexes[i][1]]
+            self.texts["Algorithm"].append(algorithm)
+            colored_algorithm = utils.colorize(algorithm, "Algorithm")
+            result += colored_algorithm
+
+        result += content[indexes[-1][1] :]
+
+        with open(tex_file, "w") as f:
+            f.write(result)
+
     def extract_graphics(self, tex_file):
         with open(tex_file, "r") as file:
             content = file.read()

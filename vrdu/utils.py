@@ -284,4 +284,9 @@ def colorize(text: str, category_name: str) -> str:
         return text[: index + 1] + "\\color{" + color + "}" + text[index + 1 :]
     if category_name == "Table":
         return "{\\color{" + color + "}" + text + "}"
-    return ""
+    if category_name == "Algorithm":
+        # skip the position arguments, like \\begin{algorithm}[hbt!]
+        index = text.find("\\", len("\\begin{algorithm}"))
+        return text[:index] + "\\color{" + color + "}" + text[index:]
+
+    raise NotImplementedError(f"Invalid category name: {category_name}")
