@@ -286,6 +286,8 @@ def colorize(text: str, category_name: str) -> str:
         return (
             text[: index + 1] + "\\textcolor{" + color + "}{" + text[index + 1 :] + "}"
         )
+    if category_name == "Equation":
+        return "{\\color{" + color + "}{" + text + "}}"
     if category_name == "Abstract":
         index = len("\\begin{abstract}")
         return text[:index] + "\\color{" + color + "}" + text[index:]
