@@ -5,7 +5,7 @@ import unittest.mock
 from vrdu.renderer import Renderer
 
 
-class TestHyperref(unittest.TestCase):
+class TestCaption(unittest.TestCase):
     def setUp(self) -> None:
         self.mock_file_content1 = (
             """\\documentclass{article}\\begin{document}\\end{document}"""
