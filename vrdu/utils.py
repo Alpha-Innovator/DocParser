@@ -209,6 +209,10 @@ def export_to_coco(
     image_infos: Dict[int, str],
     filename: str,
 ) -> None:
+    category_info = [
+        {"id": index, "name": category, "supercategory": supercategory}
+        for index, category, supercategory in config.config["category_name"]
+    ]
     result = {
         "info": {
             "year": 2023,
@@ -227,10 +231,7 @@ def export_to_coco(
         ],
         "images": [],
         "annotations": [],
-        "categories": [
-            {"id": index, "name": category}
-            for index, category in config.config["category_name"]
-        ],
+        "categories": category_info,
     }
 
     for page_index, page_elements in layout_info.items():

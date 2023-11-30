@@ -1,7 +1,5 @@
 import os
 import json
-import cv2
-import numpy as np
 
 dirname = os.path.dirname(__file__)
 file_path = os.path.join(dirname, "config.json")
@@ -9,54 +7,10 @@ file_path = os.path.join(dirname, "config.json")
 with open(file_path, "r") as json_file:
     config = json.load(json_file)
 
-category2name = {k: v for k, v in config["category_name"]}
-name2category = {name: category for category, name in config["category_name"]}
-category2rgbcolor = {
-    category: tuple(color) for category, color in config["category_color"]
-}
-name2rgbcolor = {
-    name: category2rgbcolor[category] for name, category in name2category.items()
-}
-category2color = {k: v for k, v in config["category_color"]}
-
+category2name = {category: name for category, name, _ in config["category_name"]}
+name2category = {name: category for category, name, _ in config["category_name"]}
+name2rgbcolor = {name: tuple([0, 0, 0]) for name in name2category.keys()}
 name2color = {name: name + "_color" for name in name2category.keys()}
 
-colors_map = {
-    0: "magenta",
-    1: "cyan",
-    2: "yellow",
-    3: "blue",
-    4: "green",
-    5: "red",
-    6: "teal",
-    7: "purple",
-    8: "orange",
-    9: "brown",
-    10: "pink",
-    11: "olive",
-}
-
-
-category2hsv_bound = {}  # category: (lower_bound, upper_bound)
-for k, v in category2color.items():
-    rgb_color = tuple(v)
-
-    # Convert RGB to HSV
-    hsv_color = cv2.cvtColor(np.uint8([[rgb_color]]), cv2.COLOR_RGB2HSV)[0][0]
-
-    lower_bound = np.array(
-        [
-            hsv_color[0] - config["hue_range"],
-            hsv_color[1] - config["saturation_range"],
-            hsv_color[2] - config["value_range"],
-        ]
-    )
-    upper_bound = np.array(
-        [
-            hsv_color[0] + config["hue_range"],
-            hsv_color[1] + config["saturation_range"],
-            hsv_color[2] + config["value_range"],
-        ]
-    )
-
-    category2hsv_bound[k] = (lower_bound, upper_bound)
+# used to annotate the object detection result
+colors_map = {category: color for category, color in config["annotation_color"]}

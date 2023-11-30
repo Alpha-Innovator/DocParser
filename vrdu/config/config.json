@@ -1,164 +1,144 @@
 {
-    "laparams": {
-        "line_overlap": 0.3,
-        "char_margin": 2.0,
-        "line_margin": 0.37,
-        "word_margin": 0.1,
-        "boxes_flow": -0.5,
-        "detect_vertical": false,
-        "all_texts": false
-    },
-    "category_color": [
-        [
-            0,
-            [
-                0,
-                0,
-                0
-            ]
-        ],
-        [
-            1,
-            [
-                0,
-                0,
-                0
-            ]
-        ],
-        [
-            2,
-            [
-                0,
-                0,
-                0
-            ]
-        ],
-        [
-            3,
-            [
-                0,
-                0,
-                0
-            ]
-        ],
-        [
-            4,
-            [
-                0,
-                0,
-                0
-            ]
-        ],
-        [
-            5,
-            [
-                0,
-                0,
-                0
-            ]
-        ],
-        [
-            6,
-            [
-                0,
-                0,
-                0
-            ]
-        ],
-        [
-            7,
-            [
-                0,
-                0,
-                0
-            ]
-        ],
-        [
-            8,
-            [
-                0,
-                0,
-                0
-            ]
-        ],
-        [
-            9,
-            [
-                0,
-                0,
-                0
-            ]
-        ],
-        [
-            10,
-            [
-                0,
-                0,
-                0
-            ]
-        ],
-        [
-            11,
-            [
-                0,
-                0,
-                0
-            ]
-        ]
-    ],
     "category_name": [
         [
             0,
+            "Algorithm",
             "Algorithm"
         ],
         [
             1,
+            "Caption",
             "Caption"
         ],
         [
             2,
+            "Equation",
             "Equation"
         ],
         [
             3,
+            "Figure",
             "Figure"
         ],
         [
             4,
+            "Footnote",
             "Footnote"
         ],
         [
             5,
+            "List",
             "List"
         ],
         [
             6,
+            "Others",
             "Others"
         ],
         [
             7,
+            "Table",
             "Table"
         ],
         [
             8,
+            "Text",
             "Text"
         ],
         [
             9,
-            "Text-EQ"
+            "Text-EQ",
+            "Text"
         ],
         [
             10,
+            "Title",
             "Title"
         ],
         [
             11,
-            "Reference"
+            "Reference",
+            "Reference",
+        ],
+        [
+            12,
+            "PaperTitle",
+            "Title"
+        ],
+        [
+            13,
+            "Code",
+            "Algorithm"
+        ],
+        [
+            14,
+            "Abstract",
+            "Text"
         ]
     ],
-    "hue_range": 10,
-    "saturation_range": 10,
-    "value_range": 40,
     "annotation_image_font_type": "DejaVuSans.ttf",
-    "annotation_image_font_size": 24
+    "annotation_image_font_size": 24,
+    "annotation_color": [
+        [
+            0,
+            "magenta"
+        ],
+        [
+            1,
+            "cyan"
+        ],
+        [
+            2,
+            "yellow"
+        ],
+        [
+            3,
+            "blue"
+        ],
+        [
+            4,
+            "green"
+        ],
+        [
+            5,
+            "red"
+        ],
+        [
+            6,
+            "teal"
+        ],
+        [
+            7,
+            "purple"
+        ],
+        [
+            8,
+            "orange"
+        ],
+        [
+            9,
+            "brown"
+        ],
+        [
+            10,
+            "pink"
+        ],
+        [
+            11,
+            "olive"
+        ],
+        [
+            12,
+            "pink"
+        ],
+        [
+            13,
+            "magenta"
+        ],
+        [
+            14,
+            "brown"
+        ]
+    ]
+
 }
