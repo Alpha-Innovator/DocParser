@@ -288,5 +288,13 @@ def colorize(text: str, category_name: str) -> str:
         # skip the position arguments, like \\begin{algorithm}[hbt!]
         index = text.find("\\", len("\\begin{algorithm}"))
         return text[:index] + "\\color{" + color + "}" + text[index:]
+    if category_name == "Title":
+        return r"{\color{" + color + "}" + text + "}"
+    if category_name == "List":
+        return r"{\color{" + color + "}" + text + "}"
+    if category_name == "Text":
+        return "\\textcolor{" + color + "}{" + text + "}"
+    if category_name == "Text-EQ":
+        return r"\textcolor{" + color + "}{" + text + "}"
 
     raise NotImplementedError(f"Invalid category name: {category_name}")

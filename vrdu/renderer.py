@@ -68,7 +68,7 @@ class Renderer:
     def __init__(self) -> None:
         self.texts = defaultdict(list)
 
-    def enclose_title(self, data, color="red") -> None:
+    def enclose_title(self, data) -> None:
         for item in data:
             if not isinstance(item, dict):
                 continue
@@ -79,11 +79,9 @@ class Renderer:
 
             self.texts["Title"].append(item[env])
             title_text = item[env][len(env) + 2 : -1]
-            item[env] = (
-                "\\" + env + "{" + r"\textcolor{" + color + "}{" + title_text + "}}"
-            )
+            item[env] = utils.colorize(title_text, "Title")
 
-    def enclose_section(self, data, color="red") -> None:
+    def enclose_section(self, data) -> None:
         """
         Encloses a section of data in curly braces with a specified color.
 
@@ -107,9 +105,9 @@ class Renderer:
                 continue
 
             self.texts["Title"].append(item[env])
-            item[env] = r"{\color{" + color + "}" + item[env] + "}"
+            item[env] = utils.colorize(item[env], "Title")
 
-    def enclose_list(self, data: List, color: str = "yellow") -> None:
+    def enclose_list(self, data: List) -> None:
         """
         Encloses dictionary items in a list with a brace group
         and modifies the data in-place.
@@ -132,43 +130,13 @@ class Renderer:
                 for key, value in item.items():
                     if not isinstance(value, list):
                         continue
-                    self.enclose_list(value[1], color)
+                    self.enclose_list(value[1])
                 continue
 
             self.texts["List"].append(item[env])
-            item[env] = r"{\color{" + color + "}{" + item[env] + "}}"
+            item[env] = utils.colorize(item[env], "List")
 
-    def enclose_caption(self, data, color="orange") -> None:
-        """
-        Encloses the caption of each item in the given data with color formatting.
-
-        Args:
-            data (list): A list of items.
-            color (str, optional): The color to use for the caption formatting.
-                Defaults to 'orange'.
-
-        Returns:
-            None
-
-        Raises:
-            None
-        """
-        for item in data:
-            if not isinstance(item, dict):
-                continue
-
-            env = find_env(item, envs.caption_envs)
-            if env is None:
-                for key, value in item.items():
-                    if not isinstance(value, list):
-                        continue
-                    self.enclose_caption(value[1], color)
-                continue
-
-            self.texts["Caption"].append(item[env])
-            item[env] = r"\color{" + color + "}{" + item[env] + "}"
-
-    def enclose_equation(self, data, color="green") -> None:
+    def enclose_equation(self, data) -> None:
         """
         Encloses equations in the given data with a specified color.
 
@@ -189,55 +157,13 @@ class Renderer:
                 for key, value in item.items():
                     if not isinstance(value, list):
                         continue
-                    self.enclose_equation(value[1], color)
+                    self.enclose_equation(value[1])
                 continue
 
             self.texts["Equation"].append(item[env])
-            item[env] = r"{\color{" + color + "}{" + item[env] + "}}"
+            item[env] = utils.colorize(item[env], "Equation")
 
-    def enclose_tabular(self, data: List, color="cyan"):
-        """
-        Generate a color brace group that encloses a tabular
-        environment with a specified color
-
-        Args:
-            data (list): The data to be processed.
-            color (str, optional): The color to be used. Defaults to "cyan".
-
-        Returns:
-            None
-        """
-        for item in data:
-            if not isinstance(item, dict):
-                continue
-
-            env = find_env(item, envs.tabular_envs)
-            if env is None:
-                for key, value in item.items():
-                    if isinstance(value, list):
-                        self.enclose_tabular(value[1], color)
-                continue
-
-            self.texts["Table"].append(item[env])
-            item[env] = r"{\color{" + color + "}{" + item[env] + "}}"
-
-    def enclose_footnote(self, data, color="red") -> None:
-        """
-        Encloses the text of footnotes in a given data structure
-        with a specified color.
-
-        Args:
-            data (list): A list of items to be processed.
-                Each item can be a dictionary.
-            color (str): The color to be applied to the enclosed footnotes.
-                Defaults to "red".
-
-        Returns:
-            None
-
-        Raises:
-            None
-        """
+    def enclose_text(self, data) -> None:
         for index, item in enumerate(data):
             if not isinstance(item, str):
                 if not isinstance(item, dict):
@@ -247,60 +173,17 @@ class Renderer:
                         continue
                     if not isinstance(value, list):
                         continue
-                    self.enclose_footnote(value[1], color)
-                continue
-
-            env_name = None
-            for env in envs.footnote_envs:
-                if env in item:
-                    env_name = env
-                    break
-
-            if env_name is None:
-                continue
-
-            parsed = TexSoup(item).expr.all
-            for element in parsed:
-                if element.name not in envs.footnote_envs:
-                    continue
-
-                extra_len = 2
-                footnote = str(element.args[0])
-                if len(element.args) > 1:
-                    extra_len += len(str(element.args[0]))
-                    footnote = str(element.args[1])
-
-                self.texts["Footnote"].append(str(element))
-                color_footnote = r"\color{" + color + "}" + footnote
-
-                if len(element.args) > 1:
-                    element.args[1].string = color_footnote
-                else:
-                    element.args[0].string = color_footnote
-
-            data[index] = conversion.to_latex(conversion.to_list(parsed))
-
-    def enclose_text(self, data, text_color="olive", text_eq_color="green") -> None:
-        for index, item in enumerate(data):
-            if not isinstance(item, str):
-                if not isinstance(item, dict):
-                    continue
-                for key, value in item.items():
-                    if key.lower() not in envs.text_envs:
-                        continue
-                    if not isinstance(value, list):
-                        continue
-                    self.enclose_text(value[1], text_color, text_eq_color)
+                    self.enclose_text(value[1])
                 continue
 
             if not item or item == "\n" or item == "\n\n" or item.isspace():
                 continue
 
             if is_text_eq(item):
-                data[index] = r"\textcolor{" + text_eq_color + "}{" + item + "}"
+                data[index] = utils.colorize(item, "Text-EQ")
                 self.texts["Text-EQ"].append(item)
             else:
-                data[index] = "\\textcolor{" + text_color + "}{" + item + "}"
+                data[index] = utils.colorize(item, "Text")
                 self.texts["Text"].append(item)
 
             # format
@@ -319,51 +202,6 @@ class Renderer:
                 continue
 
             item[env] = r"{\color{" + color + "}\n" + item[env] + "}"
-
-    def extract_figures(self, data):
-        for item in data:
-            if not isinstance(item, dict):
-                continue
-
-            env = find_env(item, envs.figure_envs)
-            if env is None:
-                for key, value in item.items():
-                    if not isinstance(value, list):
-                        continue
-                    self.extract_figures(value[1])
-                continue
-
-            self.texts["Figure"].append(item[env])
-
-    def enclose_algorithm(self, data, color="pink"):
-        """
-        Generate a function comment for the given function body.
-
-        Args:
-            data (list): The data to be processed.
-            color (str, optional): The color to be used. Defaults to "pink".
-
-        Returns:
-            None
-
-        Raises:
-            None
-        """
-        for item in data:
-            if not isinstance(item, dict):
-                continue
-
-            env = find_env(item, envs.algorithm_envs)
-
-            if env is None:
-                for key, value in item.items():
-                    if not isinstance(value, list):
-                        continue
-                    self.enclose_algorithm(value[1], color)
-                continue
-
-            self.texts["Algorithm"].append(item[env])
-            item[env] = r"{\color{" + color + "}" + item[env] + "}"
 
     def enclose_code(self, data, color="blue"):
         for item in data:
