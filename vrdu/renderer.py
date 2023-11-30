@@ -552,7 +552,7 @@ class Renderer:
             content = f.read()
 
         pattern = r"\\begin{abstract}.*?\\end{abstract}"
-        indexes = [(m.start(), m.end()) for m in re.finditer(pattern, content)]
+        indexes = [(m.start(), m.end()) for m in re.finditer(pattern, content, re.DOTALL)]
 
         if len(indexes) > 1:
             raise ValueError("more than one title found")
