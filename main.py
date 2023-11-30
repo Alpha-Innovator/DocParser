@@ -4,92 +4,17 @@ import os
 import re
 import shutil
 import subprocess
-from typing import Dict
 from tqdm import tqdm
-
-from arxiv_cleaner.cleaner import Cleaner
 
 
 from vrdu import logger
 from vrdu import utils
 from vrdu import renderer
+from vrdu import preprocess
 from vrdu.annotation import LayoutAnnotation
 
 
 log = logger.setup_app_level_logger(file_name="app_debug.log")
-
-
-def clean_tex(original_tex):
-    input_dir = os.path.dirname(original_tex)
-    tex = os.path.basename(original_tex)
-
-    # Create the command options
-    command_options = {
-        "latex": {
-            "compiler": "pdflatex",
-            "extra_args": "",
-        },
-        "bib": {
-            "compiler": "bibtex",
-            "extra_args": "",
-        },
-        "latexpand": {
-            "extra_args": "",
-        },
-    }
-
-    # Create the cleaner
-    cleaner = Cleaner(
-        input_dir=input_dir,
-        output_dir=input_dir,
-        tex=tex,
-        command_options=command_options,
-        verbose=False,
-    )
-
-    # Run the cleaner
-    cleaner.clean()
-
-
-def replace_pdf_figures_with_png(tex_file):
-    path = os.path.dirname(tex_file)
-    with open(tex_file) as f:
-        content = f.read()
-
-    graphic_path = utils.get_graphicspath(content)
-
-    # Regular expression pattern to match \includegraphics
-    # commands with PDF files
-    pattern = r"\\includegraphics(\[.*?\])?\{(.*?\.pdf)\}"
-
-    # Find all matches of \includegraphics with PDF files
-    matches = re.findall(pattern, content)
-
-    # Replace PDF paths with PNG paths
-    for match in matches:
-        # crop the pdf image
-        pdf_image_name = match[1]
-        pdf_image = os.path.join(path, graphic_path + pdf_image_name)
-        png_image_name = os.path.splitext(pdf_image_name)[0] + ".png"
-        png_image = os.path.join(path, graphic_path + png_image_name)
-
-        utils.convert_pdf_figure_to_png_image(pdf_image, png_image)
-
-        # replace the reference in tex file
-        content = content.replace(match[1], png_image_name)
-
-    with open(tex_file, "w") as f:
-        f.write(content)
-
-
-def preprocess(original_tex: str) -> None:
-    # Step 0: check if the file is compilable
-
-    # Step 1: clean tex
-    clean_tex(original_tex)
-
-    # Step 2: process images
-    replace_pdf_figures_with_png(original_tex)
 
 
 def parse_file_name(filename) -> str:
@@ -152,21 +77,6 @@ def remove_redundant_files(path: str) -> None:
         for dir in dirs:
             if dir.startswith("block_"):
                 shutil.rmtree(os.path.join(root, dir))
-
-
-def remove_existing_files(path):
-    # remove generated tex related files
-    files = glob.glob(f"{path}/paper_*")
-    for file in files:
-        os.remove(file)
-
-    # remove log file
-    if os.path.exists(os.path.join(path, "paper_output.log")):
-        os.remove(os.path.join(path, "paper_output.log"))
-
-    # remove output folder
-    if os.path.exists(os.path.join(path, "output")):
-        shutil.rmtree(os.path.join(path, "output"))
 
 
 def parse_arguments():
@@ -240,19 +150,13 @@ def main(file_name) -> None:
     path = os.path.dirname(file_name)
     log.info(f"[VRDU] processing file {file_name}")
 
-    # remove redundant files
-    remove_existing_files(path)
-
-    # create output folder
-    os.makedirs(os.path.join(path, "output/result"))
-
     # make a copy of the original tex file
     original_tex = os.path.join(path, "paper_original.tex")
     shutil.copyfile(file_name, original_tex)
 
     # preprocess
     log.info(f"[VRDU] Pre-processing file {original_tex}")
-    preprocess(original_tex)
+    preprocess.run(original_tex)
 
     # run rendering
     vrdu_renderer = renderer.Renderer()
