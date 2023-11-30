@@ -153,24 +153,26 @@ def main(file_name) -> None:
     shutil.copyfile(file_name, original_tex)
 
     # preprocess
-    log.info(f"[VRDU] Pre-processing file {original_tex}")
-    preprocess.run(original_tex)
+    try:
+        log.info(f"[VRDU] Pre-processing file {original_tex}")
+        preprocess.run(original_tex)
 
-    # run rendering
-    vrdu_renderer = renderer.Renderer()
-    vrdu_renderer.render(original_tex)
+        # run rendering
+        vrdu_renderer = renderer.Renderer()
+        vrdu_renderer.render(original_tex)
 
-    # compile into PDFs, and then convert into images
-    log.info("[VRDU] Transforming from TEX to images, this may take a while...")
-    transform_tex_to_images(path)
+        # compile into PDFs, and then convert into images
+        log.info("[VRDU] Transforming from TEX to images, this may take a while...")
+        transform_tex_to_images(path)
 
-    # generate annotations
-    log.info("[VRDU] Generating annotations, this may take a while...")
-    vrdu_annotation = LayoutAnnotation(path)
-    vrdu_annotation.annotate()
+        # generate annotations
+        log.info("[VRDU] Generating annotations, this may take a while...")
+        vrdu_annotation = LayoutAnnotation(path)
+        vrdu_annotation.annotate()
 
-    # remove redundant files
-    remove_redundant_files(path)
+    finally:
+        # remove redundant files
+        remove_redundant_files(path)
     log.info(
         f"[VRDU] Results of processing {file_name} are saved in {path}/output/result"
     )
