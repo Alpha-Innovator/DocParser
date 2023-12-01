@@ -178,34 +178,6 @@ class Renderer:
             if item[-1] == "\n":
                 data[index] += "\n"
 
-    def enclose_reference(self, data, color="violet") -> None:
-        for item in data:
-            if not isinstance(item, dict):
-                continue
-
-            env = find_env(item, envs.reference_envs)
-            if env is None:
-                continue
-
-            item[env] = r"{\color{" + color + "}\n" + item[env] + "}"
-
-    def enclose_code(self, data, color="blue"):
-        for item in data:
-            if not isinstance(item, dict):
-                continue
-
-            env = find_env(item, envs.code_envs)
-
-            if env is None:
-                for key, value in item.items():
-                    if not isinstance(value, list):
-                        continue
-                    self.enclose_code(value[1], color)
-                continue
-
-            self.texts["Code"].append(item[env])
-            item[env] = r"{\color{" + color + "}" + item[env] + "}"
-
     def add_color_definition(self, latex_file):
         with open(latex_file, "r") as f:
             content = f.read()
