@@ -662,7 +662,7 @@ class Renderer:
         # pattern 2: lstinputlisting to input a file
         # TODO: test arviv_cleaner to see if it can handle lstinputlisting
         pattern = (
-            r"\\begin{(verbatim|lstlisting)[*]?}(.*?)\\end{\1[*]?}"
+            r"\\begin{(verbatim|lstlisting|program)[*]?}(.*?)\\end{\1[*]?}"
             + "|"
             + r"\\lstinputlisting\[[^\]]*\]{[^\}]*}"
         )
