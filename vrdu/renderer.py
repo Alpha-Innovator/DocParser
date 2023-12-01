@@ -313,7 +313,7 @@ class Renderer:
         with open(input_file, "r") as file:
             content = file.read()
 
-        pattern = r"\\lstset\{.*\}"
+        pattern = r"\\lstset\{.*?\}"
 
         # Replace the color definitions with pure white
         modified_content = re.sub(pattern, "", content)
