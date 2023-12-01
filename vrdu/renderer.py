@@ -207,13 +207,24 @@ class Renderer:
             f.write(content)
 
     def add_layout_definition(self, latex_file: str):
+        # TODO: move this to config
+        # https://www.overleaf.com/learn/latex/Page_size_and_margins
         keys = [
             "columnwidth",
             "columnsep",
             "textwidth",
             "paperwidth",
             "hoffset",
+            "voffset",
             "oddsidemargin",
+            "evensidemargin",
+            "marginparwidth",
+            "marginparsep",
+            "topmargin",
+            "headheight",
+            "headsep",
+            "footskip",
+            "textheight",
         ]
 
         definitions = ["\\message{[vrdu_data_process: Info]}"]
@@ -333,11 +344,13 @@ class Renderer:
         path = os.path.dirname(white_tex_file)
         env_orders = self.get_env_orders(white_tex_file)
 
-        for env in envs.complex_env_list:
+        for env in config.name2category.keys():
             num_items = len(self.texts[env])
+            log.debug(f"env={env}, texts={self.texts[env]}")
             order_ids = [
                 i for i, _ in enumerate(env_orders) if env + "_color" == env_orders[i]
             ]
+            log.debug(f"order_ids={order_ids}")
             if num_items != len(order_ids):
                 raise ValueError(
                     f"num_items {num_items} != len(order_ids) {len(order_ids)}"
