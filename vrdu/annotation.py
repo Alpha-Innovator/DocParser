@@ -79,7 +79,7 @@ def generate_geometry_annotation(
 
     for index, element in enumerate(layout_elements):
         category = element.category
-        draw.rectangle(element.bbox, outline=config.colors_map[category], width=3)
+        draw.rectangle(element.bbox, outline=config.colors_map[str(category)], width=3)
         draw.text(
             (element.bbox[0], element.bbox[1]),
             config.category2name[category],
@@ -104,9 +104,8 @@ class LayoutAnnotation:
         self.ONE_INCH = 72.27
 
     def extract_pdf_layouts(self) -> List[LTPage]:
-        laparams = LAParams(**config.config["laparams"])
         rendered_pdf = os.path.join(self.directory, "colored/paper.pdf")
-        page_layouts = extract_pages(rendered_pdf, laparams=laparams)
+        page_layouts = extract_pages(rendered_pdf)
         return list(page_layouts)
 
     def parse_metadata(self, pdf_layouts: List[LTPage]) -> None:
@@ -348,7 +347,7 @@ class LayoutAnnotation:
 
         reading_annotation["categories"] = [
             {"id": index, "name": category}
-            for index, category in config.config["category_name"]
+            for index, category, _ in config.config["category_name"]
         ]
 
         return reading_annotation

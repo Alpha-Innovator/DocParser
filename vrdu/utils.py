@@ -229,7 +229,7 @@ def export_to_coco(
             "height": page_layout.height,
             "file_name": image_infos[page_index],
         }
-        image.update(config.config["coco_images"])
+        image.update(config.config["coco_image_info"])
         result["images"].append(image)
 
         for index, element in enumerate(page_elements[1:]):
