@@ -340,38 +340,6 @@ class Renderer:
         with open(output_file, "w") as file:
             file.write(modified_content)
 
-    def render_all_env(self, tex_file):
-        self.render_simple_envs(tex_file)
-        self.render_float_envs(tex_file)
-
-    def render_float_envs(self, tex_file):
-        self.render_caption(tex_file)
-        self.render_footnote(tex_file)
-        self.extract_graphics(tex_file)
-        self.render_algorithm(tex_file)
-        self.render_tabular(tex_file)
-        self.render_code(tex_file)
-        # the following two envs are placed here because they use string regex to render
-        self.render_title(tex_file)
-        self.render_abstract(tex_file)
-
-    def render_simple_envs(self, tex_file):
-        data, start, end = utils.data_from_tex_file(tex_file)
-        self.enclose_section(data)
-        self.enclose_list(data)
-        self.enclose_equation(data)
-        self.enclose_text(data)
-        # self.enclose_reference(data, color=name2color["Reference"])
-
-        # Save the raw parsed data for debugging purposes
-        raw_data_file = os.path.join(
-            os.path.dirname(tex_file), "output/result/raw_parsed_data.json"
-        )
-        utils.export_to_json(data, raw_data_file)
-
-        # Write the modified data back to the TeX file
-        utils.tex_file_from_data(data, tex_file, start=start, end=end)
-
     def get_env_orders(self, tex_file):
         with open(tex_file) as f:
             contents = f.read()
@@ -422,25 +390,6 @@ class Renderer:
         # save env orders
         orders_file = os.path.join(original_dir, "output/result/env_orders.json")
         utils.export_to_json(env_orders, orders_file)
-
-    def render(self, origin_tex_file):
-        original_dir = os.path.dirname(origin_tex_file)
-
-        color_tex_file = os.path.join(original_dir, "paper_colored.tex")
-        shutil.copyfile(origin_tex_file, color_tex_file)
-
-        self.add_color_definition(color_tex_file)
-        self.add_layout_definition(color_tex_file)
-        self.remove_hyperref_color(color_tex_file)
-        self.remove_lstlisting_color(color_tex_file)
-
-        self.render_all_env(color_tex_file)
-
-        # change the enclose color of semantic elements one by one and generate corresponding tex files
-        self.render_one_env(original_dir)
-
-        text_file = os.path.join(original_dir, "output/result/texts.json")
-        utils.export_to_json(self.texts, text_file)
 
     def render_caption(self, tex_file):
         with open(tex_file) as f:
@@ -688,3 +637,54 @@ class Renderer:
 
         with open(tex_file, "w") as f:
             f.write(result)
+
+    def render_float_envs(self, tex_file):
+        self.render_caption(tex_file)
+        self.render_footnote(tex_file)
+        # self.extract_graphics(tex_file)
+        self.render_algorithm(tex_file)
+        self.render_tabular(tex_file)
+        self.render_code(tex_file)
+        # the following two envs are placed here because they use string regex to render
+        self.render_title(tex_file)
+        self.render_abstract(tex_file)
+
+    def render_simple_envs(self, tex_file):
+        data, start, end = utils.data_from_tex_file(tex_file)
+        # Save the raw parsed data for debugging purposes
+        raw_data_file = os.path.join(
+            os.path.dirname(tex_file), "output/result/raw_parsed_data.json"
+        )
+        utils.export_to_json(data, raw_data_file)
+
+        self.enclose_section(data)
+        self.enclose_list(data)
+        self.enclose_equation(data)
+        self.enclose_text(data)
+        # self.enclose_reference(data, color=name2color["Reference"])
+
+        # Write the modified data back to the TeX file
+        utils.tex_file_from_data(data, tex_file, start=start, end=end)
+
+    def render_all_env(self, tex_file):
+        self.render_simple_envs(tex_file)
+        self.render_float_envs(tex_file)
+
+    def render(self, origin_tex_file):
+        original_dir = os.path.dirname(origin_tex_file)
+
+        color_tex_file = os.path.join(original_dir, "paper_colored.tex")
+        shutil.copyfile(origin_tex_file, color_tex_file)
+
+        self.add_color_definition(color_tex_file)
+        self.add_layout_definition(color_tex_file)
+        self.remove_hyperref_color(color_tex_file)
+        self.remove_lstlisting_color(color_tex_file)
+
+        self.render_all_env(color_tex_file)
+
+        # change the enclose color of semantic elements one by one and generate corresponding tex files
+        self.render_one_env(original_dir)
+
+        text_file = os.path.join(original_dir, "output/result/texts.json")
+        utils.export_to_json(self.texts, text_file)
