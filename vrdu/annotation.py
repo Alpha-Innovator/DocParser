@@ -135,9 +135,11 @@ class LayoutAnnotation:
 
         # https://www.overleaf.com/learn/latex/Page_size_and_margins
         element1 = self.ONE_INCH + layout_metadata["hoffset"]
+        element2 = self.ONE_INCH + layout_metadata["voffset"]
         element3 = layout_metadata["oddsidemargin"]
         margin_width = element1 + element3
         layout_metadata["margin_width"] = margin_width
+        layout_metadata["top_margin"] = element2
 
         for page_index, page_layout in enumerate(pdf_layouts):
             layout_metadata[page_index] = {}
@@ -287,11 +289,13 @@ class LayoutAnnotation:
                 elements = []
                 separations = self.layout_metadata[page_index]["separations"]
                 for column in range(self.layout_metadata["num_columns"]):
+                    # min_x: bb[1], min_y: bb[0], max_x: bb[4], max_y: bb[3]
                     column_boxes = [
                         bb
                         for bb in bounding_boxes
                         if bb[1] >= separations[column]
                         and bb[1] <= separations[column + 1]
+                        and bb[0] >= self.layout_metadata["top_margin"]
                     ]
                     if not column_boxes:
                         continue
