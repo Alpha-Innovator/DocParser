@@ -139,7 +139,6 @@ class LayoutAnnotation:
         element3 = layout_metadata["oddsidemargin"]
         margin_width = element1 + element3
         layout_metadata["margin_width"] = margin_width
-        layout_metadata["top_margin"] = element2
 
         for page_index, page_layout in enumerate(pdf_layouts):
             layout_metadata[page_index] = {}
@@ -167,8 +166,9 @@ class LayoutAnnotation:
                     separation * pt2px * px2img
                 )
                 x += separation
-
+            # TODO: consider the margin notes
             layout_metadata[page_index]["separations"].append(pdf_width * px2img)
+            layout_metadata[page_index]["top_margin"] = element2 * pt2px * px2img
 
         # layout_metadata["separations"].append(pdf_width * px2img)
         utils.export_to_json(
@@ -286,8 +286,8 @@ class LayoutAnnotation:
                     continue
 
                 # consider possible cross column case
-                elements = []
                 separations = self.layout_metadata[page_index]["separations"]
+                top_margin = self.layout_metadata[page_index]["top_margin"]
                 for column in range(self.layout_metadata["num_columns"]):
                     # min_x: bb[1], min_y: bb[0], max_x: bb[4], max_y: bb[3]
                     column_boxes = [
@@ -295,7 +295,7 @@ class LayoutAnnotation:
                         for bb in bounding_boxes
                         if bb[1] >= separations[column]
                         and bb[1] <= separations[column + 1]
-                        and bb[0] >= self.layout_metadata["top_margin"]
+                        and bb[0] >= top_margin
                     ]
                     if not column_boxes:
                         continue
