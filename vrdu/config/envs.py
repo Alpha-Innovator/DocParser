@@ -195,6 +195,7 @@ one_column_envs = [
     "Caption",
     "Algorithm",
     "Footnote",
+    "PaperTitle",
 ]
 
 list_of_tables = [
