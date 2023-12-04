@@ -1,7 +1,7 @@
 from collections import defaultdict
 import os
 import glob
-from typing import Any, Dict, List, Iterator
+from typing import Dict, List
 import matplotlib.pyplot as plt
 import numpy as np
 from skimage.measure import label, regionprops
@@ -10,14 +10,13 @@ import re
 from tqdm import tqdm
 
 from pdfminer.high_level import extract_pages
-from pdfminer.layout import LAParams, LTFigure, LTPage
+from pdfminer.layout import LTFigure, LTPage
 from vrdu import utils
 
 
 from vrdu.block import Block, BoundingBox
 from vrdu.config import config, envs
 from vrdu import logger
-from vrdu.utils import load_json
 
 log = logger.get_logger(__name__)
 
@@ -96,7 +95,7 @@ class LayoutAnnotation:
         self.directory = output_dir
         self.background_dir = os.path.join(output_dir, "white")
         self.env_dirs = self.get_matching_subdirectories()
-        self.layout_metadata = None
+        self.layout_metadata: Dict = {}
         self.text_info = utils.load_json(os.path.join(output_dir, "result/texts.json"))
         # TODO: move this to config
         self.threshold = 0.3
@@ -510,7 +509,6 @@ class LayoutAnnotation:
                 result.append(element)
             elif category2name[element.category] == "Footnote":
                 if result:
-                    log.debug(f"result[-1]={result[-1]}")
                     annotations.append(
                         {
                             "type": "ref",
@@ -521,7 +519,6 @@ class LayoutAnnotation:
 
             else:
                 prev_element = result[-1]
-                log.debug(f"result[-1]={result[-1]}")
                 annotations.append(
                     {
                         "type": relation_map.get(
