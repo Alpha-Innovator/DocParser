@@ -256,6 +256,7 @@ class LayoutAnnotation:
             category, index = self.get_category(env_orders, dir_name)
             log.debug(f"category: {category}, index: {index}")
 
+            elements = []
             for image_pair in image_pairs:
                 page_index = image_pair[0]
 
@@ -282,7 +283,9 @@ class LayoutAnnotation:
                         category=category,
                         page_index=page_index,
                     )
-                    layout_info[page_index].append(element)
+                    if elements:
+                        element.parent_block = elements[-1].block_id
+                    elements.append(element)
                     continue
 
                 # consider possible cross column case
@@ -310,8 +313,8 @@ class LayoutAnnotation:
                         element.parent_block = elements[-1].block_id
                     elements.append(element)
 
-                for element in elements:
-                    layout_info[page_index].append(element)
+            for element in elements:
+                layout_info[element.page_index].append(element)
 
         return layout_info
 
