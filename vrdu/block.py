@@ -14,9 +14,6 @@ class BoundingBox:
              |                |
              |                |
              +----------------+ (x1, y1)
-
-    Returns:
-        _type_: _description_
     """
 
     x0: float
@@ -40,6 +37,21 @@ class BoundingBox:
 
     def __getitem__(self, index: int) -> float:
         return (self.x0, self.y0, self.x1, self.y1)[index]
+
+    def area(self):
+        return abs((self.x1 - self.x0) * (self.y1 - self.y0))
+
+    def overlap(self, other):
+        if (
+            self.x0 > other.x1
+            or self.x1 < other.x0
+            or self.y0 > other.y1
+            or self.y1 < other.y0
+        ):
+            return 0
+        x_overlap = max(0, min(self.x1, other.x1) - max(self.x0, other.x0))
+        y_overlap = max(0, min(self.y1, other.y1) - max(self.y0, other.y0))
+        return x_overlap * y_overlap
 
     def to_dict(self) -> Dict[str, Any]:
         return {"bbox": (self.x0, self.y0, self.x1, self.y1)}
