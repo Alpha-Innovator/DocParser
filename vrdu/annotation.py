@@ -387,6 +387,46 @@ class LayoutAnnotation:
         else:
             return ""
 
+    def _compute_overlap(self, layout_info):
+        result = []
+        total_area, total_overlap, total_blocks = 0, 0, 0
+        for page_index in layout_info.keys():
+            blocks = layout_info[page_index]
+            blocks.sort(key=lambda block: block.bbox.x0)
+
+            area, overlap = 0, 0
+            for i in range(len(blocks)):
+                area += blocks[i].bbox.area()
+                for j in range(i + 1, len(blocks)):
+                    if blocks[j].bbox.x0 > blocks[i].bbox.x1:
+                        break
+                    overlap += blocks[i].bbox.overlap(blocks[j].bbox)
+
+            result.append(
+                {
+                    "page": page_index,
+                    "num_blocks": len(blocks),
+                    "area": area,
+                    "overlap": overlap,
+                    "ratio": 0 if area == 0 else overlap / area,
+                }
+            )
+            total_area += area
+            total_overlap += overlap
+            total_blocks += len(blocks)
+
+        result.append(
+            {
+                "page": "total",
+                "num_blocks": total_blocks,
+                "area": total_area,
+                "overlap": total_overlap,
+                "ratio": 0 if total_area == 0 else total_overlap / total_area,
+            }
+        )
+
+        return result
+
     def generate_order_annotation(self, layout_info: Dict[int, List[Block]]):
         relation_types = ["adj", "identical", "sub", "ref"]
 
@@ -500,6 +540,56 @@ class LayoutAnnotation:
 
         return annotations
 
+    def generate_quality_report(self, layout_info):
+        result = {}
+        result["num_pages"] = max(layout_info.keys())
+        result["num_columns"] = self.layout_metadata["num_columns"]
+        result["category_quality"] = []
+
+        total_reading, total_geometry = 0, 0
+        for key, value in self.text_info.items():
+            # currently, ignore graphics
+            if key == config.name2category["Figure"]:
+                continue
+
+            reading_count = len(value)
+            geometry_count = 0
+            for page_index, blocks in layout_info.items():
+                for block in blocks:
+                    # only major block is counted
+                    if (
+                        block.category == config.name2category[key]
+                        and block.parent_block is None
+                    ):
+                        geometry_count += 1
+            missing_rate = (
+                0 if reading_count == 0 else 1 - geometry_count / reading_count
+            )
+            result["category_quality"].append(
+                {
+                    "category": key,
+                    "geometry_count": geometry_count,
+                    "reading_count": len(value),
+                    "missing_rate": missing_rate,
+                }
+            )
+
+            total_reading += reading_count
+            total_geometry += geometry_count
+        result["category_quality"].append(
+            {
+                "category": "Total",
+                "geometry_count": total_geometry,
+                "reading_count": total_reading,
+                "missing_rate": 1 - total_geometry / total_reading,
+            }
+        )
+
+        result["page_quality"] = self._compute_overlap(layout_info)
+
+        report_file = os.path.join(self.directory, "result/quality_report.json")
+        utils.export_to_json(result, report_file)
+
     def annotate(self):
         layout_info = self.generate_layout_info()
         layout_info_file = os.path.join(self.directory, "result/layout_info.json")
@@ -527,3 +617,5 @@ class LayoutAnnotation:
         )
         utils.export_to_json(reading_annotation, reading_annotation_file)
         utils.export_to_json(order_annotation, order_annotation_file)
+
+        self.generate_quality_report(layout_info)
