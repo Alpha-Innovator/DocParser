@@ -136,7 +136,9 @@ class LayoutAnnotation:
         element1 = self.ONE_INCH + layout_metadata["hoffset"]
         element2 = self.ONE_INCH + layout_metadata["voffset"]
         element3 = layout_metadata["oddsidemargin"]
+        element4 = layout_metadata["topmargin"]
         margin_width = element1 + element3
+        margin_height = element2 + element4
         layout_metadata["margin_width"] = margin_width
 
         for page_index, page_layout in enumerate(pdf_layouts):
@@ -167,9 +169,8 @@ class LayoutAnnotation:
                 x += separation
             # TODO: consider the margin notes
             layout_metadata[page_index]["separations"].append(pdf_width * px2img)
-            layout_metadata[page_index]["top_margin"] = element2 * pt2px * px2img
+            layout_metadata[page_index]["top_margin"] = margin_height * pt2px * px2img
 
-        # layout_metadata["separations"].append(pdf_width * px2img)
         utils.export_to_json(
             layout_metadata, os.path.join(self.directory, "result/layout_metadata.json")
         )
