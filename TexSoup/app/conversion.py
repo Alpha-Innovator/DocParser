@@ -52,11 +52,12 @@ def to_list(tex_tree):
             ):
                 str_tree.append(str_tree.pop() + str(i))
             else:
+                argc = sum(len(arg.all) for arg in i.args)
                 str_tree.append(
                     {
                         i.name: [
                             {"begin": i.begin + str(i.args)},
-                            to_list(i.all[len(i.args) :]),
+                            to_list(i.all[argc:]),
                             {"end": i.end},
                         ]
                     }
