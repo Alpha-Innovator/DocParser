@@ -373,15 +373,13 @@ class LayoutAnnotation:
 
         return image_info
 
-    def extract_title_name(self, title):
-        # TODO: move this to utils.py
-        match = re.search(
-            r"\\(chapter|section|subsection|subsubsection)(\*?){(.*)}", title
-        )
-        if match:
-            return match.group(1)
-        else:
-            return ""
+    def extract_title_name(self, title) -> str:
+        for env in envs.section_envs:
+            match = re.search(r"\\(" + env + r"){(.*)}", title)
+            if match:
+                return match.group(1)
+
+        return ""
 
     def _compute_overlap(self, layout_info):
         result = []

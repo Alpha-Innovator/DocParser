@@ -41,12 +41,12 @@ table_of_contents = [
 section_envs = [
     "chapter",
     "chapter*",
-    "section*",
-    "section",
-    "subsection",
-    "subsection*",
     "subsubsection",
     "subsubsection*",
+    "subsection",
+    "subsection*",
+    "section*",
+    "section",
 ]
 
 table_envs = [
