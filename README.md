@@ -1,5 +1,8 @@
 # vrdu_data_process
-This repository is used to process paper with `.tex` source files.
+This repository is used to process paper with `.tex` source files to obtain:
+1. object detection results
+2. latex source code - visual bounding box pairs
+3. layout reading orders.
 
 
 # Installation
@@ -38,25 +41,45 @@ path_to_paper
 ├── output
 │   └── result
 │       ├── layout_annotation.json
-│       ├── text.json
-│       ├── paper_annotation_page_0.jpg
-│       └── paper_annotation_page_1.jpg
+│       ├── reading_annotation.json
+│       ├── ordering_annotation.json
+│       ├── quality_report.json
+│       ├── texts.json
+│       ├── env_orders.json
+│       ├── layout_info.json
+│       ├── layout_metadata.json
+│       ├── raw_parsed_data.json
+│       ├── page_0.jpg
+|       ├── page_1.jpg
+|       ├── block_0.jpg
+└─      └── block_1.jpg
+
 ```
-The result contains three parts:
-1. the `layout_annotation.json` gives the bounding box of each element in the given categories, it is represented as [COCO format](https://cocodataset.org/#format-data)
-2. the `reading_annotation.json` gives the source code of text (if there exists) inside each bounding box in `layout_annotation.json`.
+The result contains three parts:  
+1. Object detection result, which includes `layout_annotation.json` and `page_{n}.png`, the result is is represented as [COCO format](https://cocodataset.org/#format-data)
+2. Reading detection result, which includes `reading_annotation.json` and `block_{n}.png`, it matches the bounding box and its original tex represented contents
+3. Reading order result, which includes `ordering_annotation.json`. The reading order is represented via triple (`relationship`, `from`, `to`), indicates the relationship between the block with id `from` and the block with id `to`.
+4. Debugging infos, this parts contains:
+    - `texts.json`, it contains the original tex contents
+    - `env_orders.json`, it is used to annotate reading orders
+    - `layout_info.json`, it is the raw content of object detection result
+    - `layout_metadata.json`, it contains the information about the paper layouts
+    - `raw_parsed_data.json`, it contains the result of main content of the tex file parsed by `TexSoup`.
+
 
 
 
 # Category
 each bounding box is classified into one the following category.
 
-| Category   | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 |  11 | 
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |--- |
-| Name | Algorithm  | Caption | Equation | Figure | Footnote | List | Others | Table | Text | Text-EQ | Title | Reference | 
+| Category   | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 |  11 | 12 | 13 | 14|
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |--- |--- |--- |---|
+| **Name** | Algorithm  | Caption | Equation | Figure | Footnote | List | Others | Table | Text | Text-EQ | Title | Reference | PaperTitle | Code | Abstract|
+| **Super Category** | Algorithm  | Caption | Equation | Figure | Footnote | List | Others | Table | Text | Text | Title | Reference | Title | Algorithm | Text|
 
 Explanation:  
--  `Algorithm` contains Algorithm environment and Code listing environments;
+-  `Algorithm` contains Algorithm environment 
+-  `Code` contains listing environments
 -  `Caption` contains Figure caption, Table caption and Algorithm caption
 -  `Equation` contains all display equations such as `equation`, `align` environments.
 -  `List` contains `itemize`, `enumerate` and `description`.
@@ -64,6 +87,8 @@ Explanation:
 -  `Text` refers to a paragraph of texts without inline equations, 
 -  `Text-EQ` refers to text with equations, such as `$a$`. 
 -  `Title` contains section title, subsection title. Others titles are ignored.
+-  `PaperTitle` contains paper title.
+
 
 For more details, see `config/envs.py`.
 
@@ -71,6 +96,7 @@ For more details, see `config/envs.py`.
 1. Preprocess the original tex file (copy), this includes two substeps:
     - resolve inputs and clean comments with `arxiv_cleaner`
     - convert all pdf figures into png format
+    - delete table of contents
 2. render tex file, this process first call `TexSoup` to parse tex files into a list, then add a color to each semantic element. This process generates a bunch of tex files, each tex file is different with the original colored tex file in a small part 
 3. Compile these tex files into PDFs and further transform the PDFs into png images.
 4. Extract the layout metadata of PDF, so that one-column and multi-column can be classified.
@@ -81,6 +107,13 @@ For more details, see `config/envs.py`.
 7. After processing, we remove all redundant files.
 
 # Update log
+## 2023.12
+- [x] fix known bugs
+- [x] add new categories
+- [x] add quality report
+
+
+
 ## 2023.11
 - [x] release v0.2 that correctly annotate all environments.
     - [x] fix pdf figure bounding box generation error
@@ -112,3 +145,7 @@ This project is based on the following python packages:
 - [pdf2image](https://pypi.org/project/pdf2image/)  
 - [pdfminer.six](https://pdfminersix.readthedocs.io/en/latest/index.html)  
 - [arxiv_cleaner](https://github.com/elsa-lab/arxiv-cleaner.git)
+
+
+
+# License
