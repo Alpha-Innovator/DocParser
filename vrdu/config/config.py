@@ -33,3 +33,45 @@ layout_keys = [
     "textheight",
 ]
 
+
+relation_map = {
+    ("Text", "Text"): "adj",
+    ("Text", "Text-EQ"): "adj",
+    ("Text", "Equation"): "adj",
+    ("Text", "List"): "adj",
+    ("Text", "Footnote"): "ref",
+    ("Text-EQ", "Text"): "adj",
+    ("Text-EQ", "Text-EQ"): "adj",
+    ("Text-EQ", "Equation"): "adj",
+    ("Text-EQ", "List"): "adj",
+    ("Text-EQ", "Footnote"): "ref",
+    ("Equation", "Text"): "adj",
+    ("Equation", "Text-EQ"): "adj",
+    ("Equation", "Equation"): "adj",
+    ("Equation", "List"): "adj",
+    ("Equation", "Footnote"): "ref",
+    ("List", "Text"): "adj",
+    ("List", "Text-EQ"): "adj",
+    ("List", "Equation"): "adj",
+    ("List", "List"): "adj",
+    ("List", "Footnote"): "ref",
+    ("Title", "Text"): "sub",
+    ("Title", "Text-EQ"): "sub",
+    ("Title", "Equation"): "sub",
+    ("Title", "List"): "sub",
+    ("Title", "Footnote"): "ref",
+    ("chapter", "chapter"): "adj",
+    ("chapter", "section"): "sub",
+    ("section", "section"): "adj",
+    ("section", "subsection"): "sub",
+    ("subsection", "subsection"): "adj",
+    ("subsection", "subsubsection"): "sub",
+    ("subsubsection", "subsubsection"): "adj",
+}
+
+sortable_envs = ["Title", "Text", "Text-EQ", "Equation", "Footnote", "List"]
+
+
+threshold = 0.3
+ppi = 72
+prefix = "block_"

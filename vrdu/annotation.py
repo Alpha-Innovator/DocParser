@@ -90,6 +90,8 @@ def generate_geometry_annotation(
 
 
 class LayoutAnnotation:
+    ONE_INCH = 72.27
+
     def __init__(self, path: str) -> None:
         output_dir = os.path.join(path, "output")
         self.directory = output_dir
@@ -97,10 +99,8 @@ class LayoutAnnotation:
         self.env_dirs = self.get_matching_subdirectories()
         self.layout_metadata: Dict = {}
         self.text_info = utils.load_json(os.path.join(output_dir, "result/texts.json"))
-        # TODO: move this to config
-        self.threshold = 0.3
-        self.ppi = 72
-        self.ONE_INCH = 72.27
+        self.threshold = config.threshold
+        self.ppi = config.ppi
 
     def extract_pdf_layouts(self) -> List[LTPage]:
         rendered_pdf = os.path.join(self.directory, "colored/paper.pdf")
@@ -179,21 +179,17 @@ class LayoutAnnotation:
 
     def get_matching_subdirectories(self) -> List[str]:
         result = []
-        # TODO: move this to config
-        prefix = "block_"
         for name in os.listdir(self.directory):
             if not os.path.isdir(os.path.join(self.directory, name)):
                 continue
-            if not name.startswith(prefix):
+            if not name.startswith(config.prefix):
                 continue
             result.append(name)
         return result
 
     def get_category(self, env_orders: List[str], dir: str):
         dir_name = os.path.basename(dir)
-        # TODO: move this to config
-        prefix = "block_"
-        order_id = int(dir_name[len(prefix) :])
+        order_id = int(dir_name[len(config.prefix) :])
         env_name = env_orders[order_id]
 
         index = -1
@@ -428,53 +424,19 @@ class LayoutAnnotation:
         return result
 
     def generate_order_annotation(self, layout_info: Dict[int, List[Block]]):
-        relation_types = ["adj", "identical", "sub", "ref"]
-
-        sortable_envs = ["Title", "Text", "Text-EQ", "Equation", "Footnote", "List"]
-        sortable_catgory = [config.name2category[name] for name in sortable_envs]
+        sortable_category = [
+            config.name2category[name] for name in config.sortable_envs
+        ]
         category2name = config.category2name
 
         sortable_elements = [
             block
             for page_index in layout_info.keys()
             for block in layout_info[page_index]
-            if block.category in sortable_catgory
+            if block.category in sortable_category
         ]
-        # TODO: move this to config
-        relation_map = {
-            ("Text", "Text"): "adj",
-            ("Text", "Text-EQ"): "adj",
-            ("Text", "Equation"): "adj",
-            ("Text", "List"): "adj",
-            ("Text", "Footnote"): "ref",
-            ("Text-EQ", "Text"): "adj",
-            ("Text-EQ", "Text-EQ"): "adj",
-            ("Text-EQ", "Equation"): "adj",
-            ("Text-EQ", "List"): "adj",
-            ("Text-EQ", "Footnote"): "ref",
-            ("Equation", "Text"): "adj",
-            ("Equation", "Text-EQ"): "adj",
-            ("Equation", "Equation"): "adj",
-            ("Equation", "List"): "adj",
-            ("Equation", "Footnote"): "ref",
-            ("List", "Text"): "adj",
-            ("List", "Text-EQ"): "adj",
-            ("List", "Equation"): "adj",
-            ("List", "List"): "adj",
-            ("List", "Footnote"): "ref",
-            ("Title", "Text"): "sub",
-            ("Title", "Text-EQ"): "sub",
-            ("Title", "Equation"): "sub",
-            ("Title", "List"): "sub",
-            ("Title", "Footnote"): "ref",
-            ("chapter", "chapter"): "adj",
-            ("chapter", "section"): "sub",
-            ("section", "section"): "adj",
-            ("section", "subsection"): "sub",
-            ("subsection", "subsection"): "adj",
-            ("subsection", "subsubsection"): "sub",
-            ("subsubsection", "subsubsection"): "adj",
-        }
+
+        relation_map = config.relation_map
 
         result = []
         annotations = []
