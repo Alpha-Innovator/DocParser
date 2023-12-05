@@ -207,25 +207,8 @@ class Renderer:
             f.write(content)
 
     def add_layout_definition(self, latex_file: str):
-        # TODO: move this to config
         # https://www.overleaf.com/learn/latex/Page_size_and_margins
-        keys = [
-            "columnwidth",
-            "columnsep",
-            "textwidth",
-            "paperwidth",
-            "hoffset",
-            "voffset",
-            "oddsidemargin",
-            "evensidemargin",
-            "marginparwidth",
-            "marginparsep",
-            "topmargin",
-            "headheight",
-            "headsep",
-            "footskip",
-            "textheight",
-        ]
+        keys = config.layout_keys
 
         definitions = ["\\message{[vrdu_data_process: Info]}"]
         for key in keys:
@@ -549,8 +532,6 @@ class Renderer:
             f.write(result)
 
     def render_algorithm(self, tex_file):
-        pass
-        # TODO: add color, and detect if there are nested color definition, if it exists, delete it
         with open(tex_file) as f:
             content = f.read()
 
@@ -594,7 +575,6 @@ class Renderer:
             content = file.read()
         # pattern 1: code environment
         # pattern 2: lstinputlisting to input a file
-        # TODO: test arviv_cleaner to see if it can handle lstinputlisting
         pattern = (
             r"\\begin{(verbatim|lstlisting|program)[*]?}(.*?)\\end{\1[*]?}"
             + "|"

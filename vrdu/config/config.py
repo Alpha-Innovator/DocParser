@@ -14,3 +14,22 @@ name2color = {name: name + "_color" for name in name2category.keys()}
 
 # used to annotate the object detection result
 colors_map = config["annotation_color"]
+
+layout_keys = [
+    "columnwidth",
+    "columnsep",
+    "textwidth",
+    "paperwidth",
+    "hoffset",
+    "voffset",
+    "oddsidemargin",
+    "evensidemargin",
+    "marginparwidth",
+    "marginparsep",
+    "topmargin",
+    "headheight",
+    "headsep",
+    "footskip",
+    "textheight",
+]
+
