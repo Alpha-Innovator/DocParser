@@ -1,7 +1,7 @@
 import os
 import re
-import glob
 
+from vrdu.config import envs
 from vrdu import utils
 from arxiv_cleaner.cleaner import Cleaner
 
@@ -73,9 +73,8 @@ def delete_table_of_contents(original_tex):
     with open(original_tex, "r") as file:
         latex_content = file.read()
 
-    # TODO: move this to envs
-    commands_pattern = r"\\(tableofcontents|listoffigures|listoftables|listofalgorithms|lstlistoflistings)"
-    modified_content = re.sub(commands_pattern, "", latex_content)
+    pattern = r"\\(" + "|".join(envs.table_of_contents) + r")"
+    modified_content = re.sub(pattern, "", latex_content)
 
     with open(original_tex, "w") as file:
         file.write(modified_content)

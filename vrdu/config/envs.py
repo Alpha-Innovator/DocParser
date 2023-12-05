@@ -30,6 +30,14 @@ inline_math_envs = [
     "math",
 ]
 
+table_of_contents = [
+    "tableofcontents",
+    "listoffigures",
+    "listoftables",
+    "listofalgorithms",
+    "lstlistoflistings",
+]
+
 section_envs = [
     "chapter",
     "chapter*",
