@@ -39,25 +39,11 @@ def find_env(wrapped_env: dict, query: List[str]) -> Union[str, None]:
 
 
 def is_text_eq(text: str):
-    """
-    Check if the given text is equal to a specific expression.
+    pattern = r"(\\\(.*?\\\))|(\$.*?\$)|(\\begin\{math\}.*?\\end\{math\})"
+    matches = re.findall(pattern, text)
 
-    Args:
-        text (str): The text to be checked.
-
-    Returns:
-        bool: True if the text is equal to the expression, False otherwise.
-
-    Reference:
-        https://www.overleaf.com/learn/latex/Mathematical_expressions
-        See also: TexSoup/TexSoup/data.py, TexMathModeEnv, TexMathEnv
-    """
-    parsed = TexSoup(text).expr.all
-
-    for element in parsed:
-        if not isinstance(element, TexEnv):
-            continue
-        if element.name in envs.inline_math_envs:
+    for match in matches:
+        if not re.search(r"\\\$", match[0]):
             return True
 
     return False
