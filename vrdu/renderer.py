@@ -438,14 +438,12 @@ class Renderer:
             f.write(content)
 
     def render_footnote(self, tex_file):
-        # TODO: use envs.footnote_envs
         with open(tex_file) as f:
             content = f.read()
 
-        pattern = r"\\footnote"
+        pattern = r"\\(" + "|".join(envs.footnote_envs) + r")"
         matches = re.finditer(pattern, content)
 
-        # TODO: use tabular like way to enclose this part
         indexes = []
         indexes.append((0, 0, ""))
         for match in matches:
