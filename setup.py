@@ -21,6 +21,7 @@ setup(
         "python_Levenshtein==0.21.1",
         "scikit_image==0.19.3",
         "setuptools==68.0.0",
+        "tqdm=4.66.1",
     ],
     scripts=[
         "vrdu/compile_latex.sh",

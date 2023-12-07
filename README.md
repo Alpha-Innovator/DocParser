@@ -9,7 +9,7 @@ This repository is used to process paper with `.tex` source files to obtain:
 ## Step 1 Install package
 First create a conda environment (if Anaconda has not been installed, see [installation](https://docs.anaconda.com/free/anaconda/install/index.html))
 ```shell
-conda create --name vrdu 
+conda create --name vrdu python=3.8
 ```
 
 Then activate the environment and install packages:
