@@ -66,7 +66,34 @@ The result contains three parts:
     - `layout_metadata.json`, it contains the information about the paper layouts
     - `raw_parsed_data.json`, it contains the result of main content of the tex file parsed by `TexSoup`.
 
+## Common issues
+1. `latexpand` command running error
+```
+ValueError: Failed to run the command "latexpand --output="/tmp/arxiv_cleaner.46fp5l_e.latexpand_output/paper_original.tex" --fatal --out-encoding="encoding(UTF-8)"  "paper_original.tex""
+Return code: 2
+```
+if this error occurs, please check the version of installed `latexpand` with
+```
+latexpand --help
+```
+in the last line of output will print the version. If the version is below $1.6$, then we need to upgrade it to $\geq1.6$, the simplext way is
+1. go to [latexpand v1.6](https://gitlab.com/latexpand/latexpand/-/tags/v1.6) download the source code
+2. use `sudo vim $(which latexpand)` to edit the content of `latexpand` scirpt (`sudo` is necessary since `latexpand` usually locates in `/usr/bin`)
+3. copy the content of `v1.6/latexpand` to the old version of `latexpand` (opened with vim)
 
+2. `pdf2image` error
+```
+pdf2image.exceptions.PDFInfoNotInstalledError: Unable to get page count. Is poppler installed and in PATH?
+```
+use the following command to install `poppler`:
+```
+sudo apt-get install poppler-utils
+
+```
+for details, see [reference](https://pdf2image.readthedocs.io/en/latest/installation.html#installing-poppler).
+
+3. `path_to_paper/block_*****.pdf` not found
+Usually, this means the rendering process destroys the original latex, therefore it is not compiable, the reason varies from case to case.
 
 
 # Category
