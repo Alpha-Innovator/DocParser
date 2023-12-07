@@ -8,12 +8,8 @@ from pyparsing import Any
 class BoundingBox:
     """A simple bounding box representation.
     The coordinates are in the form of (x0, y0, x1, y1)
-    The origin is in the top left
-     (x0, y0)+----------------+
-             |                |
-             |                |
-             |                |
-             +----------------+ (x1, y1)
+    The origin is in the top left and (x0, y0) is the top left corner,
+    (x1, y1) is the bottom right corner.
     """
 
     x0: float

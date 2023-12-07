@@ -22,14 +22,12 @@ def find_env(wrapped_env: dict, query: List[str]) -> Union[str, None]:
     that exists in the wrapped_env dictionary.
 
     Parameters:
-        wrapped_env (dict): A dictionary containing environment variables
-            as keys.
+        wrapped_env (dict): A dictionary containing environment variables as keys.
         query (list): A list of environment variables to search for.
 
     Returns:
-        Union[str, None]: The environment variable found in the query list
-            that exists in the wrapped_env dictionary, or None
-            if no matching environment variable is found.
+        Union[str, None]: The environment variable found in the query list that exists in the wrapped_env dictionary, or None
+        if no matching environment variable is found.
     """
     for env in query:
         if env in wrapped_env:
@@ -59,8 +57,7 @@ class Renderer:
 
         Parameters:
             data (dict): The data to be enclosed.
-            color (str, optional): The color of the enclosed section.
-                Defaults to 'red'.
+            color (str, optional): The color of the enclosed section. Defaults to 'red'.
 
         Returns:
             dict: A dictionary representing the enclosed section.
@@ -86,8 +83,7 @@ class Renderer:
 
         Args:
             data (List): The list of items to be processed.
-            color (str, optional): The color to be applied to the enclosed items.
-                Defaults to "yellow".
+            color (str, optional): The color to be applied to the enclosed items. Defaults to "yellow".
 
         Returns:
             None
