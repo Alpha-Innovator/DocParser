@@ -163,7 +163,6 @@ cython_debug/
 *.tex
 *.bib
 *.svg
-*.rst
 *.xml
 *.css
 *.html
