@@ -2,6 +2,7 @@ import os
 import subprocess
 import argparse
 import random
+from multiprocessing import Pool
 
 
 def extract_tex_files(path):
@@ -28,30 +29,37 @@ def extract_tex_files(path):
     return tex_files
 
 
-def main(start, end):
-    path = os.path.expanduser("~/vrdu_data")
+def run_process(tex_file):
+    path = os.path.dirname(tex_file)
+    result_path = os.path.join(path, "output/result")
+    quality_report_file = os.path.join(result_path, "quality_report.json")
+    if os.path.exists(quality_report_file):
+        # this paper has been processed
+        return
+    subprocess.run(["python", "main.py", "--file_name", tex_file])
+
+
+def main(directory, processes=60):
+    path = os.path.expanduser(directory)
     tex_files = extract_tex_files(path)
     random.shuffle(tex_files)
 
-    for tex_file in tex_files[start:end]:
-        subprocess.run(["python", "main.py", "--file_name", tex_file])
+    p = Pool(processes)
 
+    for tex_file in tex_files:
+        p.apply_async(run_process, args=(tex_file,))
+    
+    p.close()
+    p.join()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "-s",
-        "--start",
-        type=int,
-        required=True,
-    )
-    parser.add_argument(
-        "-e",
-        "--end",
-        type=int,
+        "-d",
+        "--directory",
+        type=str,
         required=True,
     )
     args = parser.parse_args()
-    start = args.start
-    end = args.end
-    main(start, end)
+
+    main(args.directory)
