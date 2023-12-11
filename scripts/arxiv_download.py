@@ -39,6 +39,10 @@ def arxiv_download(data: List[Dict], path: str) -> None:
         )
 
         for result in search.results():
+            file_name = result._get_default_filename()
+            if os.path.exists(os.path.join(sub_directory, file_name)):
+                continue
+            
             result.download_source(dirpath=sub_directory)
 
 
@@ -61,7 +65,7 @@ def extract_tar_gz(file_path, extract_path):
 
 
 if __name__ == "__main__":
-    path = os.path.expanduser("~/vrdu_data/")
+    path = os.path.expanduser("/cpfs01/shared/ADLab/datasets/vrdu_arxiv")
     data = []
     with open("scripts/category_count.csv", "r") as f:
         reader = csv.DictReader(f)
@@ -70,5 +74,6 @@ if __name__ == "__main__":
 
     random.shuffle(data)
     arxiv_download(data=data, path=path)
-
-    extract_all_tar_gz(path)
+    for root, dirs, files in os.walk(path):
+        for dir_ in dirs:
+            extract_all_tar_gz(os.path.join(root, dir_))
