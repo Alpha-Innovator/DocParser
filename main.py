@@ -28,18 +28,6 @@ def parse_file_name(filename) -> str:
 
 
 def transform_tex_to_images(path):
-    try:
-        with open("paper_output.log", "a") as f:
-            subprocess.check_call(
-                ["pdflatex", "-interaction=nonstopmode", "paper_colored.tex"],
-                stdout=f,
-                stderr=f,
-            )
-    except subprocess.CalledProcessError:
-        raise RuntimeError(
-            f"[VRDU] Level 2: {path}/paper_colored.tex is not compilable"
-        )
-
     files = glob.glob(f"{path}/paper_*.tex")
     for file in tqdm(files):
         log.debug(f"Processing file: {file}")
