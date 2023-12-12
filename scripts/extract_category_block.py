@@ -32,6 +32,7 @@ def extract_category(path, category_name, output_path):
             os.path.join(output_path, output_image_name),
         )
         x["image_path"] = output_image_name
+        x["paper_source"] = path
 
     if os.path.exists(result_json):
         data = utils.load_json(result_json)
