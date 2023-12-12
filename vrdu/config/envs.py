@@ -212,3 +212,19 @@ list_of_tables = [
     "listoftables",
     "listofalgorithms",
 ]
+
+
+# https://en.wikibooks.org/wiki/LaTeX/Labels_and_Cross-referencing
+ref_commands = [
+    "ref",
+    "href",
+    "eqref",
+    "nameref",
+    "autoref",
+    "autoref*",
+    "cref",
+    "labelref",
+    "pageref",
+    "url",
+    "hyperlink",
+]
