@@ -1,10 +1,8 @@
-import datetime
 import os
 import re
 import subprocess
 import json
 from typing import Any, Dict
-import arxiv
 
 from TexSoup.TexSoup import TexSoup
 import TexSoup.app.conversion as conversion
@@ -258,20 +256,6 @@ def get_graphicspath(latex):
         return match.group(1)
     else:
         return ""
-
-
-def retrive_arxiv_metadata(path: str):
-    search = arxiv.Search(id_list=[path])
-
-    file_name, category = None, None
-    for result in search.results():
-        file_name = result._get_default_filename(extension="")
-        category = result.primary_category
-        break
-
-    if file_name is None or category is None:
-        raise FileNotFoundError(f"metadata of {path} cannot be found in arXiv.")
-    return file_name[:-1], category
 
 
 def colorize(text: str, category_name: str) -> str:
