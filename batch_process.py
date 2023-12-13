@@ -139,7 +139,22 @@ def process_one_file(file_name, success_save_path):
         return process_result
 
 
+def classify_path(path, required=False):
+    # used to process arxiv_uncompressed
+    # if process data in vrdu_arxiv, no need for this process
+    if not required:
+        return
+
+    for dir_name in glob.glob(f"{path}/*/"):
+        new_dir_name, category = utils.retrive_arxiv_metadata(dir_name)
+        if not os.path.exists(os.path.join(path, category)):
+            os.makedirs(os.path.join(path, category))
+        shutil.move(dir_name, os.path.join(path, category))
+
+
 def main(path, cpu_count=None):
+
+    classify_path(path, required=True)
     success_path = path + '_success'
     os.makedirs(success_path, exist_ok=True)
     tex_files = sorted(extract_tex_files(path))
