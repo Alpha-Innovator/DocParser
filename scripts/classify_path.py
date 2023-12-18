@@ -1,6 +1,7 @@
 import os
 import arxiv
 import shutil
+import multiprocessing
 
 
 def retrieve_arxiv_metadata(path: str):
@@ -49,7 +50,8 @@ def run(path):
         for f in subfolders
         if len(f) == 9 and f[:4].isdigit() and f[5:].isdigit() and f[4] == "."
     ]
-    for dir_name in filtered_subfolders:
+
+    def retrieve_subfolders(dir_name):
         new_dir_name, category = retrieve_arxiv_metadata(dir_name)
         if not os.path.exists(os.path.join(path, category)):
             os.makedirs(os.path.join(path, category))
@@ -57,7 +59,9 @@ def run(path):
             os.path.join(path, dir_name),
             os.path.join(path, category + "/" + new_dir_name),
         )
-        print(f"Moved {dir_name} to {category}/{new_dir_name}")
+
+    with multiprocessing.Pool(processes=60) as p:
+        p.map(retrieve_subfolders, filtered_subfolders)
 
 
 if __name__ == "__main__":
