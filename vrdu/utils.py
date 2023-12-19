@@ -248,6 +248,31 @@ def export_to_coco(
         json.dump(result, f)
 
 
+def extract_title_name(title) -> str:
+    """
+    Extracts the name of a title from its format.
+
+    Args:
+        title (str): The title string to extract the name from.
+
+    Returns:
+        str: The extracted title environment name from the title.
+
+    Example:
+        >>> extract_title_name("\\section{Name}")
+        'section'
+        >>> extract_title_name("\\subsection*{AnotherName}")
+        'subsection'
+        >>> extract_title_name("No match")
+        ''
+    """
+    match = re.search(r"\\(\w+)(\*?){(.*)}", title)
+    if match:
+        return match.group(1)
+
+    return ""
+
+
 def get_graphicspath(latex):
     graphicspath_re = r"\\graphicspath\{\{(.+?)}"
 
