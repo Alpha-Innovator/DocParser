@@ -373,14 +373,6 @@ class LayoutAnnotation:
 
         return image_info
 
-    def extract_title_name(self, title) -> str:
-        for env in envs.section_envs:
-            match = re.search(r"\\(" + env + r"){(.*)}", title)
-            if match:
-                return match.group(1)
-
-        return ""
-
     def _compute_overlap(self, layout_info):
         result = []
         total_area, total_overlap, total_blocks = 0, 0, 0
