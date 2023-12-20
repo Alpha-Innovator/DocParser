@@ -38,6 +38,36 @@ def clean_tex(original_tex):
     cleaner.clean()
 
 
+def replace_eps_figures_with_pdf(tex_file):
+    path = os.path.dirname(tex_file)
+    with open(tex_file) as f:
+        content = f.read()
+
+    graphic_path = utils.get_graphicspath(content)
+
+    # Regular expression pattern to match \includegraphics
+    # commands with PDF files
+    pattern = r"\\includegraphics(\[.*?\])?\{(.*?\.eps)\}"
+
+    # Find all matches of \includegraphics with PDF files
+    matches = re.findall(pattern, content)
+
+    # Replace eps paths with pdf paths
+    for match in matches:
+        eps_image_name = match[1]
+        eps_image = os.path.join(path, graphic_path + eps_image_name)
+        pdf_image_name = os.path.splitext(eps_image_name)[0] + ".pdf"
+        pdf_image = os.path.join(path, graphic_path + pdf_image_name)
+
+        utils.convert_eps_image_to_pdf_image(eps_image, pdf_image)
+
+        # replace the reference in tex file
+        content = content.replace(match[1], pdf_image_name)
+
+    with open(tex_file, "w") as f:
+        f.write(content)
+
+
 def replace_pdf_figures_with_png(tex_file):
     path = os.path.dirname(tex_file)
     with open(tex_file) as f:
@@ -54,7 +84,6 @@ def replace_pdf_figures_with_png(tex_file):
 
     # Replace PDF paths with PNG paths
     for match in matches:
-        # crop the pdf image
         pdf_image_name = match[1]
         pdf_image = os.path.join(path, graphic_path + pdf_image_name)
         png_image_name = os.path.splitext(pdf_image_name)[0] + ".png"
@@ -83,6 +112,8 @@ def delete_table_of_contents(original_tex):
 def run(original_tex: str) -> None:
     path = os.path.dirname(original_tex)
     # Step 0: check if the file is compilable
+    # replace eps figures to make the tex compilable
+    replace_eps_figures_with_pdf(original_tex)
 
     # Step 1: clean tex
     clean_tex(original_tex)
