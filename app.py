@@ -10,28 +10,33 @@ pn.extension()
 
 
 data_path = "/home/PJLAB/maosong/vrdu_data/"
+default_path = os.path.expanduser("/home/PJLAB/maosong/vrdu_data/icml2022/output")
 
+# get all renderable paper paths
 paper_paths = []
 for root, dirs, files in os.walk(data_path):
     if "layout_info.json" in files:
         paper_paths.append(os.path.dirname(root))
 
-default_path = os.path.expanduser("/home/PJLAB/maosong/vrdu_data/icml2022/output")
+# generate select widget from paper paths
 paper_select = pn.widgets.Select(value=default_path, options=paper_paths)
 
-
+# load layout info from a given paper
 layout_info = utils.load_json(os.path.join(default_path, "result/layout_info.json"))
 
+# get all image paths of a given paper
 image_paths = sorted(glob.glob(os.path.join(default_path, "colored/page_*.png")))
 
-
+# generate select widget from image paths
 image_select = pn.widgets.Select(value=image_paths[0], options=image_paths)
 image_pane = pn.pane.PNG()
 image_pane.height = 800
 image_pane.width = 600
+
+# generate pane to display source code
 source_code_pane = pn.Column("# Source Code")
 
-
+# generate select widget to show annotations of different categories
 category_select = pn.widgets.Select(
     value="All", options=["All"] + list(config.name2category.keys())
 )
@@ -64,6 +69,7 @@ def update_annotation(image_path, category):
     image_id = int(os.path.splitext(os.path.basename(image_path))[0][-4:])
     print(f"image_id={image_id}")
 
+    # filter blocks
     if category == "All":
         blocks = [block for block in layout_info if block["page_index"] == image_id]
     else:
@@ -73,8 +79,6 @@ def update_annotation(image_path, category):
             if block["page_index"] == image_id
             if block["category"] == config.name2category[category]
         ]
-
-    print(f"category: {category}, len(blocks): {len(blocks)}")
 
     for index, block in enumerate(blocks):
         bbox = (
@@ -86,7 +90,6 @@ def update_annotation(image_path, category):
         draw.rectangle(bbox, outline="red", width=3)
         if block["parent_block"] is None:
             source_code_pane.append("* " + block["source_code"])
-        print(f"index={index}, bbox: {bbox}, parent_block={block['parent_block']}")
 
     image_pane.object = image
 
@@ -106,4 +109,5 @@ app = pn.Row(
 
 app.servable()
 
+# use the following command to visualize
 # panel serve app.py --show --autoreload
