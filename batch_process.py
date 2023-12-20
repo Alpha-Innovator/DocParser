@@ -14,7 +14,7 @@ from vrdu import renderer
 from vrdu import preprocess
 from vrdu.annotation import LayoutAnnotation
 
-log = logger.setup_app_level_logger(file_name="batch_process.log". mode="a")
+log = logger.setup_app_level_logger(file_name="batch_process.log", mode="a")
 
 
 def extract_tex_files(path):
@@ -89,10 +89,9 @@ def remove_redundant_files(path: str) -> None:
                 shutil.rmtree(os.path.join(root, dir))
 
 
-def process_one_file(file_name, success_save_path):
+def process_one_file(file_name):
     original_cwd = os.getcwd()
     path = os.path.dirname(file_name)
-    tex_folder_path = os.path.basename(path)
 
     process_result = {"file": file_name, "status": "Success"}
 
@@ -127,11 +126,10 @@ def process_one_file(file_name, success_save_path):
         vrdu_annotation = LayoutAnnotation(path)
         vrdu_annotation.annotate()
 
-        shutil.copytree(path, f"{success_save_path}/{tex_folder_path}")
-
     except Exception as e:
         process_result["status"] = "Failed"
         process_result["error"] = str(e)
+        log.error(f"Error processing file {file_name}: {e}")
 
     finally:
         os.chdir(original_cwd)
@@ -142,14 +140,10 @@ def process_one_file(file_name, success_save_path):
 def main(path, cpu_count=1):
     log.info(f"path to raw data: {path}")
     log.info(f"Using cpu counts: {cpu_count}")
-    success_path = path + "_success"
-    log.info(f"success_path: {success_path}")
-    os.makedirs(success_path, exist_ok=True)
     tex_files = extract_tex_files(path)
 
     with multiprocessing.Pool(cpu_count) as pool:
-        func = partial(process_one_file, success_save_path=success_path)
-        results = pool.map(func, tex_files)
+        results = pool.map(process_one_file, tex_files)
 
     success_files = set(
         result["file"] for result in results if result["status"] == "Success"
