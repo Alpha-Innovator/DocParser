@@ -414,79 +414,137 @@ class LayoutAnnotation:
         return result
 
     def generate_order_annotation(self, layout_info: Dict[int, List[Block]]):
+        annotations = {}
+
+        annotations["orders"] = []
+        sortable_annotations = self.generate_sortable_envs_order(layout_info)
+        annotations["orders"].extend(sortable_annotations)
+        float_annotations = self.generate_float_envs_order(layout_info)
+        annotations["orders"].extend(float_annotations)
+        cross_reference_annotation = self.generate_cross_reference_order(layout_info)
+        annotations["orders"].extend(cross_reference_annotation)
+        return annotations
+
+    def generate_cross_reference_order(self, layout_info):
+        # TODO: complete this
+        # parse label in texts
+        # ref to label
+        pass
+        return []
+
+    def generate_float_envs_order(self, layout_info):
+        # TODO: complete this
+        # caption to env
+        # label to env
+        pass
+        # 1. caption-env attach, implicit cite and add label
+        # 2. equation-label attach, add label
+        return []
+
+    def generate_sortable_envs_order(self, layout_info):
+        stack = []
+        annotations = []
+        relation_map = config.relation_map
         sortable_category = [
             config.name2category[name] for name in config.sortable_envs
         ]
-        category2name = config.category2name
 
         sortable_elements = [
-            block
+            _block
             for page_index in layout_info.keys()
-            for block in layout_info[page_index]
-            if block.category in sortable_category
+            for _block in layout_info[page_index]
+            if _block.category in sortable_category
         ]
 
-        relation_map = config.relation_map
+        # TODO: move this to config
+        peer_title_categories = [
+            config.name2category[x] for x in ["Title", "PaperTitle", "Abstract"]
+        ]
 
-        result = []
-        annotations = []
+        peer_text_categories = [
+            config.name2category[x] for x in ["Text", "Text-EQ", "Equation", "List"]
+        ]
 
         for index, element in enumerate(sortable_elements):
             if index == 0:
-                result.append(element)
+                stack.append(element)
+                continue
 
-            elif category2name[element.category] == "Title":
-                while result and category2name[result[-1].category] != "Title":
-                    result.pop()
+            if element.category in peer_title_categories:
+                while stack and stack[-1].category not in peer_title_categories:
+                    stack.pop()
 
-                cur_title = self.extract_title_name(element.source_code)
-                while (
-                    result
-                    and (self.extract_title_name(result[-1].source_code), cur_title)
-                    not in relation_map
+                # no peer categories
+                if not stack:
+                    stack.append(element)
+                    continue
+
+                # not in the same category, label it as peer relationship
+                # or in the same category but the category is not Title
+                if (
+                    element.category != stack[-1].category
+                    or element.category == config.name2category["Title"]
                 ):
-                    result.pop()
-
-                if result:
-                    prev_title = self.extract_title_name(result[-1].source_code)
                     annotations.append(
                         {
-                            "type": relation_map.get(
-                                (prev_title, cur_title),
-                                "unknown",
-                            ),
+                            "type": "peer",
                             "from": element.block_id,
-                            "to": result[-1].block_id,
+                            "to": stack[-1].block_id,
                         }
                     )
-                result.append(element)
-            elif category2name[element.category] == "Footnote":
-                if result:
-                    annotations.append(
-                        {
-                            "type": "ref",
-                            "from": result[-1].block_id,
-                            "to": element.block_id,
-                        }
-                    )
+                    stack.append(element)
+                    continue
 
-            else:
-                prev_element = result[-1]
+                # both are in the Title category
+                cur_title = utils.extract_title_name(element.source_code)
+                while (
+                    stack
+                    and (cur_title, utils.extract_title_name(stack[-1].source_code))
+                    not in config.relation_map
+                ):
+                    stack.pop()
+
+                # no relation found
+                if not stack:
+                    stack.append(element)
+                    continue
+
+                # determine the relation in Title category
+                prev_title = utils.extract_title_name(stack[-1].source_code)
                 annotations.append(
                     {
-                        "type": relation_map.get(
-                            (
-                                category2name[prev_element.category],
-                                category2name[element.category],
-                            ),
-                            "unknown",
-                        ),
+                        "type": relation_map[(cur_title, prev_title)],
                         "from": element.block_id,
-                        "to": result[-1].block_id,
+                        "to": stack[-1].block_id,
                     }
                 )
+                stack.append(element)
+            elif element.category == config.name2category["Footnote"]:
+                # FIXME: this may happens when PaperTitle is not parsed and authors is represented as Footnote
+                if not stack:
+                    continue
 
-                result.append(element)
+                annotations.append(
+                    {
+                        "type": "inline",
+                        "from": element.block_id,
+                        "to": stack[-1].block_id,
+                    }
+                )
+                # the footnote element is not appended to the stack due to inline relationship is a container
+
+            elif element.category in peer_text_categories:
+                annotations.append(
+                    {
+                        "type": relation_map[(element.category, stack[-1].category)],
+                        "from": element.block_id,
+                        "to": stack[-1].block_id,
+                    }
+                )
+                stack.append(element)
+
+            else:
+                raise ValueError(f"Unsupported category {element.category}")
 
         return annotations
 
