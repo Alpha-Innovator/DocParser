@@ -14,7 +14,7 @@ from vrdu import renderer
 from vrdu import preprocess
 from vrdu.annotation import LayoutAnnotation
 
-log = logger.setup_app_level_logger(file_name="app_debug.log")
+log = logger.setup_app_level_logger(file_name="batch_process.log". mode="a")
 
 
 def extract_tex_files(path):
@@ -139,17 +139,13 @@ def process_one_file(file_name, success_save_path):
         return process_result
 
 
-
-
-
-def main(path, cpu_count=None):
-    success_path = path + '_success'
-    os.makedirs(success_path, exist_ok=True)
-    tex_files = sorted(extract_tex_files(path))
-
-    if cpu_count is None:
-        cpu_count = os.cpu_count()
+def main(path, cpu_count=1):
+    log.info(f"path to raw data: {path}")
     log.info(f'Using cpu counts: {cpu_count}')
+    success_path = path + '_success'
+    log.info(f"success_path: {success_path}")
+    os.makedirs(success_path, exist_ok=True)
+    tex_files = extract_tex_files(path)
     
     with multiprocessing.Pool(cpu_count) as pool:
         func = partial(process_one_file, success_save_path=success_path)
@@ -175,9 +171,9 @@ def main(path, cpu_count=None):
 
 
 if __name__ == "__main__":
-    # parser = argparse.ArgumentParser()
-    # parser.add_argument("-p", "--path", type=str, required=True)
-    # args = parser.parse_args()
-    # path = args.path
-    path = os.path.expanduser("/cpfs01/user/penghaoyang/code/vrdu_data_process/vrdu_arxiv")
-    main(path)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-p", "--path", type=str, required=True)
+    parser.add_argument("-c", "--cpu_count", type=int, required=True)
+    args = parser.parse_args()
+    path, cpu_count = args.path, args.cpu_count
+    main(path, cpu_count)
