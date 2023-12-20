@@ -1,7 +1,12 @@
+from functools import partial
 import os
 import arxiv
 import shutil
 import multiprocessing
+
+from vrdu import logger
+
+log = logger.setup_app_level_logger(file_name="retrive_metadata.log")
 
 
 def retrieve_arxiv_metadata(path: str):
@@ -30,7 +35,22 @@ def retrieve_arxiv_metadata(path: str):
     return file_name[:-1], category
 
 
-def run(path):
+def retrieve_subfolders(path, dir_name):
+    new_dir_name, category = retrieve_arxiv_metadata(dir_name)
+    if not os.path.exists(os.path.join(path, category)):
+        os.makedirs(os.path.join(path, category))
+        log.info("Created directory: {}".format(os.path.join(path, category)))
+    try:
+        shutil.move(
+            os.path.join(path, dir_name),
+            os.path.join(path, category + "/" + new_dir_name),
+        )
+        log.info("Moved directory: {}".format(os.path.join(path, dir_name)))
+    except Exception as e:
+        pass
+
+
+def run(path, cpu_count):
     """
     Moves subfolders in the given path to a new location based on arxiv metadata.
     subfolders must have pattern "****.****", where * is a digit.
@@ -44,24 +64,18 @@ def run(path):
     Example:
 
     """
+    log.info("Starting to move subfolders in {}".format(path))
     subfolders = [f for f in os.listdir(path) if os.path.isdir(os.path.join(path, f))]
     filtered_subfolders = [
         f
         for f in subfolders
         if len(f) == 9 and f[:4].isdigit() and f[5:].isdigit() and f[4] == "."
     ]
+    log.info("There are {} subfolders".format(len(filtered_subfolders)))
 
-    def retrieve_subfolders(dir_name):
-        new_dir_name, category = retrieve_arxiv_metadata(dir_name)
-        if not os.path.exists(os.path.join(path, category)):
-            os.makedirs(os.path.join(path, category))
-        shutil.move(
-            os.path.join(path, dir_name),
-            os.path.join(path, category + "/" + new_dir_name),
-        )
-
-    with multiprocessing.Pool(processes=60) as p:
-        p.map(retrieve_subfolders, filtered_subfolders)
+    f = partial(retrieve_subfolders, path)
+    with multiprocessing.Pool(processes=cpu_count) as p:
+        p.map(f, filtered_subfolders)
 
 
 if __name__ == "__main__":
@@ -69,6 +83,6 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("-p", "--path", help="path to directory containing subfolders")
+    parser.add_argument("-c", "--cpu_count", type=int, default=1)
     args = parser.parse_args()
-
-    run(args.path)
+    run(args.path, args.cpu_count)
