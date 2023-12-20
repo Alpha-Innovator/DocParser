@@ -94,7 +94,7 @@ def process_one_file(file_name, success_save_path):
     path = os.path.dirname(file_name)
     tex_folder_path = os.path.basename(path)
 
-    process_result = {'file': file_name, 'status': 'Success'}
+    process_result = {"file": file_name, "status": "Success"}
 
     # check if this paper has been processed
     quality_report_file = os.path.join(path, "output/result/quality_report.json")
@@ -127,11 +127,11 @@ def process_one_file(file_name, success_save_path):
         vrdu_annotation = LayoutAnnotation(path)
         vrdu_annotation.annotate()
 
-        shutil.copytree(path, f'{success_save_path}/{tex_folder_path}')
+        shutil.copytree(path, f"{success_save_path}/{tex_folder_path}")
 
     except Exception as e:
-        process_result['status'] = 'Failed'
-        # process_result['error'] = str(e)
+        process_result["status"] = "Failed"
+        process_result["error"] = str(e)
 
     finally:
         os.chdir(original_cwd)
@@ -141,33 +141,41 @@ def process_one_file(file_name, success_save_path):
 
 def main(path, cpu_count=1):
     log.info(f"path to raw data: {path}")
-    log.info(f'Using cpu counts: {cpu_count}')
-    success_path = path + '_success'
+    log.info(f"Using cpu counts: {cpu_count}")
+    success_path = path + "_success"
     log.info(f"success_path: {success_path}")
     os.makedirs(success_path, exist_ok=True)
     tex_files = extract_tex_files(path)
-    
+
     with multiprocessing.Pool(cpu_count) as pool:
         func = partial(process_one_file, success_save_path=success_path)
         results = pool.map(func, tex_files)
 
-    success_files = set(result['file'] for result in results if result['status'] == 'Success')
-    failed_files = set((result['file'], result.get('error', '')) for result in results if result['status'] == 'Failed')
+    success_files = set(
+        result["file"] for result in results if result["status"] == "Success"
+    )
+    failed_files = set(
+        (result["file"], result.get("error", ""))
+        for result in results
+        if result["status"] == "Failed"
+    )
 
     # 将成功的文件名写入到 success_files.txt
-    with open('success_files.txt', 'w') as file:
+    with open("success_files.txt", "w") as file:
         for filename in success_files:
             file.write(filename + "\n")
 
     # 将失败的文件名和错误信息写入到 failed_files.txt
-    with open('failed_files.txt', 'w') as file:
+    with open("failed_files.txt", "w") as file:
         for filename, error in failed_files:
             file.write(f"{filename}: {error}\n")
 
     success_count, failure_count = len(success_files), len(failed_files)
     all_count = success_count + failure_count
 
-    print(f"number of successful files: {len(success_files)}, success rate: {success_count / all_count}")
+    print(
+        f"number of successful files: {len(success_files)}, success rate: {success_count / all_count}"
+    )
 
 
 if __name__ == "__main__":

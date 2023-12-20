@@ -42,7 +42,7 @@ def arxiv_download(data: List[Dict], path: str) -> None:
             file_name = result._get_default_filename()
             if os.path.exists(os.path.join(sub_directory, file_name)):
                 continue
-            
+
             result.download_source(dirpath=sub_directory)
 
 
