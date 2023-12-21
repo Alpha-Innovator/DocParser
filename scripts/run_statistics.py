@@ -6,7 +6,7 @@ from rich import print
 from vrdu import utils
 
 
-def analyze_result(path) -> Dict[str, float]:
+def analyze_result(path) -> Dict:
     """
     Analyzes the processed result of the given path. This is done by checking if the
     result files exist.
@@ -15,8 +15,7 @@ def analyze_result(path) -> Dict[str, float]:
         path (str): The path to the directory containing the result files.
 
     Returns:
-        Dict[str, float]: A dictionary containing the success rate of each category,
-        where the key is the category name and the value is the success rate as a float.
+        Dict: A dictionary containing the statistics for each category.
 
     Raises:
         None.
@@ -24,8 +23,8 @@ def analyze_result(path) -> Dict[str, float]:
     all_tex_files = utils.extract_tex_files(path)
     all_categories = utils.get_all_categories()
 
-    success_files = defaultdict(List[str])
-    total_files = defaultdict(List[str])
+    success_files = defaultdict(list)
+    total_files = defaultdict(list)
 
     for tex_file in all_tex_files:
         root = os.path.dirname(tex_file)
@@ -38,9 +37,15 @@ def analyze_result(path) -> Dict[str, float]:
         total_files[category].append(tex_file)
 
     data = {
-        category: (len(success_files[category]) / len(total_files[category])) * 100
+        category: {
+            "successed": len(success_files[category]),
+            "total": len(total_files[category]),
+            "rate": (len(success_files[category]) / len(total_files[category])) * 100,
+        }
         for category in total_files
     }
+
+    utils.export_to_json(data, "result_statistics.json")
 
     return data
 
