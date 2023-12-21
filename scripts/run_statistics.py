@@ -1,16 +1,14 @@
 from collections import defaultdict
 import os
 import re
-import matplotlib.pyplot as plt
 from rich import print
-import csv
+
+from vrdu.utils import get_all_categories
 
 
 def analyze_result():
     success_counts = defaultdict(int)
     failure_counts = defaultdict(int)
-
-    prefix = r"/cpfs01/shared/ADLab/datasets/vrdu_arxiv/"
 
     with open("success_files.txt", "r") as f:
         for line in f:
@@ -43,11 +41,7 @@ def analyze_result():
 
 
 def analyze_raw_data(path):
-    categories = []
-    with open("scripts/category_count.csv", "r") as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            categories.append(row["categories"])
+    categories = get_all_categories()
 
     data = defaultdict(int)
     for category in categories:
