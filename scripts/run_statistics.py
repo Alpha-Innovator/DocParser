@@ -1,63 +1,59 @@
 from collections import defaultdict
 import os
-import re
+from typing import Dict, List
 from rich import print
 
-from vrdu.utils import get_all_categories
+from vrdu import utils
 
 
-def analyze_result():
-    success_counts = defaultdict(int)
-    failure_counts = defaultdict(int)
+def analyze_result(path) -> Dict[str, float]:
+    """
+    Analyzes the processed result of the given path. This is done by checking if the
+    result files exist.
 
-    with open("success_files.txt", "r") as f:
-        for line in f:
-            category = re.match(
-                r"/cpfs01/shared/ADLab/datasets/vrdu_arxiv/(.*?)/", line
-            ).group(1)
-            success_counts[category] += 1
+    Args:
+        path (str): The path to the directory containing the result files.
 
-    with open("failed_files.txt", "r") as f:
-        for line in f:
-            category = re.match(
-                r"/cpfs01/shared/ADLab/datasets/vrdu_arxiv/(.*?)/", line
-            ).group(1)
-            failure_counts[category] += 1
+    Returns:
+        Dict[str, float]: A dictionary containing the success rate of each category,
+        where the key is the category name and the value is the success rate as a float.
 
-    total_counts = defaultdict(int)
+    Raises:
+        None.
+    """
+    all_tex_files = utils.extract_tex_files(path)
+    all_categories = utils.get_all_categories()
 
-    for category, count in success_counts.items():
-        total_counts[category] = success_counts[category] + failure_counts[category]
+    success_files = defaultdict(List[str])
+    total_files = defaultdict(List[str])
 
-    for category, count in failure_counts.items():
-        total_counts[category] = success_counts[category] + failure_counts[category]
+    for tex_file in all_tex_files:
+        root = os.path.dirname(tex_file)
+        category = os.path.dirname(root).split("/")[-1]
+        if category not in all_categories:
+            continue
+        if os.path.exists(os.path.join(root, "output/result/quality_report.json")):
+            success_files[category].append(tex_file)
+
+        total_files[category].append(tex_file)
 
     data = {
-        category: (success_counts[category] / total_counts[category]) * 100
-        for category in total_counts
+        category: (len(success_files[category]) / len(total_files[category])) * 100
+        for category in total_files
     }
 
     return data
 
 
 def analyze_raw_data(path):
-    categories = get_all_categories()
+    all_categories = utils.get_all_categories()
 
     data = defaultdict(int)
-    for category in categories:
+    for category in all_categories:
         if os.path.exists(os.path.join(path, category)):
             data[category] = len(os.listdir(os.path.join(path, category)))
 
     return data
 
 
-data = analyze_raw_data(
-    "/cpfs01/shared/ADLab/datasets/arxiv_source/arxiv_source_uncompressed"
-)
-
-print(f"sum of data: {sum(data.values())}")
-
-print({k: v for k, v in data.items() if k.startswith("cs")})
-print(
-    f"sum of cs: {sum({k: v for k, v in data.items() if k.startswith('cs')}.values())}"
-)
+data = analyze_result("/cpfs01/shared/ADLab/datasets/vrdu_arxiv")

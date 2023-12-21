@@ -4,7 +4,6 @@ import glob
 import shutil
 import argparse
 import multiprocessing
-from functools import partial
 
 from tqdm import tqdm
 
@@ -69,13 +68,11 @@ def process_one_file(file_name):
     original_cwd = os.getcwd()
     path = os.path.dirname(file_name)
 
-    process_result = {"file": file_name, "status": "Success"}
-
     # check if this paper has been processed
     quality_report_file = os.path.join(path, "output/result/quality_report.json")
     if os.path.exists(quality_report_file):
         # this paper has been processed
-        return process_result
+        return
 
     try:
         os.chdir(path)  # 改变工作目录到文件所在目录
@@ -103,14 +100,11 @@ def process_one_file(file_name):
         vrdu_annotation.annotate()
 
     except Exception as e:
-        process_result["status"] = "Failed"
-        process_result["error"] = str(e)
         log.error(f"Error processing file {file_name}: {e}")
 
     finally:
         os.chdir(original_cwd)
         remove_redundant_files(path)
-        return process_result
 
 
 def main(path, cpu_count=1):
@@ -119,33 +113,7 @@ def main(path, cpu_count=1):
     tex_files = utils.extract_tex_files(path)
 
     with multiprocessing.Pool(cpu_count) as pool:
-        results = pool.map(process_one_file, tex_files)
-
-    success_files = set(
-        result["file"] for result in results if result["status"] == "Success"
-    )
-    failed_files = set(
-        (result["file"], result.get("error", ""))
-        for result in results
-        if result["status"] == "Failed"
-    )
-
-    # 将成功的文件名写入到 success_files.txt
-    with open("success_files.txt", "w") as file:
-        for filename in success_files:
-            file.write(filename + "\n")
-
-    # 将失败的文件名和错误信息写入到 failed_files.txt
-    with open("failed_files.txt", "w") as file:
-        for filename, error in failed_files:
-            file.write(f"{filename}: {error}\n")
-
-    success_count, failure_count = len(success_files), len(failed_files)
-    all_count = success_count + failure_count
-
-    print(
-        f"number of successful files: {len(success_files)}, success rate: {success_count / all_count}"
-    )
+        pool.map(process_one_file, tex_files)
 
 
 if __name__ == "__main__":
@@ -154,4 +122,9 @@ if __name__ == "__main__":
     parser.add_argument("-c", "--cpu_count", type=int, required=True)
     args = parser.parse_args()
     path, cpu_count = args.path, args.cpu_count
-    main(path, cpu_count)
+
+    categories = utils.get_all_categories()
+    for category in categories:
+        category_path = os.path.join(path, category)
+        log.info(f"Processing category: {category}")
+        main(category_path, cpu_count)
