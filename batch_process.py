@@ -17,30 +17,6 @@ from vrdu.annotation import LayoutAnnotation
 log = logger.setup_app_level_logger(file_name="batch_process.log", mode="a")
 
 
-def extract_tex_files(path):
-    tex_files = []
-
-    for root, dirs, files in os.walk(path):
-        for file in files:
-            if not file.endswith(".tex"):
-                continue
-            if file.startswith("paper_"):
-                continue
-            tex_file = os.path.join(root, file)
-
-            try:
-                with open(tex_file) as f:
-                    content = f.read()
-            except UnicodeDecodeError:
-                continue
-
-            if "\\begin{document}" not in content:
-                continue
-
-            tex_files.append(tex_file)
-    return tex_files
-
-
 def parse_file_name(filename) -> str:
     pattern = r"paper_(.*?)\.tex"
     match = re.search(pattern, filename)
@@ -140,7 +116,7 @@ def process_one_file(file_name):
 def main(path, cpu_count=1):
     log.info(f"path to raw data: {path}")
     log.info(f"Using cpu counts: {cpu_count}")
-    tex_files = extract_tex_files(path)
+    tex_files = utils.extract_tex_files(path)
 
     with multiprocessing.Pool(cpu_count) as pool:
         results = pool.map(process_one_file, tex_files)
