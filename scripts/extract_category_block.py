@@ -1,10 +1,23 @@
 import os
 import shutil
+import subprocess
 import uuid
 import datetime
+import re
+import glob
 
 from vrdu import utils
 from vrdu.config import config
+
+
+def is_standalone(file_path):
+    try:
+        with open(file_path, "r") as f:
+            file_content = f.read()
+    except UnicodeDecodeError:
+        return False
+    pattern = r"\\documentclass(\[.*\])?\{standalone\}"
+    return bool(re.search(pattern, file_content))
 
 
 def extract_category(path, category, output_path):
@@ -34,6 +47,49 @@ def extract_category(path, category, output_path):
         key["added_date"] = str(datetime.date.today())
 
     return result
+
+
+def extract_tikz(path, output_path):
+    # FIXME: problem exists, do not use it before this function get fixes
+    json_data = utils.load_json("result_statistics.json")
+    result = [x for x in json_data["standalone"] if is_standalone(x)]
+    print(f"Found {len(result)} standalone files")
+
+    data = []
+    original_path = os.getcwd()
+    try:
+        os.chdir(output_path)
+        for tex_file in result:
+            base_name = str(uuid.uuid4())
+            output_tex_name = os.path.join(output_path, f"{base_name}.tex")
+            print(f"moving {tex_file} to {output_tex_name}")
+            shutil.copyfile(tex_file, os.path.join(output_path, output_tex_name))
+            subprocess.run(["pdflatex", "-interaction=nonstopmode", output_tex_name])
+            subprocess.run(
+                [
+                    "convert",
+                    "-density",
+                    "300",
+                    base_name + ".pdf",
+                    "-quality",
+                    "90",
+                    base_name + ".png",
+                ]
+            )
+            print("converted")
+            data.append(
+                {
+                    "image_path": [],
+                    "source_code": output_tex_name,
+                    "data_source": tex_file,
+                }
+            )
+
+    except Exception:
+        pass
+    finally:
+        os.chdir(original_path)
+        utils.export_to_json(data, os.path.join(output_path, "tikz_annotation.json"))
 
 
 def main(category_name, input_directory, output_path):
@@ -74,8 +130,10 @@ def main(category_name, input_directory, output_path):
 if __name__ == "__main__":
     category_name = "Equation"
     input_directory = os.path.expanduser("/cpfs01/shared/ADLab/datasets/vrdu_arxiv")
-    output_path = os.path.expanduser(
-        f"/cpfs01/shared/ADLab/datasets/vrdu_{category_name.lower()}"
-    )
+    # output_path = os.path.expanduser(
+    #     f"/cpfs01/shared/ADLab/datasets/vrdu_{category_name.lower()}"
+    # )
 
-    main(category_name, input_directory, output_path)
+    # main(category_name, input_directory, output_path)
+    output_path = "/cpfs01/shared/ADLab/datasets/vrdu_tikz"
+    extract_tikz(input_directory, output_path)
