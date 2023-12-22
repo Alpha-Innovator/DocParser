@@ -60,14 +60,27 @@ relation_map = {
     ("Title", "Equation"): "sub",
     ("Title", "List"): "sub",
     ("Title", "Footnote"): "ref",
-    ("chapter", "chapter"): "adj",
-    ("chapter", "section"): "sub",
-    ("section", "section"): "adj",
-    ("section", "subsection"): "sub",
-    ("subsection", "subsection"): "adj",
-    ("subsection", "subsubsection"): "sub",
-    ("subsubsection", "subsubsection"): "adj",
+    # Title category relationships
+    ("chapter", "chapter"): "peer",
+    ("section", "chapter"): "sub",
+    ("section", "section"): "peer",
+    ("subsection", "section"): "sub",
+    ("subsection", "subsection"): "peer",
+    ("subsubsection", "subsection"): "sub",
+    ("subsubsection", "subsubsection"): "peer",
 }
+
+sortable_envs = [
+    "Title",
+    "Text",
+    "Text-EQ",
+    "Equation",
+    "Footnote",
+    "List",
+    "PaperTitle",
+    "Abstract",
+]
+
 
 sortable_envs = ["Title", "Text", "Text-EQ", "Equation", "Footnote", "List"]
 
