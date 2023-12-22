@@ -67,17 +67,16 @@ def remove_redundant_files(path: str) -> None:
 def process_one_file(file_name):
     original_cwd = os.getcwd()
     path = os.path.dirname(file_name)
+    log.info(f"[VRDU] processing file {file_name}")
 
     # check if this paper has been processed
     quality_report_file = os.path.join(path, "output/result/quality_report.json")
     if os.path.exists(quality_report_file):
+        log.info(f"[VRDU] File {file_name} has been processed")
         return
 
     try:
         os.chdir(path)
-
-        log.info(f"[VRDU] processing file {file_name}")
-
         # make a copy of the original tex file
         original_tex = os.path.join(path, "paper_original.tex")
         shutil.copyfile(file_name, original_tex)
@@ -102,6 +101,7 @@ def process_one_file(file_name):
         log.error(f"Error processing file {file_name}: {e}")
 
     finally:
+        log.info(f"[VRDU] Finished processing file {file_name}")
         os.chdir(original_cwd)
         remove_redundant_files(path)
 
@@ -110,6 +110,7 @@ def main(path, cpu_count=1):
     log.info(f"path to raw data: {path}")
     log.info(f"Using cpu counts: {cpu_count}")
     tex_files = utils.extract_tex_files(path)
+    log.info(f"Found {len(tex_files)} tex files")
 
     with multiprocessing.Pool(cpu_count) as pool:
         pool.map(process_one_file, tex_files)
