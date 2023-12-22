@@ -71,11 +71,10 @@ def process_one_file(file_name):
     # check if this paper has been processed
     quality_report_file = os.path.join(path, "output/result/quality_report.json")
     if os.path.exists(quality_report_file):
-        # this paper has been processed
         return
 
     try:
-        os.chdir(path)  # 改变工作目录到文件所在目录
+        os.chdir(path)
 
         log.info(f"[VRDU] processing file {file_name}")
 
