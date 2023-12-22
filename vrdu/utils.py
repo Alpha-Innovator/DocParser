@@ -265,6 +265,35 @@ def extract_tex_files(path) -> List[str]:
     return tex_files
 
 
+def extract_macro_definitions(tex_file) -> List[str]:
+    """
+    Extracts macro definitions from a given tex file.
+
+    Args:
+        tex_file (str): The path to the tex file.
+
+    Returns:
+        List[str]: A list of macro definitions extracted from the tex file.
+    """
+    macro_patterns = [
+        r"\\newcommand{[^}]+}",
+        r"\\renewcommand{[^}]+}",
+        r"\\newenvironment{[^}]+}",
+        r"\\renewenvironment{[^}]+}",
+    ]
+
+    macros = []
+    with open(tex_file, "r") as file:
+        text_lines = file.readlines()
+        macros = [
+            line.strip()
+            for line in text_lines
+            if any(re.findall(pattern, line) for pattern in macro_patterns)
+        ]
+
+    return macros
+
+
 def export_to_coco(
     layout_info: Dict,
     image_infos: Dict[int, str],
