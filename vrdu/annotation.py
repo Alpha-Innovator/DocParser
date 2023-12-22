@@ -444,22 +444,19 @@ class LayoutAnnotation:
                 while result and category2name[result[-1].category] != "Title":
                     result.pop()
 
-                cur_title = self.extract_title_name(element.source_code)
+                cur_title = utils.extract_title_name(element.source_code)
                 while (
                     result
-                    and (self.extract_title_name(result[-1].source_code), cur_title)
+                    and (utils.extract_title_name(result[-1].source_code), cur_title)
                     not in relation_map
                 ):
                     result.pop()
 
                 if result:
-                    prev_title = self.extract_title_name(result[-1].source_code)
+                    prev_title = utils.extract_title_name(result[-1].source_code)
                     annotations.append(
                         {
-                            "type": relation_map.get(
-                                (prev_title, cur_title),
-                                "unknown",
-                            ),
+                            "type": relation_map[(prev_title, cur_title)],
                             "from": element.block_id,
                             "to": result[-1].block_id,
                         }
