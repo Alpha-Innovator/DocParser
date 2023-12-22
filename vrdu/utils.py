@@ -252,7 +252,7 @@ def extract_tex_files(path) -> List[str]:
             tex_file = os.path.join(root, file)
 
             try:
-                with open(tex_file) as f:
+                with open(tex_file, "r") as f:
                     content = f.read()
             except UnicodeDecodeError:
                 continue
