@@ -38,7 +38,7 @@ def analyze_result(path) -> Dict:
         root = os.path.dirname(tex_file)
         category = os.path.dirname(root).split("/")[-1]
         if category not in all_categories:
-            if  is_standalone(tex_file):
+            if is_standalone(tex_file):
                 standalone_files.append(tex_file)
             else:
                 others.append(tex_file)
