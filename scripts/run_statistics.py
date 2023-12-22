@@ -6,6 +6,12 @@ from rich import print
 from vrdu import utils
 
 
+def is_standalone(path: str) -> bool:
+    with open(path, "r") as f:
+        content = f.read()
+    return "standalone" in content
+
+
 def analyze_result(path) -> Dict:
     """
     Analyzes the processed result of the given path. This is done by checking if the
@@ -25,24 +31,35 @@ def analyze_result(path) -> Dict:
 
     success_files = defaultdict(list)
     total_files = defaultdict(list)
+    standalone_files = []
+    others = []
 
     for tex_file in all_tex_files:
         root = os.path.dirname(tex_file)
         category = os.path.dirname(root).split("/")[-1]
         if category not in all_categories:
-            continue
-        if os.path.exists(os.path.join(root, "output/result/quality_report.json")):
+            if  is_standalone(tex_file):
+                standalone_files.append(tex_file)
+            else:
+                others.append(tex_file)
+        elif os.path.exists(os.path.join(root, "output/result/quality_report.json")):
             success_files[category].append(tex_file)
 
         total_files[category].append(tex_file)
 
     data = {
-        category: {
-            "successed": len(success_files[category]),
-            "total": len(total_files[category]),
-            "rate": (len(success_files[category]) / len(total_files[category])) * 100,
-        }
-        for category in total_files
+        "main": {
+            category: {
+                "files": total_files[category],
+                "successed": len(success_files[category]),
+                "total": len(total_files[category]),
+                "rate": (len(success_files[category]) / len(total_files[category]))
+                * 100,
+            }
+            for category in total_files
+        },
+        "standalone": standalone_files,
+        "others": others,
     }
 
     utils.export_to_json(data, "result_statistics.json")
