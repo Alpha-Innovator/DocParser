@@ -126,5 +126,5 @@ if __name__ == "__main__":
     categories = utils.get_all_categories()
     for category in categories:
         category_path = os.path.join(path, category)
-        log.info(f"Processing category: {category}")
+        log.info(f"Processing category: {category_path}")
         main(category_path, cpu_count)
