@@ -3,6 +3,7 @@ import os
 import arxiv
 import shutil
 import multiprocessing
+import time
 
 from vrdu import logger
 
@@ -23,6 +24,8 @@ def retrieve_arxiv_metadata(path: str):
         FileNotFoundError: If the metadata of the document cannot be found in arxiv.
     """
     search = arxiv.Search(id_list=[path])
+    # wait for 5 seconds, see https://info.arxiv.org/help/api/tou.html Limitations
+    time.sleep(5.0)
 
     file_name, category = None, None
     for result in search.results():
