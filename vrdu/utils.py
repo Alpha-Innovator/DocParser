@@ -1,4 +1,5 @@
 import csv
+import glob
 import os
 import re
 import subprocess
@@ -37,6 +38,45 @@ def load_json(file_path) -> Any:
     with open(file_path, "r") as json_file:
         data = json.load(json_file)
     return data
+
+
+def compile_check(source_code: str) -> bool:
+    """
+    check if the source code can be compiled,
+    used to check if there are macros in the source code.
+    """
+    prefix = r"""
+    \documentclass{article}
+    \usepackage{amsmath}
+    \usepackage{amssymb}
+    \usepackage{amsfonts, bm}
+    \usepackage{amsthm}
+    \usepackage{array}
+    \usepackage{tabularx}
+    \usepackage{multirow}
+    \usepackage{booktabs}
+    \begin{document}
+    """
+
+    suffix = r"""
+    \end{document}
+    """
+    content = prefix + source_code + suffix
+    with open("temp.tex", "w") as f:
+        f.write(content)
+
+    result = True
+    try:
+        subprocess.run(["pdflatex", "-halt-on-error", "temp.tex"])
+    except subprocess.CalledProcessError:
+        result = False
+    finally:
+        # remove files
+        files = glob.glob(f"{os.getcwd()}/temp.*")
+        for file in files:
+            os.remove(file)
+
+    return result
 
 
 def get_main_content(data):
