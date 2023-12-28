@@ -10,6 +10,8 @@ Visually Rich Document Understanding Data Process's documentation
    :maxdepth: 2
    :caption: Contents:
 
+   vrdu-data-process.md
+   installation.md
    api.md
 
 Indices and tables
