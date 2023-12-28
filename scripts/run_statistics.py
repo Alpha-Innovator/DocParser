@@ -1,7 +1,6 @@
 from collections import defaultdict
 import os
-from typing import Dict, List
-from rich import print
+from typing import Dict
 
 from vrdu import utils
 
@@ -78,4 +77,6 @@ def analyze_raw_data(path):
     return data
 
 
-data = analyze_result("/cpfs01/shared/ADLab/datasets/vrdu_arxiv")
+if __name__ == "__main__":
+    data = analyze_result("/cpfs01/shared/ADLab/datasets/vrdu_arxiv")
+    utils.export_to_json(data, "result_statistics.json")
