@@ -67,7 +67,7 @@ def compile_check(source_code: str) -> bool:
 
     result = True
     try:
-        subprocess.run(["pdflatex", "-halt-on-error", "temp.tex"])
+        subprocess.run(["pdflatex", "-halt-on-error", "temp.tex"], check=True)
     except subprocess.CalledProcessError:
         result = False
     finally:
