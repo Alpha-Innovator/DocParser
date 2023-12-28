@@ -95,6 +95,14 @@ for details, see [reference](https://pdf2image.readthedocs.io/en/latest/installa
 Usually, this means the rendering process destroys the original latex, therefore it is not compiable, the reason varies from case to case.
 
 
+# Documentation
+The documentation is built with [Sphinx](https://www.sphinx-doc.org/en/master/), to build documentation, run the following commands:
+```
+cd docs
+sphinx-build . _build
+```
+then the documentations are listed in `docs/_build`, which can be viewed by open `index.html` with a browser.
+
 # Category
 each bounding box is classified into one the following category.
 
