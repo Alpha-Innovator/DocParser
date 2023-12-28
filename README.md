@@ -78,7 +78,7 @@ latexpand --help
 ```
 in the last line of output will print the version. If the version is below $1.6$, then we need to upgrade it to $\geq1.6$, the simplest way is
 1. go to [latexpand v1.6](https://gitlab.com/latexpand/latexpand/-/tags/v1.6) download the source code
-2. use `sudo vim $(which latexpand)` to edit the content of `latexpand` scirpt (`sudo` is necessary since `latexpand` usually locates in `/usr/bin`)
+2. use `sudo vim $(which latexpand)` to edit the content of `latexpand` script (`sudo` is necessary since `latexpand` usually locates in `/usr/bin`)
 3. copy the content of `v1.6/latexpand` to the old version of `latexpand` (opened with vim)  
 
 ### 2. `pdf2image` error
@@ -92,8 +92,16 @@ sudo apt-get install poppler-utils
 for details, see [reference](https://pdf2image.readthedocs.io/en/latest/installation.html#installing-poppler).
 
 ### 3. `path_to_paper/block_*****.pdf` not found
-Usually, this means the rendering process destroys the original latex, therefore it is not compiable, the reason varies from case to case.
+Usually, this means the rendering process destroys the original latex, therefore it is not compilable, the reason varies from case to case.
 
+
+# Documentation
+The documentation is built with [Sphinx](https://www.sphinx-doc.org/en/master/), to build documentation, run the following commands:
+```
+cd docs
+sphinx-build . _build
+```
+then the documentations are listed in `docs/_build`, which can be viewed by open `index.html` with a browser.
 
 # Category
 each bounding box is classified into one the following category.
