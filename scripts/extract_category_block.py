@@ -1,6 +1,6 @@
 import os
 import shutil
-from typing import List
+from typing import List, Optional, Tuple
 import uuid
 import datetime
 import argparse
@@ -9,24 +9,26 @@ from vrdu import utils
 from vrdu.config import config
 
 
-def extract_category(path: str, category: int, output_directory: str) -> List:
+def extract_category(
+    input_directory: str, category_index: int, output_directory: str
+) -> Tuple[List, List]:
     """
     Extracts blocks from the given 'path' that match the specified 'category'
     and saves the corresponding images to 'output_directory'.
 
     Args:
-        path (str): The path to the directory containing the source JSON file.
-        category (int): The category index to filter blocks by.
+        input_directory (str): The path to the directory containing the source JSON file.
+        category_index (int): The index of the category to extract.
         output_directory (str): The path to the directory where the extracted images will be saved.
 
     Returns:
-        list: A list of blocks that match the specified category.
+        Tuple[List, List]: A tuple containing the high-quality blocks and the low-quality blocks.
     """
     # load block-source_code informations
-    source_json_file = os.path.join(path, "reading_annotation.json")
+    source_json_file = os.path.join(input_directory, "reading_annotation.json")
     data = utils.load_json(source_json_file)
 
-    result = []
+    high_quality_result, low_quality_result = [], []
     for key, blocks in data.items():
         # key must be page index
         if not key.isnumeric():
@@ -34,29 +36,46 @@ def extract_category(path: str, category: int, output_directory: str) -> List:
         for block in blocks:
             if "category" not in block:
                 continue
-            if block["category"] == category:
-                result.append(block)
+            if block["category"] == category_index:
+                if utils.compile_check(block["source_code"]):
+                    high_quality_result.append(block)
+                else:
+                    low_quality_result.append(block)
 
     # save images
-    for key in result:
+    if not os.path.exists(os.path.join(output_directory, "high_quality")):
+        os.makedirs(os.path.join(output_directory, "high_quality"))
+    if not os.path.exists(os.path.join(output_directory, "low_quality")):
+        os.makedirs(os.path.join(output_directory, "low_quality"))
+
+    for key in high_quality_result:
         output_image_name = f"{uuid.uuid4()}.png"
         shutil.copyfile(
-            os.path.join(path, key["image_path"]),
-            os.path.join(output_directory, output_image_name),
+            os.path.join(input_directory, key["image_path"]),
+            os.path.join(output_directory, f"high_quality/{output_image_name}"),
         )
         key["image_path"] = output_image_name
-        key["paper_source"] = path
+        key["paper_source"] = input_directory
         key["added_date"] = str(datetime.date.today())
-        key["macros"] = data.get("macros", [])
 
-    return result
+    for key in low_quality_result:
+        output_image_name = f"{uuid.uuid4()}.png"
+        shutil.copyfile(
+            os.path.join(input_directory, key["image_path"]),
+            os.path.join(output_directory, f"low_quality/{output_image_name}"),
+        )
+        key["image_path"] = output_image_name
+        key["paper_source"] = input_directory
+        key["added_date"] = str(datetime.date.today())
+
+    return high_quality_result, low_quality_result
 
 
 def extract_category_dataset(
     category_name: str,
     input_directory: str,
     output_directory: str,
-    existed_source_json: str = None,
+    existed_source_json: Optional[str] = None,
 ):
     """
     Extracts blocks from the given 'input_directory' that match the specified 'category_name'
@@ -84,6 +103,9 @@ def extract_category_dataset(
     results = []
     # use the existed json as a filter (used when to add data to a new dataset
     # but expect to separate from an existing dataset)
+    if existed_source_json is None:
+        existed_source_json = result_json
+
     if os.path.exists(existed_source_json):
         existed_source = set(
             item["paper_source"] for item in utils.load_json(result_json)
@@ -103,6 +125,7 @@ def extract_category_dataset(
             continue
 
         count += 1
+        print(f"Extracting from {root}...")
         results.extend(extract_category(root, category, output_directory))
 
     # exclude the reading_annotation.json file
