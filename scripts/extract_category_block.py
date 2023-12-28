@@ -11,7 +11,7 @@ from vrdu.config import config
 
 def extract_category(
     input_directory: str, category_index: int, output_directory: str
-) -> Tuple[List, List]:
+) -> List:
     """
     Extracts blocks from the given 'path' that match the specified 'category'
     and saves the corresponding images to 'output_directory'.
@@ -22,13 +22,13 @@ def extract_category(
         output_directory (str): The path to the directory where the extracted images will be saved.
 
     Returns:
-        Tuple[List, List]: A tuple containing the high-quality blocks and the low-quality blocks.
+        List: A tuple containing the high-quality blocks and the low-quality blocks.
     """
-    # load block-source_code informations
+    # load block-source_code information
     source_json_file = os.path.join(input_directory, "reading_annotation.json")
     data = utils.load_json(source_json_file)
 
-    high_quality_result, low_quality_result = [], []
+    result = []
     for key, blocks in data.items():
         # key must be page index
         if not key.isnumeric():
@@ -38,37 +38,23 @@ def extract_category(
                 continue
             if block["category"] == category_index:
                 if utils.compile_check(block["source_code"]):
-                    high_quality_result.append(block)
+                    block["quality"] = "high"
                 else:
-                    low_quality_result.append(block)
+                    block["quality"] = "low"
+                result.append(block)
 
     # save images
-    if not os.path.exists(os.path.join(output_directory, "high_quality")):
-        os.makedirs(os.path.join(output_directory, "high_quality"))
-    if not os.path.exists(os.path.join(output_directory, "low_quality")):
-        os.makedirs(os.path.join(output_directory, "low_quality"))
-
-    for key in high_quality_result:
+    for key in result:
         output_image_name = f"{uuid.uuid4()}.png"
         shutil.copyfile(
             os.path.join(input_directory, key["image_path"]),
-            os.path.join(output_directory, f"high_quality/{output_image_name}"),
+            os.path.join(output_directory, output_image_name),
         )
         key["image_path"] = output_image_name
         key["paper_source"] = input_directory
         key["added_date"] = str(datetime.date.today())
 
-    for key in low_quality_result:
-        output_image_name = f"{uuid.uuid4()}.png"
-        shutil.copyfile(
-            os.path.join(input_directory, key["image_path"]),
-            os.path.join(output_directory, f"low_quality/{output_image_name}"),
-        )
-        key["image_path"] = output_image_name
-        key["paper_source"] = input_directory
-        key["added_date"] = str(datetime.date.today())
-
-    return high_quality_result, low_quality_result
+    return result
 
 
 def extract_category_dataset(
@@ -90,6 +76,9 @@ def extract_category_dataset(
 
     Returns:
         None
+
+    Raises:
+        KeyError: If the specified 'category_name' is not found in the 'config.name2category' dictionary.
     """
     if category_name not in config.name2category.keys():
         raise KeyError(
@@ -115,7 +104,6 @@ def extract_category_dataset(
     elif os.path.exists(result_json):
         results = utils.load_json(result_json)
 
-    count = 0
     for root, dirs, files in os.walk(input_directory):
         if "reading_annotation.json" not in files:
             continue
@@ -124,8 +112,6 @@ def extract_category_dataset(
         if root in existed_source:
             continue
 
-        count += 1
-        print(f"Extracting from {root}...")
         results.extend(extract_category(root, category, output_directory))
 
     # exclude the reading_annotation.json file
