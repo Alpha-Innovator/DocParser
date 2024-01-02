@@ -13,7 +13,9 @@ from vrdu import renderer
 from vrdu import preprocess
 from vrdu.annotation import LayoutAnnotation
 
-log = logger.setup_app_level_logger(file_name="batch_process.log", mode="a")
+log = logger.setup_app_level_logger(
+    file_name="batch_process.log", level="INFO", mode="a"
+)
 
 
 def parse_file_name(filename) -> str:
