@@ -36,7 +36,7 @@ def setup_app_level_logger(
     logger = logging.getLogger(logger_name)
     logger.setLevel(level)
     formatter = logging.Formatter(
-        "[%(levelname)-s]:%(filename)s %(funcName)s [Line %(lineno)s] - %(message)s"
+        "[%(asctime)s - %(levelname)-s]:%(filename)s %(funcName)s [Line %(lineno)s] - %(message)s"
     )
 
     # create file handler which logs even debug messages
