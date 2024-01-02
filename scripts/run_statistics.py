@@ -49,9 +49,8 @@ def analyze_result(path) -> Dict:
     data = {
         "main": {
             category: {
-                "files": total_files[category],
-                "successed": len(success_files[category]),
-                "total": len(total_files[category]),
+                "total": total_files[category],
+                "successed": success_files[category],
                 "rate": (len(success_files[category]) / len(total_files[category]))
                 * 100,
             }
