@@ -421,31 +421,54 @@ def colorize(text: str, category_name: str) -> str:
         return text[: index + 1] + "{\\color{" + color + "}" + text[index + 1 :] + "}"
     if category_name == "Footnote":
         index = text.find("{")
-        return text[: index + 1] + "\\color{" + color + "}" + text[index + 1 :]
+        return text[: index + 1] + "{\\color{" + color + "}" + text[index + 1 :] + "}"
     if category_name == "Table":
         return "{\\color{" + color + "}" + text + "}"
     if category_name == "Algorithm":
         # skip the position arguments, like \\begin{algorithm}[hbt!]
-        index = text.find("\\", len("\\begin{algorithm}"))
-        return text[:index] + "\\color{" + color + "}" + text[index:]
+        prefix = text.find("\\", len("\\begin{algorithm}"))
+        suffix = text.find("\\end{algorithm}")
+        return (
+            text[:prefix]
+            + "{\\color{"
+            + color
+            + "}"
+            + text[prefix:suffix]
+            + "}"
+            + text[suffix:]
+        )
     if category_name == "Title":
         return "{\\color{" + color + "}" + text + "}"
     if category_name == "List":
         return "{\\color{" + color + "}" + text + "}"
     if category_name == "Text":
-        return "\\textcolor{" + color + "}{" + text + "}"
+        return "{\\textcolor{" + color + "}{" + text + "}}"
     if category_name == "Text-EQ":
-        return "\\textcolor{" + color + "}{" + text + "}"
+        return "{\\textcolor{" + color + "}{" + text + "}}"
     if category_name == "PaperTitle":
         index = text.find("{")
         return (
-            text[: index + 1] + "\\textcolor{" + color + "}{" + text[index + 1 :] + "}"
+            text[: index + 1]
+            + "{\\textcolor{"
+            + color
+            + "}{"
+            + text[index + 1 :]
+            + "}}"
         )
     if category_name == "Equation":
         return "{\\color{" + color + "}{" + text + "}}"
     if category_name == "Abstract":
-        index = len("\\begin{abstract}")
-        return text[:index] + "\\color{" + color + "}" + text[index:]
+        prefix = len("\\begin{abstract}")
+        suffix = len("\\end{abstract}")
+        return (
+            text[:prefix]
+            + "{\\color{"
+            + color
+            + "}"
+            + text[prefix:-suffix]
+            + "}"
+            + text[-suffix:]
+        )
     if category_name == "Code":
         return "{\\color{" + color + "}" + text + "}"
 
