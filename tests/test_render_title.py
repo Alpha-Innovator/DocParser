@@ -33,7 +33,7 @@ class TestTitle(unittest.TestCase):
             self.renderer.render_title(file_mock)
             file_mock.assert_called_with(file_mock, "w")
             file_mock().write.assert_called_with(
-                """\\documentclass{article}\\title{\\textcolor{PaperTitle_color}{This is a title}}\\begin{document}\\maketitle\\end{document}"""
+                """\\documentclass{article}\\title{{\\textcolor{PaperTitle_color}{This is a title}}}\\begin{document}\\maketitle\\end{document}"""
             )
 
     def test_two_title(self):

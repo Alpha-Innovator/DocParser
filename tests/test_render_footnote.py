@@ -38,7 +38,7 @@ class TestFootnote(unittest.TestCase):
             self.renderer.render_footnote(file_mock)
             file_mock.assert_called_with(file_mock, "w")
             file_mock().write.assert_called_with(
-                """\\documentclass{article}\\begin{document}\\footnote{\\color{Footnote_color}A footnote.}\\end{document}"""
+                """\\documentclass{article}\\begin{document}\\footnote{{\\color{Footnote_color}A footnote.}}\\end{document}"""
             )
 
     def test_one_footnote2(self):
@@ -50,7 +50,7 @@ class TestFootnote(unittest.TestCase):
             self.renderer.render_footnote(file_mock)
             file_mock.assert_called_with(file_mock, "w")
             file_mock().write.assert_called_with(
-                """\\documentclass{article}\\begin{document}\\footnote{\\color{Footnote_color}\\url{A figure without list entry.}}\\end{document}"""
+                """\\documentclass{article}\\begin{document}\\footnote{{\\color{Footnote_color}\\url{A figure without list entry.}}}\\end{document}"""
             )
 
     def test_multiple_footnote(self):
@@ -62,7 +62,7 @@ class TestFootnote(unittest.TestCase):
             self.renderer.render_footnote(file_mock)
             file_mock.assert_called_with(file_mock, "w")
             file_mock().write.assert_called_with(
-                """\\documentclass{article}\\begin{document}\\footnote{\\color{Footnote_color}A figure without list entry.}\\footnote{\\color{Footnote_color}A figure without list entry.}\\end{document}"""
+                """\\documentclass{article}\\begin{document}\\footnote{{\\color{Footnote_color}A figure without list entry.}}\\footnote{{\\color{Footnote_color}A figure without list entry.}}\\end{document}"""
             )
 
     def test_nested_footnote(self):
@@ -74,5 +74,5 @@ class TestFootnote(unittest.TestCase):
             self.renderer.render_footnote(file_mock)
             file_mock.assert_called_with(file_mock, "w")
             file_mock().write.assert_called_with(
-                """\\documentclass{article}\\begin{document}Table \\ref{demo-table} has a caption:\\begin{table}[!h]\\begin{center}\\begin{tabular}{||c c c c||}  \\hline Col1 & Col2 & Col2 & Col3 \\ [0.5ex]  \\hline\\hline 1 & 6 & 87837 & 787 \\  \\hline 2 & 7 & 78 & 5415 \\ \\hline 3 & 545 & 778 & 7507 \\ \\hline 4 & 545 & 18744 & 7560 \\ \\hline 5 & 88 & 788 & 6344 \\ [1ex]  \\hline\\end{tabular}\\caption{\\label{demo-table}Your caption.\\footnote{\\color{Footnote_color}\\url{A figure without list entry.}}\\end{center}\\end{table}\\end{document}"""
+                """\\documentclass{article}\\begin{document}Table \\ref{demo-table} has a caption:\\begin{table}[!h]\\begin{center}\\begin{tabular}{||c c c c||}  \\hline Col1 & Col2 & Col2 & Col3 \\ [0.5ex]  \\hline\\hline 1 & 6 & 87837 & 787 \\  \\hline 2 & 7 & 78 & 5415 \\ \\hline 3 & 545 & 778 & 7507 \\ \\hline 4 & 545 & 18744 & 7560 \\ \\hline 5 & 88 & 788 & 6344 \\ [1ex]  \\hline\\end{tabular}\\caption{\\label{demo-table}Your caption.\\footnote{{\\color{Footnote_color}\\url{A figure without list entry.}}}\\end{center}\\end{table}\\end{document}"""
             )
