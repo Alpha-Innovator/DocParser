@@ -1,6 +1,7 @@
 from collections import defaultdict
 import os
 from typing import Dict
+import csv
 
 from vrdu import utils
 
@@ -76,4 +77,17 @@ def analyze_raw_data(path):
 
 if __name__ == "__main__":
     data = analyze_result("/cpfs01/shared/ADLab/datasets/vrdu_arxiv")
+    categories = utils.get_all_categories()
+    with open("statistics.csv", "w") as f:
+        fieldnames = ["category", "total", "successed"]
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer.writeheader()
+        for key in categories:
+            writer.writerow(
+                {
+                    "category": key,
+                    "total": len(data["main"][key]["total"]),
+                    "successed": len(data["main"][key]["successed"]),
+                }
+            )
     utils.export_to_json(data, "result_statistics.json")
