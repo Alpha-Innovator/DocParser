@@ -60,8 +60,6 @@ def analyze_result(path) -> Dict:
         "others": others,
     }
 
-    utils.export_to_json(data, "result_statistics.json")
-
     return data
 
 
