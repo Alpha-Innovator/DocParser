@@ -264,6 +264,8 @@ class LayoutAnnotation:
                 image2_array = np.array(plt.imread(image_pair[2]), dtype=np.uint8)
 
                 diff_image = np.abs(image2_array - image1_array, dtype=np.uint8)
+                if np.all(diff_image == 0):
+                    continue
                 labeled_image, num = label(diff_image > self.threshold, return_num=True)
                 if num == 0:
                     continue
