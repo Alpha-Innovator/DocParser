@@ -294,7 +294,6 @@ class Renderer:
         colors = list(config.name2color.values())
         matches = []
 
-        log.debug(f"colors={colors}")
         pattern = "|".join(rf"\b{re.escape(term)}\b" for term in colors)
         for m in re.finditer(pattern, contents):
             matches.append(m.group(0))
@@ -311,11 +310,9 @@ class Renderer:
 
         for env in config.name2category.keys():
             num_items = len(self.texts[env])
-            log.debug(f"env={env}, texts={self.texts[env]}")
             order_ids = [
                 i for i, _ in enumerate(env_orders) if env + "_color" == env_orders[i]
             ]
-            log.debug(f"order_ids={order_ids}")
             if num_items != len(order_ids):
                 raise ValueError(
                     f"num_items {num_items} != len(order_ids) {len(order_ids)}"
