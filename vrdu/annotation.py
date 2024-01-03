@@ -38,21 +38,21 @@ def get_image_pairs(dir1: str, dir2: str):
             Each tuple contains the page index, the path to the rendered image,
             and the path to the changed image.
     """
-    file_pattern = os.path.join(dir1, "*.png")
-    rendered_png_files = sorted(glob.glob(file_pattern))
-    file_pattern = os.path.join(dir2, "*.png")
-    changed_png_files = sorted(glob.glob(file_pattern))
+    file_pattern = os.path.join(dir1, "*.jpg")
+    rendered_jpg_files = sorted(glob.glob(file_pattern))
+    file_pattern = os.path.join(dir2, "*.jpg")
+    changed_jpg_files = sorted(glob.glob(file_pattern))
 
-    if len(rendered_png_files) != len(changed_png_files):
+    if len(rendered_jpg_files) != len(changed_jpg_files):
         raise FileNotFoundError("Wrong image path or file name or page index!")
 
     page_indices = []
-    for i in range(len(rendered_png_files)):
-        file_name = os.path.basename(rendered_png_files[i])
+    for i in range(len(rendered_jpg_files)):
+        file_name = os.path.basename(rendered_jpg_files[i])
         page_index = int(file_name[-6:-4]) - 1
         page_indices.append(int(page_index))
 
-    image_pairs = list(zip(page_indices, rendered_png_files, changed_png_files))
+    image_pairs = list(zip(page_indices, rendered_jpg_files, changed_jpg_files))
     return image_pairs
 
 
@@ -144,7 +144,7 @@ class LayoutAnnotation:
         pdf_images_path = os.path.join(self.directory, "colored")
         # sort all images by page index, see utils.pdf2jpg for details
         image_files = sorted(
-            glob.glob(os.path.join(pdf_images_path, "*.png")), key=lambda x: x[-6:-4]
+            glob.glob(os.path.join(pdf_images_path, "*.jpg")), key=lambda x: x[-6:-4]
         )
         for page_index, page_layout in enumerate(pdf_layouts):
             layout_metadata[page_index] = {}
@@ -337,7 +337,7 @@ class LayoutAnnotation:
         pdf_images_path = os.path.join(self.directory, "colored")
         # sort all images by page index, see utils.pdf2jpg for details
         image_files = sorted(
-            glob.glob(os.path.join(pdf_images_path, "*.png")), key=lambda x: x[-6:-4]
+            glob.glob(os.path.join(pdf_images_path, "*.jpg")), key=lambda x: x[-6:-4]
         )
         count = 0
         for page_index in layout_info.keys():
@@ -345,7 +345,7 @@ class LayoutAnnotation:
             for block in layout_info[page_index]:
                 cropped_image = page_image.crop(block.bbox)
 
-                image_name = "block_" + str(count).zfill(4) + ".png"
+                image_name = "block_" + str(count).zfill(4) + ".jpg"
                 count += 1
                 image_path = os.path.join(result_path, image_name)
                 cropped_image.save(image_path)
@@ -374,7 +374,7 @@ class LayoutAnnotation:
         pdf_images_path = os.path.join(self.directory, "colored")
         # sort all images by page index, see utils.pdf2jpg for details
         image_files = sorted(
-            glob.glob(os.path.join(pdf_images_path, "*.png")), key=lambda x: x[-6:-4]
+            glob.glob(os.path.join(pdf_images_path, "*.jpg")), key=lambda x: x[-6:-4]
         )
 
         result_path = os.path.join(self.directory, "result")
@@ -384,7 +384,7 @@ class LayoutAnnotation:
             annotated_image = generate_geometry_annotation(
                 page_image, layout_info[page_index]
             )
-            image_name = "page_" + str(page_index).zfill(4) + ".png"
+            image_name = "page_" + str(page_index).zfill(4) + ".jpg"
             annotated_image_path = os.path.join(result_path, image_name)
             image_info[page_index] = image_name
             annotated_image.save(annotated_image_path)

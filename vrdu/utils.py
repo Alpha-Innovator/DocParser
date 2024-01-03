@@ -217,7 +217,7 @@ def compile_latex(file):
 
 def pdf2jpg(pdf: str, path: str) -> None:
     """
-    Convert a PDF file into a series of PNG images.
+    Convert a PDF file into a series of jpg images.
 
     Parameters:
         pdf (str): The path of the PDF file to be converted.
@@ -230,7 +230,7 @@ def pdf2jpg(pdf: str, path: str) -> None:
     # where x is the thread index, yz is the index of pdf page start from 1
     pdf2image.convert_from_path(
         pdf,
-        fmt="png",
+        fmt="jpg",
         output_folder=path,
         output_file=generators.counter_generator(prefix="thread-", suffix="-page"),
         grayscale=True,
