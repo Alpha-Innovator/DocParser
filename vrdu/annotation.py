@@ -49,7 +49,7 @@ def get_image_pairs(dir1: str, dir2: str):
     page_indices = []
     for i in range(len(rendered_png_files)):
         file_name = os.path.basename(rendered_png_files[i])
-        page_index = int(os.path.splitext(file_name)[0])
+        page_index = int(file_name[-6:-4]) - 1
         page_indices.append(int(page_index))
 
     image_pairs = list(zip(page_indices, rendered_png_files, changed_png_files))
@@ -141,6 +141,11 @@ class LayoutAnnotation:
         margin_height = element2 + element4
         layout_metadata["margin_width"] = margin_width
 
+        pdf_images_path = os.path.join(self.directory, "colored")
+        # sort all images by page index, see utils.pdf2jpg for details
+        image_files = sorted(
+            glob.glob(os.path.join(pdf_images_path, "*.png")), key=lambda x: x[-6:-4]
+        )
         for page_index, page_layout in enumerate(pdf_layouts):
             layout_metadata[page_index] = {}
 
@@ -148,8 +153,7 @@ class LayoutAnnotation:
             layout_metadata[page_index]["pdf_width"] = pdf_width
             layout_metadata[page_index]["pdf_height"] = pdf_height
 
-            page_image_path = os.path.join(self.directory, f"colored/{page_index}.png")
-            with Image.open(page_image_path) as page_image:
+            with Image.open(image_files[page_index]) as page_image:
                 image_width, image_height = page_image.size
             layout_metadata[page_index]["image_width"] = image_width
             layout_metadata[page_index]["image_height"] = image_height
@@ -325,13 +329,17 @@ class LayoutAnnotation:
         return layout_info
 
     def generate_reading_annotation(self, layout_info: Dict[int, List[Block]]):
-        rendered_path = os.path.join(self.directory, "colored")
         result_path = os.path.join(self.directory, "result")
         reading_annotation = defaultdict(list)
+
+        pdf_images_path = os.path.join(self.directory, "colored")
+        # sort all images by page index, see utils.pdf2jpg for details
+        image_files = sorted(
+            glob.glob(os.path.join(pdf_images_path, "*.png")), key=lambda x: x[-6:-4]
+        )
         count = 0
         for page_index in layout_info.keys():
-            page_image_path = os.path.join(rendered_path, f"{page_index}.png")
-            page_image = Image.open(page_image_path)
+            page_image = Image.open(image_files[page_index])
             for block in layout_info[page_index]:
                 cropped_image = page_image.crop(block.bbox)
 
@@ -361,12 +369,16 @@ class LayoutAnnotation:
         return reading_annotation
 
     def generate_image_annotation(self, layout_info: Dict[int, List[Block]]):
-        rendered_path = os.path.join(self.directory, "colored")
+        pdf_images_path = os.path.join(self.directory, "colored")
+        # sort all images by page index, see utils.pdf2jpg for details
+        image_files = sorted(
+            glob.glob(os.path.join(pdf_images_path, "*.png")), key=lambda x: x[-6:-4]
+        )
+
         result_path = os.path.join(self.directory, "result")
         image_info = {}  # annotation image info member of COCO
         for page_index in layout_info.keys():
-            page_image_path = os.path.join(rendered_path, f"{page_index}.png")
-            page_image = Image.open(page_image_path)
+            page_image = Image.open(image_files[page_index])
             annotated_image = generate_geometry_annotation(
                 page_image, layout_info[page_index]
             )

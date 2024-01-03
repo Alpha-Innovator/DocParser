@@ -9,6 +9,7 @@ from typing import Any, Dict, List
 from TexSoup.TexSoup import TexSoup
 import TexSoup.app.conversion as conversion
 from pdf2image import pdf2image
+from pdf2image import generators
 
 from vrdu.config import config
 
@@ -216,22 +217,24 @@ def compile_latex(file):
 
 def pdf2jpg(pdf: str, path: str) -> None:
     """
-    Convert a PDF file into a series of JPEG images.
+    Convert a PDF file into a series of PNG images.
 
     Parameters:
         pdf (str): The path of the PDF file to be converted.
         path (str): The directory where the converted images will be saved.
-
     Returns:
         None
     """
     os.makedirs(path, exist_ok=True)
-    images = pdf2image.convert_from_path(pdf, fmt="png")
-
-    for page_index, image in enumerate(images):
-        # TODO: make this more flexible
-        image_name = str(page_index) + ".png"
-        image.save(os.path.join(path, image_name))
+    # the output images has name of format: thread-000x-yz.png
+    # where x is the thread index, yz is the index of pdf page start from 1
+    pdf2image.convert_from_path(
+        pdf,
+        fmt="png",
+        output_folder=path,
+        output_file=generators.counter_generator(prefix="thread-", suffix="-page"),
+        grayscale=True,
+    )
 
 
 def convert_pdf_figure_to_png_image(pdf_image: str, png_image: str):
