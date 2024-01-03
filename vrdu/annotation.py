@@ -539,9 +539,14 @@ class LayoutAnnotation:
                 # the footnote element is not appended to the stack due to inline relationship is a container
 
             elif element.category in peer_text_categories:
+                cur_name = config.category2name[element.category]
+                prev_name = config.category2name[stack[-1].category]
                 annotations.append(
                     {
-                        "type": relation_map[(element.category, stack[-1].category)],
+                        "type": relation_map.get(
+                            (cur_name, prev_name),
+                            "Unknown",
+                        ),
                         "from": element.block_id,
                         "to": stack[-1].block_id,
                     }
