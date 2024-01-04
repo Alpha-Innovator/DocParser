@@ -233,7 +233,6 @@ def pdf2jpg(pdf: str, path: str) -> None:
         fmt="jpg",
         output_folder=path,
         output_file=generators.counter_generator(prefix="thread-", suffix="-page"),
-        grayscale=True,
     )
 
 
