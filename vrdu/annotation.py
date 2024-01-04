@@ -52,7 +52,7 @@ def get_image_pairs(dir1: str, dir2: str):
         match = re.search(pattern, filename)
         if match:
             page_index = int(match.group(1))
-            return page_index
+            return page_index - 1
         else:
             raise ValueError("Cannot found corresponding page index")
 
