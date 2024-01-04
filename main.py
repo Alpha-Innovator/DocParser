@@ -136,6 +136,11 @@ def main(file_name) -> None:
     path = os.path.dirname(file_name)
     log.info(f"[VRDU] processing file {file_name}")
 
+    # remove output folder
+    output_folder = os.path.join(path, "output")
+    if os.path.exists(output_folder):
+        shutil.rmtree(output_folder)
+
     # make a copy of the original tex file
     original_tex = os.path.join(path, "paper_original.tex")
     shutil.copyfile(file_name, original_tex)
