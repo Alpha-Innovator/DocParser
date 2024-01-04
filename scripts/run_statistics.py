@@ -26,26 +26,33 @@ def analyze_result(path) -> Dict:
     Raises:
         None.
     """
-    all_tex_files = utils.extract_tex_files(path)
-    all_categories = utils.get_all_categories()
+
+    # all_categories = utils.get_all_categories()
+    all_categories = ["cs.DS"]
 
     success_files = defaultdict(list)
     total_files = defaultdict(list)
     standalone_files = []
     others = []
 
-    for tex_file in all_tex_files:
-        root = os.path.dirname(tex_file)
-        category = os.path.dirname(root).split("/")[-1]
-        if category not in all_categories:
-            if is_standalone(tex_file):
-                standalone_files.append(tex_file)
-            else:
-                others.append(tex_file)
-        elif os.path.exists(os.path.join(root, "output/result/quality_report.json")):
-            success_files[category].append(tex_file)
+    for category in all_categories:
+        category_path = os.path.join(path, category)
+        all_tex_files = utils.extract_tex_files(category_path)
 
-        total_files[category].append(tex_file)
+        for tex_file in all_tex_files:
+            root = os.path.dirname(tex_file)
+            category = os.path.dirname(root).split("/")[-1]
+            if category not in all_categories:
+                if is_standalone(tex_file):
+                    standalone_files.append(tex_file)
+                else:
+                    others.append(tex_file)
+            elif os.path.exists(
+                os.path.join(root, "output/result/quality_report.json")
+            ):
+                success_files[category].append(tex_file)
+
+            total_files[category].append(tex_file)
 
     data = {
         "main": {
@@ -65,13 +72,17 @@ def analyze_result(path) -> Dict:
 
 
 if __name__ == "__main__":
-    data = analyze_result("/cpfs01/shared/ADLab/datasets/vrdu_arxiv")
+    data = analyze_result(
+        "/cpfs01/shared/ADLab/datasets/arxiv_source/arxiv_source_uncompressed/"
+    )
     categories = utils.get_all_categories()
     with open("statistics.csv", "w") as f:
         fieldnames = ["category", "total", "successed"]
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
         for key in categories:
+            if key not in data["main"]:
+                continue
             writer.writerow(
                 {
                     "category": key,
