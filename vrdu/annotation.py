@@ -46,10 +46,20 @@ def get_image_pairs(dir1: str, dir2: str):
     if len(rendered_jpg_files) != len(changed_jpg_files):
         raise FileNotFoundError("Wrong image path or file name or page index!")
 
+    def extract_page_index(filename: str) -> int:
+        pattern = r"thread-\d+-page-(\d+)\.jpg"
+
+        match = re.search(pattern, filename)
+        if match:
+            page_index = int(match.group(1))
+            return page_index
+        else:
+            raise ValueError("Cannot found corresponding page index")
+
     page_indices = []
     for i in range(len(rendered_jpg_files)):
         file_name = os.path.basename(rendered_jpg_files[i])
-        page_index = int(file_name[-6:-4]) - 1
+        page_index = extract_page_index(file_name)
         page_indices.append(int(page_index))
 
     image_pairs = list(zip(page_indices, rendered_jpg_files, changed_jpg_files))
