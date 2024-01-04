@@ -64,17 +64,6 @@ def analyze_result(path) -> Dict:
     return data
 
 
-def analyze_raw_data(path):
-    all_categories = utils.get_all_categories()
-
-    data = defaultdict(int)
-    for category in all_categories:
-        if os.path.exists(os.path.join(path, category)):
-            data[category] = len(os.listdir(os.path.join(path, category)))
-
-    return data
-
-
 if __name__ == "__main__":
     data = analyze_result("/cpfs01/shared/ADLab/datasets/vrdu_arxiv")
     categories = utils.get_all_categories()

@@ -46,11 +46,28 @@ def visualize_distribution(dict1, dict2):
     plt.savefig("test.png")
 
 
-batch = {}
-with open("batch.csv", newline="") as csvfile:
-    reader = csv.DictReader(csvfile)
-    for row in reader:
-        batch[row["category"]] = int(row["number of files"])
+def analyze_raw_data(path):
+    all_categories = utils.get_all_categories()
+
+    data = defaultdict(int)
+    for category in all_categories:
+        if os.path.exists(os.path.join(path, category)):
+            data[category] = len(os.listdir(os.path.join(path, category)))
+
+    with open("scripts/batch_count.csv", mode="w") as f:
+        fieldnames = ["categories", "count"]
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer.writeheader()
+        for key, value in data.items():
+            writer.writerow(
+                {
+                    "categories": key,
+                    "count": value,
+                }
+            )
+
+    return data
+
 
 original = {}
 with open("scripts/category_count.csv", newline="") as csvfile:
