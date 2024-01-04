@@ -122,11 +122,18 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-p", "--path", type=str, required=True)
     parser.add_argument("-c", "--cpu_count", type=int, required=True)
+    parser.add_argument("-t", "--category", type=str, required=False)
     args = parser.parse_args()
-    path, cpu_count = args.path, args.cpu_count
+    path, cpu_count, given_category = args.path, args.cpu_count, args.category
 
-    categories = utils.get_all_categories()
-    for category in categories:
-        category_path = os.path.join(path, category)
-        log.info(f"Processing category: {category}")
+    if given_category is not None:
+        category_path = os.path.join(path, given_category)
+        log.info(f"Processing single category: {given_category}")
         main(category_path, cpu_count)
+
+    else:
+        categories = utils.get_all_categories()
+        for category in categories:
+            category_path = os.path.join(path, category)
+            log.info(f"Processing all categories: {category}")
+            main(category_path, cpu_count)
