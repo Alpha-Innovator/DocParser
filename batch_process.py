@@ -98,12 +98,12 @@ def process_one_file(file_name):
         log.info("[VRDU] Generating annotations, this may take a while...")
         vrdu_annotation = LayoutAnnotation(path)
         vrdu_annotation.annotate()
+        log.info(f"[VRDU] Successfully processing file {file_name}")
 
-    except Exception as e:
-        log.error(f"Error processing file {file_name}: {e}")
+    except Exception:
+        log.exception(f"Error processing file {file_name}")
 
     finally:
-        log.info(f"[VRDU] Finished processing file {file_name}")
         os.chdir(original_cwd)
         remove_redundant_files(path)
 
@@ -128,5 +128,5 @@ if __name__ == "__main__":
     categories = utils.get_all_categories()
     for category in categories:
         category_path = os.path.join(path, category)
-        log.info(f"Processing category: {category_path}")
+        log.info(f"Processing category: {category}")
         main(category_path, cpu_count)
