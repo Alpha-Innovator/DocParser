@@ -1,6 +1,10 @@
+from collections import defaultdict
+import os
 import matplotlib.pyplot as plt
 import numpy as np
 import csv
+
+from vrdu import utils
 
 
 def visualize_distribution(dict1, dict2):
@@ -69,11 +73,19 @@ def analyze_raw_data(path):
     return data
 
 
-original = {}
-with open("scripts/category_count.csv", newline="") as csvfile:
-    reader = csv.DictReader(csvfile)
-    for row in reader:
-        original[row["categories"]] = int(row["count"])
+def main():
+    batch = analyze_raw_data(
+        "/cpfs01/shared/ADLab/datasets/arxiv_source/arxiv_source_uncompressed"
+    )
+
+    original = {}
+    with open("scripts/category_count.csv", newline="") as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            original[row["categories"]] = int(row["count"])
+
+    visualize_distribution(batch, original)
 
 
-visualize_distribution(batch, original)
+if __name__ == "__main__":
+    main()
