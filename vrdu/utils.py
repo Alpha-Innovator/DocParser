@@ -224,6 +224,9 @@ def pdf2jpg(pdf: str, path: str) -> None:
         path (str): The directory where the converted images will be saved.
     Returns:
         None
+
+    Reference:
+        https://pypi.org/project/pdf2image/
     """
     os.makedirs(path, exist_ok=True)
     # the output images has name of format: thread-000x-yz.png
