@@ -81,6 +81,50 @@ def run(path, cpu_count):
         p.map(f, filtered_subfolders)
 
 
+def run_v2(path):
+    subfolders = [f for f in os.listdir(path) if os.path.isdir(os.path.join(path, f))]
+    filtered_subfolders = [
+        f
+        for f in subfolders
+        if len(f) == 9 and f[:4].isdigit() and f[5:].isdigit() and f[4] == "."
+    ]
+    num_papers = len(filtered_subfolders)
+    log.info("There are {} subfolders".format(num_papers))
+    big_slow_client = arxiv.Client(delay_seconds=5)
+    slice_length = 100
+    for i in range(0, num_papers, slice_length):
+        slice_list = filtered_subfolders[i : i + slice_length]
+        for dir_name, result in zip(
+            slice_list,
+            big_slow_client.results(arxiv.Search(id_list=slice_list)),
+        ):
+            new_dir_name = result._get_default_filename(extension="")
+            category = result.primary_category
+            log.info(
+                f"dir_name: {dir_name}, category: {category}, new_dir_name: {new_dir_name}"
+            )
+            if not os.path.exists(os.path.join(path, category)):
+                os.makedirs(os.path.join(path, category))
+                log.info("Created directory: {}".format(os.path.join(path, category)))
+            try:
+                old_path = os.path.join(path, dir_name)
+                new_path = os.path.join(path, category + "/" + new_dir_name)
+                if os.path.exists(new_path):
+                    shutil.rmtree(new_path)
+                shutil.move(old_path, new_path)
+                log.info(
+                    "Move directory: {} to {}".format(
+                        old_path,
+                        new_path,
+                    )
+                )
+            except Exception:
+                log.exception(f"Error moving {old_path}")
+                pass
+
+        time.sleep(10)
+
+
 if __name__ == "__main__":
     import argparse
 
@@ -88,4 +132,5 @@ if __name__ == "__main__":
     parser.add_argument("-p", "--path", help="path to directory containing subfolders")
     parser.add_argument("-c", "--cpu_count", type=int, default=1)
     args = parser.parse_args()
-    run(args.path, args.cpu_count)
+    # run(args.path, args.cpu_count)
+    run_v2(args.path)
