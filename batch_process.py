@@ -4,6 +4,7 @@ import glob
 import shutil
 import argparse
 import multiprocessing
+from uuid import uuid4
 
 from tqdm import tqdm
 
@@ -12,10 +13,11 @@ from vrdu import utils
 from vrdu import renderer
 from vrdu import preprocess
 from vrdu.annotation import LayoutAnnotation
+from vrdu.config import config
 
-log = logger.setup_app_level_logger(
-    file_name="batch_process.log", level="INFO", mode="a"
-)
+
+log_file = str(uuid4()) + ".log"
+log = logger.setup_app_level_logger(file_name=log_file, level="INFO", mode="a")
 
 
 def parse_file_name(filename) -> str:
@@ -100,22 +102,27 @@ def process_one_file(file_name):
         vrdu_annotation.annotate()
         log.info(f"[VRDU] Successfully processing file {file_name}")
 
-    except Exception:
-        log.exception(f"Error processing file {file_name}")
+    except Exception as e:
+        error_type = e.__class__.__name__
+        error_info = str(e)
+        log.error(f"Error processing file {file_name}, type: {error_type}, message: {error_info}")
 
     finally:
         os.chdir(original_cwd)
         remove_redundant_files(path)
 
 
-def main(path, cpu_count=1):
-    log.info(f"path to raw data: {path}")
+def process_one_category(path, cpu_count, category):
+    category_path = os.path.join(path, category)
+    log.info(f"path to raw data: {category_path}")
     log.info(f"Using cpu counts: {cpu_count}")
-    tex_files = utils.extract_tex_files(path)
+    tex_files = utils.extract_tex_files(category_path)
     log.info(f"Found {len(tex_files)} tex files")
 
     with multiprocessing.Pool(cpu_count) as pool:
         pool.map(process_one_file, tex_files)
+    # save log file
+    shutil.move(log_file, f"batch_process_{category}.log")
 
 
 if __name__ == "__main__":
@@ -124,16 +131,10 @@ if __name__ == "__main__":
     parser.add_argument("-c", "--cpu_count", type=int, required=True)
     parser.add_argument("-t", "--category", type=str, required=False)
     args = parser.parse_args()
-    path, cpu_count, given_category = args.path, args.cpu_count, args.category
+    path, cpu_count, category = args.path, args.cpu_count, args.category
 
-    if given_category is not None:
-        category_path = os.path.join(path, given_category)
-        log.info(f"Processing single category: {given_category}")
-        main(category_path, cpu_count)
+    categories = [category] if category is not None else utils.get_all_categories()
 
-    else:
-        categories = utils.get_all_categories()
-        for category in categories:
-            category_path = os.path.join(path, category)
-            log.info(f"Processing all categories: {category}")
-            main(category_path, cpu_count)
+    for category in categories:
+        log.info(f"Processing single category: {category}")
+        process_one_category(path, cpu_count, category)
