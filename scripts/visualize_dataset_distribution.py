@@ -19,12 +19,12 @@ def visualize_distribution(dict1, dict2):
     files_dict2 = [x / sum(files_dict2) for x in files_dict2]
 
     # Set up the plot
-    plt.figure(figsize=(800, 600))
+    plt.figure(figsize=(10, 8))
     fig, ax = plt.subplots()
-    width = 0.6  # Width of the bars
+    width = 1.2  # Width of the bars
 
     # Calculate the positions for the bars
-    positions = np.arange(len(categories))
+    positions = np.arange(0, len(categories) * width, width)
 
     # Plot the number of files for each category
     ax.barh(positions, files_dict1, width, label="batch", align="center", color="blue")
@@ -38,16 +38,15 @@ def visualize_distribution(dict1, dict2):
     )
 
     # Add labels and title to the plot
-    # ax.set_yticks(positions)
-    # ax.set_yticklabels(categories)
+    ax.set_yticks(positions)
+    ax.set_yticklabels(categories, fontsize=2)
     ax.set_xlabel("Number of Files")
-    ax.set_title("Distribution of Number of Files")
+    ax.set_title("Distribution of arxiv_source_uncompressed")
     ax.legend()
 
     plt.subplots_adjust(left=0.4)
     # Display the plot
-    # plt.show()
-    plt.savefig("test.png")
+    plt.savefig("test.png", dpi=300)
 
 
 def analyze_raw_data(path):
