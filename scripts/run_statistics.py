@@ -5,6 +5,7 @@ import re
 from typing import Dict
 import csv
 import pandas as pd
+from datetime import datetime
 
 from vrdu import utils
 from vrdu.config import config
@@ -99,6 +100,12 @@ def run_statistics_v1(path):
     utils.export_to_json(data, "result_statistics.json")
 
 
+def extract_time(line: str):
+    time_format = "%Y-%m-%d %H:%M:%S,%f"
+    log_time = line.split(" - ")[0][1:]
+    return datetime.strptime(log_time, time_format)
+
+
 def run_statistics_v2():
     all_categories = utils.get_all_categories()
     columns = [
@@ -107,16 +114,20 @@ def run_statistics_v2():
         "category",
         "path",
         "status",
+        "duration",
         "error_type",
         "error_info",
         "date",
         "pages",
         "columns",
         "blocks",
-        # *list(config.category2name.values()),
         "overlap",
     ]
     df = pd.DataFrame(columns=columns)
+    df['duration'] = pd.to_timedelta(df["duration"])
+
+    start_times = {}
+
     log_files = glob.glob("batch_process_*.log")
     for log_file in log_files:
         category = "unknown"
@@ -124,11 +135,11 @@ def run_statistics_v2():
             for line in f.readlines():
                 if not line.startswith("["):
                     continue
-                if line.find("Line 139") != -1:
+                if line.find("Line 139") != -1:  # determine category
                     index = line.find("category: ")
                     category = line[index + len("category: ") : -1]
                     continue
-                if line.find("Line 74") != -1:
+                if line.find("Line 74") != -1:  # start processing, record it
                     index = line.find("processing file ")
                     file = line[index + len("processing file ") :]
                     path = os.path.dirname(file)
@@ -143,12 +154,16 @@ def run_statistics_v2():
 
                     uuid = match.group(1)
                     name = match.group(2)
+                    start_time = extract_time(line)
+                    start_times[uuid] = start_time
+
                     data = [
                         uuid,
                         name,
                         category,
                         path,
                         "unknown",
+                        0,
                         "",
                         "",
                         line[1:11],
@@ -158,9 +173,10 @@ def run_statistics_v2():
                         0.0,
                     ]
                     df.loc[len(df)] = data
-                    log.debug(f"data numbers: {len(df)}")
                     continue
-                if line.find("Line 79") != -1:
+                if (
+                    line.find("Line 79") != -1
+                ):  # file has been processed, update information
                     file = line.split("File ")[1].split(" ")[0]
                     path = os.path.dirname(file)
                     category_path = os.path.basename(os.path.dirname(path))
@@ -177,8 +193,11 @@ def run_statistics_v2():
                     existed_index = df[df["uuid"] == uuid].index
 
                     df.loc[existed_index, "status"] = "success"
+                    df.loc[existed_index, "duration"] = 0.0
                     continue
-                if line.find("Line 103") != -1:
+                if (
+                    line.find("Line 103") != -1
+                ):  # success processing file, update information
                     index = line.find("processing file ")
                     file = line[index + len("processing file ") :]
                     path = os.path.dirname(file)
@@ -196,8 +215,13 @@ def run_statistics_v2():
                     existed_index = df[df["uuid"] == uuid].index
 
                     df.loc[existed_index, "status"] = "success"
+                    end_time = extract_time(line)
+
+                    df.loc[existed_index, "duration"] = end_time - start_times[uuid]
                     continue
-                if line.find("Line 108") != -1:
+                if (
+                    line.find("Line 108") != -1
+                ):  # failed to process file, update status and eror information
                     # Extract variables using split()
                     file_name = line.split("processing file ")[1].split(",")[0]
                     error_type = line.split("type: ")[1].split(",")[0]
@@ -216,10 +240,44 @@ def run_statistics_v2():
                     name = match.group(2)
                     existed_index = df[df["uuid"] == uuid].index
 
+                    if df.loc[existed_index, "status"].str == "success":
+                        continue
+
                     df.loc[existed_index, "status"] = "failure"
                     df.loc[existed_index, "error_type"] = error_type
                     df.loc[existed_index, "error_info"] = error_info
+                    end_time = extract_time(line)
+
+                    df.loc[existed_index, "duration"] = end_time - start_times[uuid]
                     continue
+
+    category_names = list(config.category2name.values())
+    for category_name in category_names:
+        df[category_name] = 0
+
+    for index in range(len(df)):
+        if df.loc[index, "status"] != "success":
+            continue
+        # use output result to update information
+        path = df.loc[index, "path"]
+        result_path = os.path.join(path, "output/result")
+        quality_report_file = os.path.join(result_path, "quality_report.json")
+        quality_report = utils.load_json(quality_report_file)
+        log.debug(f"keys: {list(quality_report.keys())}")
+        df.loc[index, "pages"] = quality_report["num_pages"]
+        df.loc[index, "columns"] = quality_report["num_columns"]
+        df.loc[index, "blocks"] = quality_report["category_quality"][-1][
+            "geometry_count"
+        ]
+        df.loc[index, "overlap"] = quality_report["page_quality"][-1]["ratio"]
+        log.debug(
+            f'pages: {df.loc[index, "pages"]}, columns: {df.loc[index, "columns"]}'
+        )
+
+        for item in quality_report["category_quality"]:
+            log.debug(f"category: {item['category']}")
+            if item["category"] in category_names:
+                df.loc[index, item["category"]] = item["geometry_count"]
 
     df.to_csv("data.csv", index=False)
 
