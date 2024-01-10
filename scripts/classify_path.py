@@ -81,6 +81,41 @@ def run(path, cpu_count):
         p.map(f, filtered_subfolders)
 
 
+def retrive_metadata_for_pdfs(path, file_format="pdf"):
+    files = [f for f in os.listdir(path) if os.path.isfile(os.path.join(path, f))]
+    pdf_files = [f for f in files if f.endswith(file_format)]
+    num_papers = len(pdf_files)
+    log.info("There are {} subfolders".format(num_papers))
+    big_slow_client = arxiv.Client(delay_seconds=5)
+    slice_length = 50
+    for i in range(0, num_papers, slice_length):
+        slice_list = [
+            pdf_file[: -(len(file_format) + 1)]
+            for pdf_file in pdf_files[i : i + slice_length]
+        ]
+        for pdf_file, result in zip(
+            slice_list,
+            big_slow_client.results(arxiv.Search(id_list=slice_list)),
+        ):
+            category = result.primary_category
+            if not os.path.exists(os.path.join(path, category)):
+                os.makedirs(os.path.join(path, category))
+                log.info("Created directory: {}".format(os.path.join(path, category)))
+            try:
+                old_path = os.path.join(path, pdf_file + "." + file_format)
+                new_path = os.path.join(path, category)
+                shutil.move(old_path, new_path)
+                log.info(
+                    "Move directory: {} to {}".format(
+                        old_path,
+                        new_path,
+                    )
+                )
+            except Exception:
+                log.exception(f"Error moving {old_path}")
+                pass
+
+
 def run_v2(path):
     subfolders = [f for f in os.listdir(path) if os.path.isdir(os.path.join(path, f))]
     filtered_subfolders = [
@@ -122,8 +157,6 @@ def run_v2(path):
                 log.exception(f"Error moving {old_path}")
                 pass
 
-        time.sleep(10)
-
 
 if __name__ == "__main__":
     import argparse
@@ -133,4 +166,5 @@ if __name__ == "__main__":
     parser.add_argument("-c", "--cpu_count", type=int, default=1)
     args = parser.parse_args()
     # run(args.path, args.cpu_count)
-    run_v2(args.path)
+    # run_v2(args.path)
+    retrive_metadata_for_pdfs(args.path, "docx")
