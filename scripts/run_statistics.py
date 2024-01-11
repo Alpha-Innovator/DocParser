@@ -1,9 +1,6 @@
-from collections import defaultdict
 import glob
 import os
 import re
-from typing import Dict
-import csv
 import pandas as pd
 from datetime import datetime
 
@@ -15,232 +12,174 @@ from vrdu import logger
 log = logger.setup_app_level_logger(file_name="statistics.log")
 
 
-def is_standalone(path: str) -> bool:
-    with open(path, "r") as f:
-        content = f.read()
-    return "standalone" in content
-
-
-def analyze_result(path) -> Dict:
-    """
-    Analyzes the processed result of the given path. This is done by checking if the
-    result files exist.
-
-    Args:
-        path (str): The path to the directory containing the result files.
-
-    Returns:
-        Dict: A dictionary containing the statistics for each category.
-
-    Raises:
-        None.
-    """
-
-    # all_categories = utils.get_all_categories()
-    all_categories = ["cs.DS"]
-
-    success_files = defaultdict(list)
-    total_files = defaultdict(list)
-    standalone_files = []
-    others = []
-
-    for category in all_categories:
-        category_path = os.path.join(path, category)
-        all_tex_files = utils.extract_tex_files(category_path)
-
-        for tex_file in all_tex_files:
-            root = os.path.dirname(tex_file)
-            category = os.path.dirname(root).split("/")[-1]
-            if category not in all_categories:
-                if is_standalone(tex_file):
-                    standalone_files.append(tex_file)
-                else:
-                    others.append(tex_file)
-            elif os.path.exists(
-                os.path.join(root, "output/result/quality_report.json")
-            ):
-                success_files[category].append(tex_file)
-
-            total_files[category].append(tex_file)
-
-    data = {
-        "main": {
-            category: {
-                "total": total_files[category],
-                "successed": success_files[category],
-                "rate": (len(success_files[category]) / len(total_files[category]))
-                * 100,
-            }
-            for category in total_files
-        },
-        "standalone": standalone_files,
-        "others": others,
-    }
-
-    return data
-
-
-def run_statistics_v1(path):
-    data = analyze_result(path)
-    categories = utils.get_all_categories()
-    with open("statistics.csv", "w") as f:
-        fieldnames = ["category", "total", "successed"]
-        writer = csv.DictWriter(f, fieldnames=fieldnames)
-        writer.writeheader()
-        for key in categories:
-            if key not in data["main"]:
-                continue
-            writer.writerow(
-                {
-                    "category": key,
-                    "total": len(data["main"][key]["total"]),
-                    "successed": len(data["main"][key]["successed"]),
-                }
-            )
-    utils.export_to_json(data, "result_statistics.json")
-
-
 def extract_time(line: str):
     time_format = "%Y-%m-%d %H:%M:%S,%f"
     log_time = line.split(" - ")[0][1:]
     return datetime.strptime(log_time, time_format)
 
 
+def init_dataframe() -> pd.DataFrame:
+    if os.path.exists("data.csv"):
+        df = pd.read_csv("data.csv")
+    else:
+        columns = [
+            "uuid",
+            "title",
+            "category",
+            "path",
+            "status",
+            "duration",
+            "error_type",
+            "error_info",
+            "date",
+            "pages",
+            "columns",
+            "blocks",
+            "overlap",
+        ]
+        df = pd.DataFrame(columns=columns)
+
+    # df["duration"] = pd.to_timedelta(df["duration"], unit="sec")
+    return df
+
+
 def run_statistics_v2():
-    all_categories = utils.get_all_categories()
-    columns = [
-        "uuid",
-        "title",
-        "category",
-        "path",
-        "status",
-        "duration",
-        "error_type",
-        "error_info",
-        "date",
-        "pages",
-        "columns",
-        "blocks",
-        "overlap",
-    ]
-    df = pd.DataFrame(columns=columns)
-    df['duration'] = pd.to_timedelta(df["duration"])
+    df = init_dataframe()
+
+    all_discplines = list(
+        pd.read_csv("scripts/category_count.csv")["categories"].values
+    )
 
     start_times = {}
 
+    pattern = r"(\d+\.\d+v\d+)\.(.*)"  # used for filter uuid and title
+
     log_files = glob.glob("batch_process_*.log")
     for log_file in log_files:
-        category = "unknown"
+        log.debug(f"processing log file: {log_file}")
+        discpline = "unknown"
         with open(log_file, "r") as f:
             for line in f.readlines():
                 if not line.startswith("["):
                     continue
                 if line.find("Line 139") != -1:  # determine category
                     index = line.find("category: ")
-                    category = line[index + len("category: ") : -1]
+                    discpline = line[index + len("category: ") : -1]
                     continue
                 if line.find("Line 74") != -1:  # start processing, record it
                     index = line.find("processing file ")
                     file = line[index + len("processing file ") :]
+                    log.debug(f"processing file {file}")
                     path = os.path.dirname(file)
-                    category_path = os.path.basename(os.path.dirname(path))
-                    if category_path not in all_categories:
+                    discpline = os.path.basename(os.path.dirname(path))
+                    if discpline not in all_discplines:
+                        log.debug(f"unknown discpline: {file}")
                         continue
 
-                    pattern = r"(\d+\.\d+v\d+)\.(.*)"
                     match = re.search(pattern, path)
                     if not match:
+                        log.debug(f"unknown path: {path}")
                         continue
 
                     uuid = match.group(1)
-                    name = match.group(2)
+                    title = match.group(2)
+
+                    if uuid in df["uuid"].values:
+                        # paper has been processed
+                        continue
+
                     start_time = extract_time(line)
                     start_times[uuid] = start_time
-
+                    log.debug(f"start time: {start_times[uuid]}")
                     data = [
                         uuid,
-                        name,
-                        category,
+                        title,
+                        discpline,
                         path,
                         "unknown",
                         0,
                         "",
                         "",
-                        line[1:11],
+                        "",
                         0,
                         0,
                         0,
                         0.0,
                     ]
-                    df.loc[len(df)] = data
+                    extended_data = data + [0] * (len(df.columns.to_list()) - len(data))
+                    df.loc[len(df)] = extended_data
                     continue
-                if (
-                    line.find("Line 79") != -1
-                ):  # file has been processed, update information
+                # file has been processed, update information
+                if line.find("Line 79") != -1:
                     file = line.split("File ")[1].split(" ")[0]
                     path = os.path.dirname(file)
-                    category_path = os.path.basename(os.path.dirname(path))
-                    if category_path not in all_categories:
+                    discpline = os.path.basename(os.path.dirname(path))
+                    if discpline not in all_discplines:
+                        log.debug(f"unknown discpline: {file}")
                         continue
 
                     pattern = r"(\d+\.\d+v\d+)\.(.*)"
                     match = re.search(pattern, path)
                     if not match:
+                        log.debug(f"unknown path: {path}")
                         continue
 
                     uuid = match.group(1)
-                    name = match.group(2)
+                    title = match.group(2)
                     existed_index = df[df["uuid"] == uuid].index
 
-                    df.loc[existed_index, "status"] = "success"
-                    df.loc[existed_index, "duration"] = 0.0
+                    if df.loc[existed_index, "status"].str == "unknown":
+                        df.loc[existed_index, "status"] = "processed"
+                        df.loc[existed_index, "duration"] = 0.0
                     continue
-                if (
-                    line.find("Line 103") != -1
-                ):  # success processing file, update information
+                # success processing file, update information
+                if line.find("Line 103") != -1:
                     index = line.find("processing file ")
                     file = line[index + len("processing file ") :]
                     path = os.path.dirname(file)
-                    category_path = os.path.basename(os.path.dirname(path))
-                    if category_path not in all_categories:
+                    discpline = os.path.basename(os.path.dirname(path))
+                    if discpline not in all_discplines:
+                        log.debug(f"unknown discpline: {file}")
                         continue
 
-                    pattern = r"(\d+\.\d+v\d+)\.(.*)"
                     match = re.search(pattern, path)
                     if not match:
+                        log.debug(f"unknown path: {path}")
                         continue
 
                     uuid = match.group(1)
-                    name = match.group(2)
+                    title = match.group(2)
                     existed_index = df[df["uuid"] == uuid].index
+                    if df.loc[existed_index, "status"].str == "unknown":
+                        df.loc[existed_index, "status"] = "success"
+                        end_time = extract_time(line)
 
-                    df.loc[existed_index, "status"] = "success"
-                    end_time = extract_time(line)
-
-                    df.loc[existed_index, "duration"] = end_time - start_times[uuid]
+                        log.debug(
+                            f"end time={end_time}, start time: {start_times[uuid]}"
+                        )
+                        df.loc[existed_index, "duration"] = end_time - start_times[uuid]
                     continue
-                if (
-                    line.find("Line 108") != -1
-                ):  # failed to process file, update status and eror information
+                # failed to process file, update status and eror information
+                if line.find("Line 108") != -1:
                     # Extract variables using split()
-                    file_name = line.split("processing file ")[1].split(",")[0]
+                    file = line.split("processing file ")[1].split(",")[0]
                     error_type = line.split("type: ")[1].split(",")[0]
                     error_info = line.split("message: ")[1][:-1]
-                    path = os.path.dirname(file_name)
-                    category_path = os.path.basename(os.path.dirname(path))
-                    if category_path not in all_categories:
+                    path = os.path.dirname(file)
+                    discpline = os.path.basename(os.path.dirname(path))
+                    if discpline not in all_discplines:
                         continue
 
-                    pattern = r"(\d+\.\d+v\d+)\.(.*)"
                     match = re.search(pattern, path)
                     if not match:
+                        log.debug(f"unknown discpline: {discpline}")
                         continue
 
                     uuid = match.group(1)
-                    name = match.group(2)
+                    title = match.group(2)
                     existed_index = df[df["uuid"] == uuid].index
 
-                    if df.loc[existed_index, "status"].str == "success":
+                    if df.loc[existed_index, "status"].str != "unknown":
                         continue
 
                     df.loc[existed_index, "status"] = "failure"
@@ -278,6 +217,10 @@ def run_statistics_v2():
             log.debug(f"category: {item['category']}")
             if item["category"] in category_names:
                 df.loc[index, item["category"]] = item["geometry_count"]
+
+        layout_annotation_file = os.path.join(result_path, "layout_annotation.json")
+        layout_annotation = utils.load_json(layout_annotation_file)
+        df.loc[index, "date"] = layout_annotation["info"]["date_created"]
 
     df.to_csv("data.csv", index=False)
 
