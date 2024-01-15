@@ -19,25 +19,23 @@ def extract_time(line: str):
 
 
 def init_dataframe() -> pd.DataFrame:
-    if os.path.exists("data.csv"):
-        df = pd.read_csv("data.csv")
-    else:
-        columns = [
-            "uuid",
-            "title",
-            "category",
-            "path",
-            "status",
-            "duration",
-            "error_type",
-            "error_info",
-            "date",
-            "pages",
-            "columns",
-            "blocks",
-            "overlap",
-        ]
-        df = pd.DataFrame(columns=columns)
+    columns = [
+        "uuid",
+        "title",
+        "discpline",
+        "path",
+        "status",
+        "start_time",
+        "end_time",
+        "error_type",
+        "error_info",
+        "date",
+        "pages",
+        "columns",
+        "blocks",
+        "overlap",
+    ]
+    df = pd.DataFrame(columns=columns)
 
     # df["duration"] = pd.to_timedelta(df["duration"], unit="sec")
     return df
@@ -45,12 +43,6 @@ def init_dataframe() -> pd.DataFrame:
 
 def run_statistics_v2():
     df = init_dataframe()
-
-    all_discplines = list(
-        pd.read_csv("scripts/category_count.csv")["categories"].values
-    )
-
-    start_times = {}
 
     pattern = r"(\d+\.\d+v\d+)\.(.*)"  # used for filter uuid and title
 
@@ -60,19 +52,20 @@ def run_statistics_v2():
         discpline = "unknown"
         with open(log_file, "r") as f:
             for line in f.readlines():
+                log.debug(f"line={line}")
                 if not line.startswith("["):
                     continue
-                if line.find("Line 139") != -1:  # determine category
+                if line.find("Line 139") != -1:  # determine discpline
                     index = line.find("category: ")
                     discpline = line[index + len("category: ") : -1]
+                    log.debug(f"displine: {discpline}")
                     continue
                 if line.find("Line 74") != -1:  # start processing, record it
                     index = line.find("processing file ")
                     file = line[index + len("processing file ") :]
                     log.debug(f"processing file {file}")
                     path = os.path.dirname(file)
-                    discpline = os.path.basename(os.path.dirname(path))
-                    if discpline not in all_discplines:
+                    if os.path.basename(os.path.dirname(path)) != discpline:
                         log.debug(f"unknown discpline: {file}")
                         continue
 
@@ -89,15 +82,14 @@ def run_statistics_v2():
                         continue
 
                     start_time = extract_time(line)
-                    start_times[uuid] = start_time
-                    log.debug(f"start time: {start_times[uuid]}")
                     data = [
                         uuid,
                         title,
                         discpline,
                         path,
                         "unknown",
-                        0,
+                        str(start_time),
+                        "",
                         "",
                         "",
                         "",
@@ -106,15 +98,13 @@ def run_statistics_v2():
                         0,
                         0.0,
                     ]
-                    extended_data = data + [0] * (len(df.columns.to_list()) - len(data))
-                    df.loc[len(df)] = extended_data
+                    df.loc[len(df)] = data
                     continue
                 # file has been processed, update information
                 if line.find("Line 79") != -1:
                     file = line.split("File ")[1].split(" ")[0]
                     path = os.path.dirname(file)
-                    discpline = os.path.basename(os.path.dirname(path))
-                    if discpline not in all_discplines:
+                    if os.path.basename(os.path.dirname(path)) != discpline:
                         log.debug(f"unknown discpline: {file}")
                         continue
 
@@ -128,17 +118,17 @@ def run_statistics_v2():
                     title = match.group(2)
                     existed_index = df[df["uuid"] == uuid].index
 
-                    if df.loc[existed_index, "status"].str == "unknown":
-                        df.loc[existed_index, "status"] = "processed"
-                        df.loc[existed_index, "duration"] = 0.0
+                    df.loc[existed_index, "status"] = "processed"
+                    df.loc[existed_index, "end_time"] = df.loc[
+                        existed_index, "start_time"
+                    ]
                     continue
                 # success processing file, update information
                 if line.find("Line 103") != -1:
                     index = line.find("processing file ")
                     file = line[index + len("processing file ") :]
                     path = os.path.dirname(file)
-                    discpline = os.path.basename(os.path.dirname(path))
-                    if discpline not in all_discplines:
+                    if os.path.basename(os.path.dirname(path)) != discpline:
                         log.debug(f"unknown discpline: {file}")
                         continue
 
@@ -150,14 +140,11 @@ def run_statistics_v2():
                     uuid = match.group(1)
                     title = match.group(2)
                     existed_index = df[df["uuid"] == uuid].index
-                    if df.loc[existed_index, "status"].str == "unknown":
-                        df.loc[existed_index, "status"] = "success"
-                        end_time = extract_time(line)
 
-                        log.debug(
-                            f"end time={end_time}, start time: {start_times[uuid]}"
-                        )
-                        df.loc[existed_index, "duration"] = end_time - start_times[uuid]
+                    df.loc[existed_index, "status"] = "success"
+                    end_time = extract_time(line)
+
+                    df.loc[existed_index, "end_time"] = end_time
                     continue
                 # failed to process file, update status and eror information
                 if line.find("Line 108") != -1:
@@ -166,8 +153,8 @@ def run_statistics_v2():
                     error_type = line.split("type: ")[1].split(",")[0]
                     error_info = line.split("message: ")[1][:-1]
                     path = os.path.dirname(file)
-                    discpline = os.path.basename(os.path.dirname(path))
-                    if discpline not in all_discplines:
+                    if os.path.basename(os.path.dirname(path)) != discpline:
+                        log.debug(f"unknown discpline: {file}")
                         continue
 
                     match = re.search(pattern, path)
@@ -179,15 +166,12 @@ def run_statistics_v2():
                     title = match.group(2)
                     existed_index = df[df["uuid"] == uuid].index
 
-                    if df.loc[existed_index, "status"].str != "unknown":
-                        continue
-
                     df.loc[existed_index, "status"] = "failure"
                     df.loc[existed_index, "error_type"] = error_type
                     df.loc[existed_index, "error_info"] = error_info
                     end_time = extract_time(line)
 
-                    df.loc[existed_index, "duration"] = end_time - start_times[uuid]
+                    df.loc[existed_index, "end_time"] = end_time
                     continue
 
     category_names = list(config.category2name.values())
@@ -202,16 +186,12 @@ def run_statistics_v2():
         result_path = os.path.join(path, "output/result")
         quality_report_file = os.path.join(result_path, "quality_report.json")
         quality_report = utils.load_json(quality_report_file)
-        log.debug(f"keys: {list(quality_report.keys())}")
         df.loc[index, "pages"] = quality_report["num_pages"]
         df.loc[index, "columns"] = quality_report["num_columns"]
         df.loc[index, "blocks"] = quality_report["category_quality"][-1][
             "geometry_count"
         ]
         df.loc[index, "overlap"] = quality_report["page_quality"][-1]["ratio"]
-        log.debug(
-            f'pages: {df.loc[index, "pages"]}, columns: {df.loc[index, "columns"]}'
-        )
 
         for item in quality_report["category_quality"]:
             log.debug(f"category: {item['category']}")
