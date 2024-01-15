@@ -5,6 +5,7 @@ import re
 import subprocess
 import json
 from typing import Any, Dict, List
+import uuid
 
 from TexSoup.TexSoup import TexSoup
 import TexSoup.app.conversion as conversion
@@ -62,18 +63,21 @@ def compile_check(source_code: str) -> bool:
     suffix = r"""
     \end{document}
     """
+    temp_filename = str(uuid.uuid4())
     content = prefix + source_code + suffix
-    with open("temp.tex", "w") as f:
+    with open(f"{temp_filename}.tex", "w") as f:
         f.write(content)
 
     result = True
     try:
-        subprocess.run(["pdflatex", "-halt-on-error", "temp.tex"], check=True)
+        subprocess.run(
+            ["pdflatex", "-halt-on-error", f"{temp_filename}.tex"], check=True
+        )
     except subprocess.CalledProcessError:
         result = False
     finally:
         # remove files
-        files = glob.glob(f"{os.getcwd()}/temp.*")
+        files = glob.glob(f"{os.getcwd()}/{temp_filename}.*")
         for file in files:
             os.remove(file)
 
@@ -208,11 +212,14 @@ def replace_nth(string: str, old: str, new: str, n: int) -> str:
     return string
 
 
-def compile_latex(file):
+def compile_latex(file: str, tex_engine: str = "pdflatex"):
     path_name = os.path.dirname(file)
     file_name = os.path.basename(file)
-    script_path = os.path.expanduser("compile_latex.sh")
-    subprocess.run(["bash", script_path, path_name, file_name], check=True)
+    if tex_engine == "pdflatex":
+        script_path = os.path.expanduser("compile_latex.sh")
+        subprocess.run(["bash", script_path, path_name, file_name], check=True)
+    elif tex_engine == "xelatex":
+        subprocess.run(["xelatex", file], check=True)
 
 
 def pdf2jpg(pdf: str, path: str) -> None:
