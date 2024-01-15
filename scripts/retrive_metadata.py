@@ -94,9 +94,7 @@ def retrive_metadata_for_folders(path: str) -> None:
     """
     subfolders = [f for f in os.listdir(path) if os.path.isdir(os.path.join(path, f))]
     filtered_subfolders = [
-        f
-        for f in subfolders
-        if len(f) == 9 and f[:4].isdigit() and f[5:].isdigit() and f[4] == "."
+        f for f in subfolders if f[:4].isdigit() and f[5:].isdigit() and f[4] == "."
     ]
     num_papers = len(filtered_subfolders)
     log.info("There are {} subfolders".format(num_papers))
