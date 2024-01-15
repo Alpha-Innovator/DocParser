@@ -2,8 +2,9 @@ import argparse
 from datetime import datetime
 import glob
 import os
+from subprocess import CalledProcessError
 from typing import Dict, List
-from uuid import uuid4
+import uuid
 
 from vrdu import utils
 
@@ -13,11 +14,24 @@ def augment_data(
 ) -> Dict:
     # ========================================================
     # TODO: complete this part
-    prefix = ""
-    suffix = ""
+    prefix = "\\documentclass{article}\n\\pagenumbering{gobble}\n\\begin{document}"
+    suffix = r"\end{document}"
+    tex_engine = "pdflatex"
     if augment_way == "bf":
-        prefix = "Aaaa"
-        suffix = "aaa"
+        prefix = prefix + "\\bfseries{\n"
+        suffix = "}\n" + suffix
+    elif augment_way == "small caps":
+        prefix = prefix + "\\textsc{\n"
+        suffix = "}\n" + suffix
+    elif augment_way == "cyklop":
+        prefix = "\\documentclass{article}\n\\pagenumbering{gobble}\n\\usepackage{cyklop}}\n\\usepackage[T1]{fontenc}\n\\begin{document}\n{\\normalfont\\bfseries\n"
+        suffix = "}\n" + suffix
+    elif augment_way == "Atchen":
+        prefix = "\\documentclass{article}\n\\pagenumbering{gobble}\n\\usepackage{fontspec}\n\\setmainfont{QTAtchen}\n\\begin{document}\n{\\normalfont\\bfseries\n"
+        suffix = "}\n" + suffix
+        tex_engine = "xelatex"
+    else:
+        raise NotImplementedError(f"Unknown augmentation method: {augment_way}")
     # ========================================================
 
     tex_content = prefix + data["source_code"] + suffix
@@ -26,8 +40,13 @@ def augment_data(
     with open(tex_file, "w") as f:
         f.write(tex_content)
 
-    utils.compile_latex(tex_file)
-    png_filename = str(uuid4.uuid()) + ".png"
+    try:
+        utils.compile_latex(tex_file, tex_engine)
+    except CalledProcessError:
+        return {}
+    if not os.path.exists(pdf_file):
+        return {}
+    png_filename = str(uuid.uuid4()) + ".png"
     output_png_file = os.path.join(output_path, png_filename)
     utils.convert_pdf_figure_to_png_image(pdf_file, output_png_file, dpi=dpi)
     # remove files
@@ -38,17 +57,20 @@ def augment_data(
     result = {key: value for key, value in data.items()}
     result["image_path"] = png_filename
     result["augmentation"] = augment_way
+    result["added_date"] = str(datetime.today())
 
     return result
 
 
 def augment_dataset(reading_annotations: List[Dict], output_path: str) -> None:
     augment_ways = [
-        "cyklop",
-        "bf",
-        # "rotate",
-        # "no_lines",
-        # "col_pos",  # use l,c,r to change the positions of columns
+        "cyklop",  # https://tug.org/FontCatalogue/cyklop/
+        "bf",  # https://www.overleaf.com/learn/latex/Font_sizes%2C_families%2C_and_styles
+        # "Atchen",  # https://tug.org/FontCatalogue/qtatchen/
+        "small caps",  # https://www.overleaf.com/learn/latex/Font_sizes%2C_families%2C_and_styles
+        # "rotate",     # TODO: rotate the tables
+        # "no_lines",   # TODO: remove all lines
+        # "col_pos",  # TODO: use l,c,r to change the positions of columns
     ]
 
     result = []
@@ -63,7 +85,8 @@ def augment_dataset(reading_annotations: List[Dict], output_path: str) -> None:
 
         for augment_way in augment_ways:
             augment_item = augment_data(item, augment_way, output_path)
-
+            if not augment_item:
+                continue
             result.append(augment_item)
 
     output_json_file = os.path.join(output_path, "reading_annotation.json")
@@ -75,7 +98,7 @@ def augment_dataset(reading_annotations: List[Dict], output_path: str) -> None:
     utils.export_to_json(result, output_json_file)
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "-p",
@@ -95,7 +118,9 @@ def main():
     dataset_path = args.path
     output_path = args.output
 
-    reading_annotation_file = os.path.join(dataset_path, "reading_annotation.json")
+    reading_annotation_file = os.path.join(
+        dataset_path, "clean_reading_annotation_v2.json"
+    )
     if not os.path.exists(reading_annotation_file):
         raise FileNotFoundError(f"{reading_annotation_file} doesn't exist!")
 
