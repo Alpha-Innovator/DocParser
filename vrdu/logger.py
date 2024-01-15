@@ -8,30 +8,18 @@ def setup_app_level_logger(
     level: str = "DEBUG",
     file_name: str = "app_debug.log",
     mode: str = "w",
-):
-    """create a logger
+) -> logging.Logger:
+    """
+    Set up an application-level logger.
 
     Args:
-        logger_name (str, optional): name of the logger.
-            Defaults to APP_LOGGER_NAME.
-        level (str, optional): controls the output level.
-            Defaults to 'DEBUG'.
-        file_name (str, optional): path where the log is saved.
-            Defaults to "app_debug.log".
-        mode (str, optional): mode of the file.
-            Defaults to 'w'.
+        logger_name (str): The name of the logger (default: APP_LOGGER_NAME).
+        level (str): The log level (default: "DEBUG").
+        file_name (str): The name of the log file (default: "app_debug.log").
+        mode (str): The file mode for logging (default: "w").
 
-        level option: {
-            'CRITICAL': CRITICAL,
-            'FATAL': FATAL,
-            'ERROR': ERROR,
-            'WARN': WARNING,
-            'WARNING': WARNING,
-            'INFO': INFO,
-            'DEBUG': DEBUG,
-            'NOTSET': NOTSET,}
     Returns:
-        _type_: the logger object
+        logging.Logger: The configured logger object.
     """
     logger = logging.getLogger(logger_name)
     logger.setLevel(level)
@@ -54,5 +42,14 @@ def setup_app_level_logger(
     return logger
 
 
-def get_logger(module_name):
+def get_logger(module_name: str) -> logging.Logger:
+    """
+    Return a logger with the specified module name.
+
+    Args:
+        module_name (str): The name of the module.
+
+    Returns:
+        logging.Logger: A logger object.
+    """
     return logging.getLogger(APP_LOGGER_NAME).getChild(module_name)
