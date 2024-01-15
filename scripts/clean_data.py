@@ -37,7 +37,6 @@ def clean_tabular(data: Dict) -> Dict:
 
     if not cols_match:
         log.debug(f"cols not found for {data}")
-        return
     cols = cols_match.group(1)
 
     align_patterns = ["c", "r", "l", "p"]
