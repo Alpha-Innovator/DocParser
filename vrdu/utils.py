@@ -416,14 +416,7 @@ def extract_title_name(title) -> str:
     return ""
 
 
-def get_graphicspath(latex):
-    graphicspath_re = r"\\graphicspath\{\{(.+?)}"
 
-    match = re.search(graphicspath_re, latex, re.DOTALL)
-    if match:
-        return match.group(1)
-    else:
-        return ""
 
 
 def colorize(text: str, category_name: str) -> str:

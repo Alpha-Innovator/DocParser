@@ -6,44 +6,27 @@ from vrdu import utils
 from arxiv_cleaner.cleaner import Cleaner
 
 
-def clean_tex(original_tex):
-    input_dir = os.path.dirname(original_tex)
-    tex = os.path.basename(original_tex)
+def get_graphicspath(latex: str) -> str:
+    """
+    Returns the graphics path from a LaTeX string.
 
-    # Create the command options
-    command_options = {
-        "latex": {
-            "compiler": "pdflatex",
-            "extra_args": "",
-        },
-        "bib": {
-            "compiler": "bibtex",
-            "extra_args": "",
-        },
-        "latexpand": {
-            "extra_args": "",
-        },
-    }
+    Args:
+        latex (str): The LaTeX string to search for the graphics path.
 
-    # Create the cleaner
-    cleaner = Cleaner(
-        input_dir=input_dir,
-        output_dir=input_dir,
-        tex=tex,
-        command_options=command_options,
-        verbose=False,
-    )
+    Returns:
+        str: The graphics path found in the LaTeX string, or an empty string if no graphics path is found.
+    """
+    graphicspath_re = r"\\graphicspath\{\{(.+?)}"
 
-    # Run the cleaner
-    cleaner.clean()
-
-
-def replace_eps_figures_with_pdf(tex_file):
-    path = os.path.dirname(tex_file)
-    with open(tex_file) as f:
+    match = re.search(graphicspath_re, latex, re.DOTALL)
+    if match:
+        return match.group(1)
+    else:
+        return ""
         content = f.read()
 
-    graphic_path = utils.get_graphicspath(content)
+    # get the graphicspath configuration
+    graphic_path = get_graphicspath(content)
 
     # Regular expression pattern to match \includegraphics of type .eps or .ps with PDF files
     pattern = r"\\includegraphics(\[.*?\])?\{(.*?\.e?ps)\}"
@@ -72,7 +55,7 @@ def replace_pdf_figures_with_png(tex_file):
     with open(tex_file) as f:
         content = f.read()
 
-    graphic_path = utils.get_graphicspath(content)
+    graphic_path = get_graphicspath(content)
 
     # Regular expression pattern to match \includegraphics
     # commands with PDF files
