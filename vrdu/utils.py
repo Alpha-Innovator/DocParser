@@ -111,39 +111,7 @@ def get_main_content(data):
     return main_content, main_content_index
 
 
-def replace_nth(string: str, old: str, new: str, n: int) -> str:
-    """
-    Replace the n-th occurrence of a substring in a given string with a new substring.
 
-    Args:
-        string (str): The original string to search and perform the replacement on.
-        old (str): The substring to be replaced.
-        new (str): The substring to replace the n-th occurrence of `old` in `string`.
-        n (int): The occurrence number of `old` to be replaced (1-based index).
-
-    Returns:
-        str: The modified string with the n-th occurrence of `old` replaced by `new`. If the
-             occurrence is not found, the original string is returned.
-
-    Example:
-        >>> replace_nth("Hello, hello, hello!", 'hello', 'hi', 2)
-        'Hello, hello, hi!'
-    """
-    index_of_occurrence = string.find(old)
-    occurrence = int(index_of_occurrence != -1)
-
-    while index_of_occurrence != -1 and occurrence != n:
-        index_of_occurrence = string.find(old, index_of_occurrence + 1)
-        occurrence += 1
-
-    if occurrence == n:
-        return (
-            string[:index_of_occurrence]
-            + new
-            + string[index_of_occurrence + len(old) :]
-        )
-
-    return string
 
 
 def compile_latex(file: str, tex_engine: str = "pdflatex"):

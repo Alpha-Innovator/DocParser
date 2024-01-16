@@ -344,10 +344,9 @@ class Renderer:
                 with open(output_file, "r") as f:
                     content = f.read()
 
-                # the first one is the color definition, skip it
-                new_content = utils.replace_nth(
-                    content, "{" + env + "_color}", r"{black}", index + 2
-                )
+            new_content = replace_nth(
+                content, "{" + env_color + "}", r"{black}", index + 2
+            )
 
                 with open(output_file, "w") as f:
                     f.write(new_content)
