@@ -5,10 +5,6 @@ from typing import List, Union
 import re
 
 
-from TexSoup.TexSoup import TexSoup
-from TexSoup.TexSoup.data import TexEnv
-
-
 import vrdu.utils as utils
 import vrdu.logger as logger
 from vrdu.config import config, envs
@@ -51,7 +47,7 @@ class Renderer:
     def __init__(self) -> None:
         self.texts = defaultdict(list)
 
-    def enclose_section(self, data) -> None:
+    def render_section(self, data) -> None:
         """
         Encloses a section of data in curly braces with a specified color.
 
@@ -76,7 +72,7 @@ class Renderer:
             self.texts["Title"].append(item[env])
             item[env] = utils.colorize(item[env], "Title")
 
-    def enclose_list(self, data: List) -> None:
+    def render_list(self, data: List) -> None:
         """
         Encloses dictionary items in a list with a brace group
         and modifies the data in-place.
@@ -98,13 +94,13 @@ class Renderer:
                 for key, value in item.items():
                     if not isinstance(value, list):
                         continue
-                    self.enclose_list(value[1])
+                    self.render_list(value[1])
                 continue
 
             self.texts["List"].append(item[env])
             item[env] = utils.colorize(item[env], "List")
 
-    def enclose_equation(self, data) -> None:
+    def render_equation(self, data) -> None:
         """
         Encloses equations in the given data with a specified color.
 
@@ -125,13 +121,13 @@ class Renderer:
                 for key, value in item.items():
                     if not isinstance(value, list):
                         continue
-                    self.enclose_equation(value[1])
+                    self.render_equation(value[1])
                 continue
 
             self.texts["Equation"].append(item[env])
             item[env] = utils.colorize(item[env], "Equation")
 
-    def enclose_text(self, data) -> None:
+    def render_text(self, data) -> None:
         for index, item in enumerate(data):
             if not isinstance(item, str):
                 if not isinstance(item, dict):
@@ -141,7 +137,7 @@ class Renderer:
                         continue
                     if not isinstance(value, list):
                         continue
-                    self.enclose_text(value[1])
+                    self.render_text(value[1])
                 continue
 
             if not item or item == "\n" or item == "\n\n" or item.isspace():
@@ -599,10 +595,10 @@ class Renderer:
         )
         utils.export_to_json(data, raw_data_file)
 
-        self.enclose_section(data)
-        self.enclose_list(data)
-        self.enclose_equation(data)
-        self.enclose_text(data)
+        self.render_section(data)
+        self.render_list(data)
+        self.render_equation(data)
+        self.render_text(data)
         # self.enclose_reference(data, color=name2color["Reference"])
 
         # Write the modified data back to the TeX file
