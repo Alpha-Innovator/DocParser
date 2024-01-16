@@ -195,21 +195,31 @@ class Renderer:
         with open(color_tex, "w") as f:
             f.write(content)
 
-    def add_layout_definition(self, latex_file: str):
+    def add_layout_definition(self, color_tex: str) -> None:
+        """Adds layout definitions to a LaTeX file.
+
+        Args:
+            color_tex (str): The path to the LaTeX file to modify.
+
+        Raises:
+            ValueError: If the end of the document is not found.
+
+        Returns:
+            None
+        """
+        with open(color_tex, "r") as f:
+            content = f.read()
+
         # https://www.overleaf.com/learn/latex/Page_size_and_margins
         keys = config.layout_keys
 
         definitions = ["\\message{[vrdu_data_process: Info]}"]
         for key in keys:
-            definition = (
-                "\\message{{[vrdu_data_process: The {0} is: \\the\\{0}]}}".format(key)
-            )
+            definition = f"\\message{{[vrdu_data_process: The {key} is: \\the\\{key}]}}"
             definitions.append(definition)
 
-        layout_definitions = "\n".join(definitions) + "\n"
+        layout_definitions = "\n" + "\n".join(definitions) + "\n"
 
-        with open(latex_file, "r") as f:
-            content = f.read()
         package_re = r"\\end{document}"
         match = re.search(package_re, content)
         if not match:
@@ -223,7 +233,7 @@ class Renderer:
         )
 
         # Write updated content
-        with open(latex_file, "w") as f:
+        with open(color_tex, "w") as f:
             f.write(content)
 
     def remove_hyperref_color(self, input_file):
