@@ -7,8 +7,7 @@ import json
 from typing import Any, Dict, List
 import uuid
 
-from TexSoup.TexSoup import TexSoup
-import TexSoup.app.conversion as conversion
+
 from pdf2image import pdf2image
 from pdf2image import generators
 
@@ -110,71 +109,6 @@ def get_main_content(data):
         raise Exception("document not found")
 
     return main_content, main_content_index
-
-
-def extract_main_content(latex_file):
-    """Extract content between \\begin{document} and \\end{document}"""
-
-    with open(latex_file) as f:
-        content = f.read()
-
-    start = content.find("\\begin{document}")
-    end = content.find("\\end{document}")
-
-    if start == -1 or end == -1:
-        raise ValueError("Document tags not found")
-
-    start += len("\\begin{document}")
-    main_content = content[start:end]
-
-    return main_content, start, end
-
-
-def data_from_tex_file(tex_file):
-    """
-    Reads a given tex file and extracts data from it.
-
-    Args:
-        tex_file (str): The path to the tex file.
-        debug_mode (bool, optional): If True, enables debug mode. Defaults to False.
-
-    Returns:
-        list: The extracted data from the tex file.
-    """
-    main_content, start, end = extract_main_content(tex_file)
-    tex_tree = TexSoup(main_content).expr.all
-    data = conversion.to_list(tex_tree)
-
-    return data, start, end
-
-
-def tex_file_from_data(
-    data: list, tex_file: str, start: int = 0, end: int = -1
-) -> None:
-    """
-    Generate a TeX file from a dictionary/list of data.
-
-    Args:
-        data (list): The data to be converted into a TeX file.
-        tex_file (str): The path to the output TeX file.
-        debug_mode (bool, optional): Whether to enable debug mode. Defaults to False.
-        start (int, optional): The start index. Defaults to 0.
-        end (int, optional): The end index. Defaults to -1
-
-    Returns:
-        None: This function does not return anything.
-    """
-
-    # convert the data into latex
-    rendered_tex = conversion.to_latex(data)
-
-    with open(tex_file, "r") as f:
-        content = f.read()
-
-    content = content[:start] + rendered_tex + content[end:]
-
-    with open(tex_file, "w") as f:
-        f.write(content)
 
 
 def replace_nth(string: str, old: str, new: str, n: int) -> str:
@@ -414,9 +348,6 @@ def extract_title_name(title) -> str:
         return match.group(1)
 
     return ""
-
-
-
 
 
 def colorize(text: str, category_name: str) -> str:

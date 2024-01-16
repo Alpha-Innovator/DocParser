@@ -1,13 +1,16 @@
 from collections import defaultdict
 import os
 import shutil
-from typing import List, Union
+from typing import List, Tuple, Union
 import re
 
 
 import vrdu.utils as utils
 import vrdu.logger as logger
 from vrdu.config import config, envs
+
+from TexSoup.TexSoup import TexSoup
+import TexSoup.app.conversion as conversion
 
 log = logger.get_logger(__name__)
 
@@ -645,3 +648,76 @@ class Renderer:
 
         text_file = os.path.join(original_dir, "output/result/texts.json")
         utils.export_to_json(self.texts, text_file)
+
+
+def extract_main_content(tex_file: str) -> Tuple[str, int, int]:
+    """Extracts the main content from a LaTeX file.
+
+    Args:
+        tex_file (str): The path to the LaTeX file.
+
+    Returns:
+        Tuple[str, int, int]: A tuple containing the main content of the LaTeX file,
+            the start position of the main content in the file, and the end position
+            of the main content in the file.
+    """
+    with open(tex_file) as f:
+        content = f.read()
+
+    start = content.find("\\begin{document}")
+    end = content.find("\\end{document}")
+
+    if start == -1 or end == -1:
+        raise ValueError("Document tags not found")
+
+    start += len("\\begin{document}")
+    main_content = content[start:end]
+
+    return main_content, start, end
+
+
+def data_from_tex_file(tex_file: str) -> Tuple[List[Union[dict, str]], int, int]:
+    """Extracts data from a Tex file using TexSoup.
+
+    Args:
+        tex_file (str): The path to the Tex file.
+
+    Returns:
+        Tuple[List, int, int]: A tuple containing the extracted data, the start
+        position of the extracted content, and the end position of the extracted
+        content.
+    """
+    main_content, start, end = extract_main_content(tex_file)
+    tex_tree = TexSoup(main_content).expr.all
+    data = conversion.to_list(tex_tree)
+
+    return data, start, end
+
+
+def tex_file_from_data(
+    data: List[Union[dict, str]],
+    tex_file: str,
+    start: int = 0,
+    end: int = -1,
+) -> None:
+    """Generate a TeX file from the given TexSoup data.
+
+    Args:
+        data (List[Union[dict, str]]): The data to be converted into LaTeX.
+        tex_file (str): The path of the TeX file to be generated.
+        start (int, optional): The starting position in the TeX file to replace content. Defaults to 0.
+        end (int, optional): The ending position in the TeX file to replace content. Defaults to -1.
+
+    Returns:
+        None: This function does not return any value.
+    """
+    with open(tex_file, "r") as f:
+        content = f.read()
+
+    # convert the data into latex
+    rendered_tex = conversion.to_latex(data)
+
+    content = content[:start] + rendered_tex + content[end:]
+
+    with open(tex_file, "w") as f:
+        f.write(content)
