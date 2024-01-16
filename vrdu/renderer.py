@@ -353,27 +353,26 @@ class Renderer:
         with open(tex_file) as f:
             content = f.read()
 
-        pattern = r"\\caption"
+        pattern = r"\\caption(?:\[[^\]]*\])?(?:\{[^}]*\})"
         matches = re.finditer(pattern, content)
 
         indexes = [(0, 0, "")]
         for match in matches:
-            brackets = []
             start = match.start()
             end = match.end()
-            complete = False
-            while True:
+
+            # the regex is greedy, iterate to find the end of footnote env
+            num_left_brackets = content[start:end].count("{")
+            num_right_brackets = content[start:end].count("}")
+            while num_right_brackets < num_left_brackets:
                 if content[end] == "{":
-                    brackets.append("{")
-                    complete = True
+                    num_left_brackets += 1
                 elif content[end] == "}":
-                    brackets.pop()
-                if complete and len(brackets) == 0:
-                    break
+                    num_right_brackets += 1
                 end += 1
 
-            end += 1
             caption = content[start:end]
+            print(f"caption:{caption}")
 
             self.texts["Caption"].append(caption)
             colored_caption = utils.colorize(caption, "Caption")
