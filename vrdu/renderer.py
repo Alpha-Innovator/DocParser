@@ -156,32 +156,43 @@ class Renderer:
             if item[-1] == "\n":
                 data[index] += "\n"
 
-    def add_color_definition(self, latex_file):
-        with open(latex_file, "r") as f:
+    def add_color_definition(self, color_tex: str) -> None:
+        """Adds color definitions to a LaTeX file.
+
+        Args:
+            color_tex (str): The path to the LaTeX file to modify.
+
+        Raises:
+            ValueError: If the beginning of the document is not found.
+
+        Returns:
+            None
+        """
+        with open(color_tex, "r") as f:
             content = f.read()
 
-        definitions = ["\n\\usepackage{xcolor}"]
+        definitions = ["\\usepackage{xcolor}"]
         for name, rgb_color in config.name2rgbcolor.items():
             color_name = config.name2color[name]
             r, g, b = rgb_color
             definition = f"\\definecolor{{{color_name}}}{{RGB}}{{{r}, {g}, {b}}}"
             definitions.append(definition)
 
-        color_definitions = "\n".join(definitions)
+        color_definitions = "\n" + "\n".join(definitions) + "\n"
 
         # Find location to insert package
-        package_re = r"(\\documentclass.+?)\n"
-        match = re.search(package_re, content)
-        if not match:
-            raise ValueError("Document class not found")
-
-        package_loc = match.end()
+        preamble = re.search(r"\\begin{document}", content)
+        if not preamble:
+            raise ValueError("begin of document not found")
+        preamble_loc = preamble.start()
 
         # Insert package line
-        content = content[:package_loc] + color_definitions + content[package_loc:]
+        content = (
+            content[: preamble_loc - 1] + color_definitions + content[preamble_loc:]
+        )
 
         # Write updated content
-        with open(latex_file, "w") as f:
+        with open(color_tex, "w") as f:
             f.write(content)
 
     def add_layout_definition(self, latex_file: str):
