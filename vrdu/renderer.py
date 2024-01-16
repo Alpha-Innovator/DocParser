@@ -188,7 +188,7 @@ class Renderer:
 
         # Insert package line
         content = (
-            content[: preamble_loc - 1] + color_definitions + content[preamble_loc:]
+            content[: preamble_loc] + color_definitions + content[preamble_loc:]
         )
 
         # Write updated content
@@ -228,9 +228,7 @@ class Renderer:
         package_loc = match.start()
 
         # Insert package line
-        content = (
-            content[: package_loc - 1] + layout_definitions + content[package_loc:]
-        )
+        content = content[:package_loc] + layout_definitions + content[package_loc:]
 
         # Write updated content
         with open(color_tex, "w") as f:
