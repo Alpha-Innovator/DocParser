@@ -506,7 +506,18 @@ class Renderer:
         with open(tex_file, "w") as f:
             f.write(result)
 
-    def render_tabular(self, tex_file):
+    def render_tabular(self, tex_file: str) -> None:
+        """Renders tabular environments in a LaTeX file.
+
+        This method modifies the content of a LaTeX file by rendering tabular environments with a specified color.
+        It searches for tabular environments in the file and applies colorization to their contents.
+
+        Args:
+            tex_file (str): The path to the LaTeX file to modify.
+
+        Returns:
+            None
+        """
         with open(tex_file) as f:
             content = f.read()
 
@@ -523,6 +534,10 @@ class Renderer:
             if i > 0:
                 result += content[indexes[i - 1][1] : indexes[i][0]]
             tabular = content[indexes[i][0] : indexes[i][1]]
+            # ignore the case where tabular is used to arange figures
+            if "includegraphics" in tabular:
+                result += tabular
+                continue
             self.texts["Table"].append(tabular)
             colored_tabular = utils.colorize(tabular, "Table")
             result += colored_tabular
