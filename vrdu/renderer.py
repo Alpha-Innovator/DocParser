@@ -427,47 +427,60 @@ class Renderer:
         with open(tex_file, "w") as f:
             f.write(content)
 
-    def render_footnote(self, tex_file):
+    def render_footnote(self, tex_file: str) -> None:
+        """Renders footnotes in a LaTeX file.
+
+        This method modifies the content of a LaTeX file by rendering footnotes with a specified color.
+        It searches for various footnote environments and applies colorization to their contents.
+
+        Args:
+            tex_file (str): The path to the LaTeX file to modify.
+
+        Returns:
+            None
+        """
+        # \footnote{...}, \footnote[]{...}, \footnotetext{...}, \footnotetext[]{...}, \tablefootnote{}
         with open(tex_file) as f:
             content = f.read()
 
-        pattern = r"\\(" + "|".join(envs.footnote_envs) + r")"
-        matches = re.finditer(pattern, content)
+        for env_name in envs.footnote_envs:
+            pattern = r"\\" + env_name + r"(?:\[[^\]]*\])?(?:\{[^}]*\})"
+            matches = re.finditer(pattern, content)
 
-        indexes = []
-        indexes.append((0, 0, ""))
-        for match in matches:
-            brackets = []
-            start = match.start()
-            end = match.end()
-            complete = False
-            while True:
-                if content[end] == "{":
-                    brackets.append("{")
-                    complete = True
-                elif content[end] == "}":
-                    brackets.pop()
-                if complete and len(brackets) == 0:
-                    break
-                end += 1
+            indexes = []
+            indexes.append((0, 0, ""))
 
-            end += 1
-            footnote = content[start:end]
-            self.texts["Footnote"].append(footnote)
-            colored_footnote = utils.colorize(footnote, "Footnote")
-            indexes.append((start, end, colored_footnote))
+            for m in matches:
+                start = m.start()
+                end = m.end()
 
-        result = ""
-        for i, _ in enumerate(indexes):
-            if i == 0:
-                continue
-            result += content[indexes[i - 1][1] : indexes[i][0]]
-            result += indexes[i][2]
+                # the regex is greedy, iterate to find the end of footnote env
+                num_left_brackets = content[start:end].count("{")
+                num_right_brackets = content[start:end].count("}")
+                while num_right_brackets < num_left_brackets:
+                    if content[end] == "{":
+                        num_left_brackets += 1
+                    elif content[end] == "}":
+                        num_right_brackets += 1
+                    end += 1
 
-        result += content[indexes[-1][1] :]
+                footnote = content[start:end]
+                colored_footnote = utils.colorize(footnote, "Footnote")
+                indexes.append((start, end, colored_footnote))
+
+            result = ""
+            for i, _ in enumerate(indexes):
+                if i == 0:
+                    continue
+                result += content[indexes[i - 1][1] : indexes[i][0]]
+                result += indexes[i][2]
+
+            result += content[indexes[-1][1] :]
+
+            content = result
 
         with open(tex_file, "w") as f:
-            f.write(result)
+            f.write(content)
 
     def render_abstract(self, tex_file):
         with open(tex_file) as f:
