@@ -319,41 +319,35 @@ class Renderer:
         # the definitions are discarded
         return matches[len(colors) :]
 
-    def render_one_env(self, original_dir):
-        color_tex_file = os.path.join(original_dir, "paper_colored.tex")
-        white_tex_file = os.path.join(original_dir, "paper_white.tex")
+    def render_one_env(self, main_directory: str) -> None:
+        """Render one environment by modifying the corresponding rendering color to black.
+
+        Args:
+            main_directory (str): The main directory.
+
+        Returns:
+            None: This function does not return anything.
+        """
+        color_tex_file = os.path.join(main_directory, "paper_colored.tex")
+        white_tex_file = os.path.join(main_directory, "paper_white.tex")
         self.modify_color_definitions(color_tex_file, white_tex_file)
-        path = os.path.dirname(white_tex_file)
         env_orders = self.get_env_orders(white_tex_file)
 
-        for env in config.name2category.keys():
-            num_items = len(self.texts[env])
-            order_ids = [
-                i for i, _ in enumerate(env_orders) if env + "_color" == env_orders[i]
-            ]
-            if num_items != len(order_ids):
-                raise ValueError(
-                    f"num_items {num_items} != len(order_ids) {len(order_ids)}"
-                )
-            for index, order_id in enumerate(order_ids):
-                output_file = os.path.join(
-                    path, "paper_block_" + str(order_id).zfill(5) + ".tex"
-                )
-                shutil.copyfile(white_tex_file, output_file)
+        with open(white_tex_file, "r") as f:
+            content = f.read()
 
-                with open(output_file, "r") as f:
-                    content = f.read()
-
+        for index, env_color in enumerate(env_orders):
+            # the first one is the color definition, skip it
             new_content = replace_nth(
                 content, "{" + env_color + "}", r"{black}", index + 2
             )
 
-                with open(output_file, "w") as f:
-                    f.write(new_content)
-
-        # save env orders
-        orders_file = os.path.join(original_dir, "output/result/env_orders.json")
-        utils.export_to_json(env_orders, orders_file)
+            output_file = os.path.join(
+                main_directory,
+                "paper_" + config.folder_prefix + str(index).zfill(5) + ".tex",
+            )
+            with open(output_file, "w") as f:
+                f.write(new_content)
 
     def render_caption(self, tex_file):
         with open(tex_file) as f:
