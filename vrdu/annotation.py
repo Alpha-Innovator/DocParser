@@ -26,7 +26,6 @@ class LayoutAnnotation:
 
     def __init__(self, path: str) -> None:
         self.output_directory = os.path.join(path, "output")
-        self.env_dirs = self.get_matching_subdirectories()
         self.layout_metadata: Dict = {}
         self.text_info = utils.load_json(
             os.path.join(self.output_directory, "result/texts.json")
@@ -114,16 +113,6 @@ class LayoutAnnotation:
 
         self.layout_metadata = layout_metadata
 
-    def get_matching_subdirectories(self) -> List[str]:
-        result = []
-        for name in os.listdir(self.directory):
-            if not os.path.isdir(os.path.join(self.directory, name)):
-                continue
-            if not name.startswith(config.folder_prefix):
-                continue
-            result.append(name)
-        return result
-
     def get_category(self, env_orders: List[str], dir: str):
         dir_name = os.path.basename(dir)
         order_id = int(dir_name[len(config.folder_prefix) :])
@@ -179,15 +168,18 @@ class LayoutAnnotation:
 
     def generate_non_figure_bb(self) -> Dict[int, List[Block]]:
         background_directory = os.path.join(self.output_directory, "white")
+        block_directories = glob.glob(
+            f"{self.output_directory}/{config.folder_prefix}*"
+        )
         layout_info = defaultdict(list)
         env_orders = utils.load_json(
-            os.path.join(self.directory, "result/env_orders.json")
+            os.path.join(self.output_directory, "result/env_orders.json")
         )
-        for dir_name in tqdm(sorted(self.env_dirs)):
-            log.debug(f"Processing {dir_name}")
-            env_dir = os.path.join(self.directory, dir_name)
-            image_pairs = get_image_pairs(env_dir, self.background_dir)
-            category, index = self.get_category(env_orders, dir_name)
+
+        for block_directory in tqdm(sorted(block_directories)):
+            log.debug(f"Processing {block_directory}")
+            image_pairs = get_image_pairs(block_directory, background_directory)
+            category, index = self.get_category(env_orders, block_directory)
             log.debug(f"category: {category}, index: {index}")
 
             elements = []
