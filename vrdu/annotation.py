@@ -27,9 +27,10 @@ class LayoutAnnotation:
     def __init__(self, main_directory: str) -> None:
         self.main_directory = main_directory
         self.output_directory = os.path.join(main_directory, "output")
+        self.result_directory = os.path.join(self.output_directory, "result")
         self.layout_metadata: Dict = {}
         self.text_info = utils.load_json(
-            os.path.join(self.output_directory, "result/texts.json")
+            os.path.join(self.result_directory, "texts.json")
         )
 
     def extract_pdf_layouts(self) -> List[LTPage]:
@@ -106,7 +107,7 @@ class LayoutAnnotation:
 
         utils.export_to_json(
             layout_metadata,
-            os.path.join(self.output_directory, "result/layout_metadata.json"),
+            os.path.join(self.result_directory, "layout_metadata.json"),
         )
 
         self.layout_metadata = layout_metadata
@@ -171,7 +172,7 @@ class LayoutAnnotation:
         )
         layout_info = defaultdict(list)
         env_orders = utils.load_json(
-            os.path.join(self.output_directory, "result/env_orders.json")
+            os.path.join(self.result_directory, "env_orders.json")
         )
 
         for block_directory in tqdm(sorted(block_directories)):
@@ -257,7 +258,6 @@ class LayoutAnnotation:
         return layout_info
 
     def generate_reading_annotation(self, layout_info: Dict[int, List[Block]]):
-        result_path = os.path.join(self.output_directory, "result")
         reading_annotation = defaultdict(list)
 
         pdf_images_path = os.path.join(self.output_directory, "colored")
@@ -273,7 +273,7 @@ class LayoutAnnotation:
 
                 image_name = "block_" + str(count).zfill(4) + ".jpg"
                 count += 1
-                image_path = os.path.join(result_path, image_name)
+                image_path = os.path.join(self.result_directory, image_name)
                 cropped_image.save(image_path)
                 reading_annotation[page_index].append(
                     {
@@ -303,7 +303,6 @@ class LayoutAnnotation:
             glob.glob(os.path.join(pdf_images_path, "*.jpg")), key=lambda x: x[-6:-4]
         )
 
-        result_path = os.path.join(self.output_directory, "result")
         image_info = {}  # annotation image info member of COCO
         for page_index in layout_info.keys():
             page_image = Image.open(image_files[page_index])
@@ -311,7 +310,7 @@ class LayoutAnnotation:
                 page_image, layout_info[page_index]
             )
             image_name = "page_" + str(page_index).zfill(4) + ".jpg"
-            annotated_image_path = os.path.join(result_path, image_name)
+            annotated_image_path = os.path.join(self.result_directory, image_name)
             image_info[page_index] = image_name
             annotated_image.save(annotated_image_path)
             page_image.close()
@@ -545,14 +544,12 @@ class LayoutAnnotation:
 
         result["page_quality"] = self._compute_overlap(layout_info)
 
-        report_file = os.path.join(self.output_directory, "result/quality_report.json")
+        report_file = os.path.join(self.result_directory, "quality_report.json")
         utils.export_to_json(result, report_file)
 
     def annotate(self):
         layout_info = self.generate_layout_info()
-        layout_info_file = os.path.join(
-            self.output_directory, "result/layout_info.json"
-        )
+        layout_info_file = os.path.join(self.result_directory, "layout_info.json")
         serialized_layout_info = [
             block.to_dict() for blocks in layout_info.values() for block in blocks
         ]
@@ -563,13 +560,13 @@ class LayoutAnnotation:
         order_annotation = self.generate_order_annotation(layout_info)
 
         layout_annotation_file = os.path.join(
-            self.output_directory, "result/layout_annotation.json"
+            self.result_directory, "layout_annotation.json"
         )
         reading_annotation_file = os.path.join(
-            self.output_directory, "result/reading_annotation.json"
+            self.result_directory, "reading_annotation.json"
         )
         order_annotation_file = os.path.join(
-            self.output_directory, "result/order_annotation.json"
+            self.result_directory, "order_annotation.json"
         )
 
         utils.export_to_coco(
