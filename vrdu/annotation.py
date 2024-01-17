@@ -1,7 +1,7 @@
 from collections import defaultdict
 import os
 import glob
-from typing import Dict, List
+from typing import Dict, List, Tuple
 import matplotlib.pyplot as plt
 import numpy as np
 from skimage.measure import label, regionprops
@@ -111,7 +111,7 @@ class LayoutAnnotation:
 
         self.layout_metadata = layout_metadata
 
-    def get_category(self, env_orders: List[str], dir: str):
+    def get_category(self, env_orders: List[str], dir: str) -> Tuple[int, int]:
         dir_name = os.path.basename(dir)
         order_id = int(dir_name[len(config.folder_prefix) :])
         env_name = env_orders[order_id]
@@ -318,7 +318,7 @@ class LayoutAnnotation:
 
         return image_info
 
-    def _compute_overlap(self, layout_info):
+    def _compute_overlap(self, layout_info: Dict[int, List[Block]]) -> List[Dict]:
         result = []
         total_area, total_overlap, total_blocks = 0, 0, 0
         for page_index in layout_info.keys():
