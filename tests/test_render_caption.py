@@ -13,7 +13,7 @@ class TestCaption(unittest.TestCase):
         self.mock_file_content2 = """\\documentclass{article}\\begin{document}\\caption{A figure without list entry.}\\end{document}"""
         self.mock_file_content3 = """\\documentclass{article}\\begin{document}\\caption[]{A figure without list entry.}\\end{document}"""
         self.mock_file_content4 = """\\documentclass{article}\\begin{document}\\caption{A figure without list entry.}\\caption{A figure without list entry.}\\end{document}"""
-        self.mock_file_content5 = r"""\documentclass{article}\begin{document}Table \ref{demo-table} has a caption:\begin{table}[!h]\begin{center}\begin{tabular}{||c c c c||}  \hline Col1 & Col2 & Col2 & Col3 \\ [0.5ex]  \hline\hline 1 & 6 & 87837 & 787 \\  \hline 2 & 7 & 78 & 5415 \\ \hline 3 & 545 & 778 & 7507 \\ \hline 4 & 545 & 18744 & 7560 \\ \hline 5 & 88 & 788 & 6344 \\ [1ex]  \hline\end{tabular}\caption{\label{demo-table}Your caption.}\end{center}\end{table}\end{document}"""
+        self.mock_file_content5 = """\\documentclass{article}\\begin{document}Table \\ref{demo-table} has a caption:\\begin{table}[!h]\\begin{center}\\begin{tabular}{||c c c c||}  \\hline Col1 & Col2 & Col2 & Col3 \\ [0.5ex]  \\hline\\hline 1 & 6 & 87837 & 787 \\  \\hline 2 & 7 & 78 & 5415 \\ \\hline 3 & 545 & 778 & 7507 \\ \\hline 4 & 545 & 18744 & 7560 \\ \\hline 5 & 88 & 788 & 6344 \\ [1ex]  \\hline\\end{tabular}\\caption{\\label{demo-table}Your caption.}\\end{center}\\end{table}\\end{document}"""
 
         self.renderer = Renderer()
 
@@ -74,5 +74,5 @@ class TestCaption(unittest.TestCase):
             self.renderer.render_caption(file_mock)
             file_mock.assert_called_with(file_mock, "w")
             file_mock().write.assert_called_with(
-                r"""\documentclass{article}\begin{document}Table \ref{demo-table} has a caption:\begin{table}[!h]\begin{center}\begin{tabular}{||c c c c||}  \hline Col1 & Col2 & Col2 & Col3 \\ [0.5ex]  \hline\hline 1 & 6 & 87837 & 787 \\  \hline 2 & 7 & 78 & 5415 \\ \hline 3 & 545 & 778 & 7507 \\ \hline 4 & 545 & 18744 & 7560 \\ \hline 5 & 88 & 788 & 6344 \\ [1ex]  \hline\end{tabular}\caption{{\color{Caption_color}\label{demo-table}Your caption.}}\end{center}\end{table}\end{document}"""
+                """\\documentclass{article}\\begin{document}Table \\ref{demo-table} has a caption:\\begin{table}[!h]\\begin{center}\\begin{tabular}{||c c c c||}  \\hline Col1 & Col2 & Col2 & Col3 \\ [0.5ex]  \\hline\\hline 1 & 6 & 87837 & 787 \\  \\hline 2 & 7 & 78 & 5415 \\ \\hline 3 & 545 & 778 & 7507 \\ \\hline 4 & 545 & 18744 & 7560 \\ \\hline 5 & 88 & 788 & 6344 \\ [1ex]  \\hline\\end{tabular}\\caption{{\\color{Caption_color}\\label{demo-table}Your caption.}}\\end{center}\\end{table}\\end{document}"""
             )

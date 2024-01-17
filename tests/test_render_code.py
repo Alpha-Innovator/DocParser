@@ -24,7 +24,10 @@ class TestCode(unittest.TestCase):
             create=True,
         ) as file_mock:
             self.renderer.render_code(file_mock)
-            file_mock.assert_called_with(file_mock, "r")
+            file_mock.assert_called_with(file_mock, "w")
+            file_mock().write.assert_called_with(
+                """\\documentclass{article}\\begin{document}\\end{document}"""
+            )
 
     def test_one_code1(self):
         with unittest.mock.patch(

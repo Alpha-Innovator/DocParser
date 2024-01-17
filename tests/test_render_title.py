@@ -22,7 +22,10 @@ class TestTitle(unittest.TestCase):
             create=True,
         ) as file_mock:
             self.renderer.render_title(file_mock)
-            file_mock.assert_called_with(file_mock)
+            file_mock.assert_called_with(file_mock, "w")
+            file_mock().write.assert_called_with(
+                """\\documentclass{article}\\begin{document}\\end{document}"""
+            )
 
     def test_one_title(self):
         with unittest.mock.patch(
@@ -42,7 +45,11 @@ class TestTitle(unittest.TestCase):
             new=unittest.mock.mock_open(read_data=self.mock_file_content3),
             create=True,
         ) as file_mock:
-            self.assertRaises(ValueError, self.renderer.render_title, file_mock)
+            self.renderer.render_title(file_mock)
+            file_mock.assert_called_with(file_mock, "w")
+            file_mock().write.assert_called_with(
+                """\\documentclass{article}\\title{{\\textcolor{PaperTitle_color}{This is a title}}}\\title{{\\textcolor{PaperTitle_color}{This is anotheter title}}}\\begin{document}\\maketitle\\end{document}"""
+            )
 
     def test_unusual_title(self):
         with unittest.mock.patch(
@@ -51,4 +58,7 @@ class TestTitle(unittest.TestCase):
             create=True,
         ) as file_mock:
             self.renderer.render_title(file_mock)
-            file_mock.assert_called_with(file_mock)
+            file_mock.assert_called_with(file_mock, "w")
+            file_mock().write.assert_called_with(
+                """\\documentclass{article}\\icmltitle{This is a title}\\begin{document}\\maketitle\\end{document}"""
+            )
