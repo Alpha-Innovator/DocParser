@@ -628,6 +628,11 @@ class Renderer:
             content = f.read()
 
         pattern = r"\\begin{tabular}.*?\\end{tabular}"
+        result = self._render_float_envs(content, pattern, "Table")
+
+        with open(tex_file, "w") as f:
+            f.write(result)
+
     def render_algorithm(self, tex_file: str) -> None:
         """Renders algorithm environments in a LaTeX file.
 
@@ -644,6 +649,11 @@ class Renderer:
             content = f.read()
 
         pattern = r"\\begin{algorithm[*]?}(.*?)\\end{algorithm[*]?}"
+        result = self._render_float_envs(content, pattern, "Algorithm")
+
+        with open(tex_file, "w") as f:
+            f.write(result)
+
     def render_code(self, tex_file: str) -> None:
         """Renders code environments in a LaTeX file.
 
@@ -666,86 +676,50 @@ class Renderer:
         """
         with open(tex_file, "r") as file:
             content = file.read()
-        # pattern 1: code environment
-        # pattern 2: lstinputlisting to input a file
+
         pattern = (
             r"\\begin{(verbatim|lstlisting|program)[*]?}(.*?)\\end{\1[*]?}"
             + "|"
             + r"\\lstinputlisting\[[^\]]*\]{[^\}]*}"
         )
+        result = self._render_float_envs(content, pattern, "Code")
+
+        with open(tex_file, "w") as f:
+            f.write(result)
+
+    def _render_float_envs(self, content: str, pattern: str, category: str) -> str:
+        """Renders specific float environments in the content.
+
+        This method searches for occurrences of a pattern in the content and replaces them with colored versions.
+        The replacement is based on the specified category for colorization.
+
+        Args:
+            content (str): The content of the LaTeX file.
+            pattern (str): The regular expression pattern to match.
+            category (str): The category of the environment for colorization.
+
+        Returns:
+            str: The modified content with the rendered float environments.
+        """
         indexes = [
             (m.start(), m.end()) for m in re.finditer(pattern, content, re.DOTALL)
         ]
 
         if not indexes:
-            return
+            log.debug(f"no {category} found")
+            return content
 
         result = content[: indexes[0][0]]
         for i, _ in enumerate(indexes):
             if i > 0:
                 result += content[indexes[i - 1][1] : indexes[i][0]]
-            code = content[indexes[i][0] : indexes[i][1]]
-            self.texts["Code"].append(code)
-            colored_code = utils.colorize(code, "Code")
-            result += colored_code
+            algorithm = content[indexes[i][0] : indexes[i][1]]
+            self.texts[category].append(algorithm)
+            colored_algorithm = utils.colorize(algorithm, category)
+            result += colored_algorithm
 
         result += content[indexes[-1][1] :]
-
-        content = result
-
-        with open(tex_file, "w") as f:
-            f.write(result)
-
-    def render_float_envs(self, tex_file):
-        self.render_caption(tex_file)
-        self.render_footnote(tex_file)
-        # self.extract_graphics(tex_file)
-        self.render_algorithm(tex_file)
-        self.render_tabular(tex_file)
-        self.render_code(tex_file)
-        # the following two envs are placed here because they use string regex to render
-        self.render_title(tex_file)
-        self.render_abstract(tex_file)
-
-    def render_simple_envs(self, tex_file):
-        data, start, end = utils.data_from_tex_file(tex_file)
-        # Save the raw parsed data for debugging purposes
-        raw_data_file = os.path.join(
-            os.path.dirname(tex_file), "output/result/raw_parsed_data.json"
-        )
-        utils.export_to_json(data, raw_data_file)
-
-        self.render_section(data)
-        self.render_list(data)
-        self.render_equation(data)
-        self.render_text(data)
-        # self.enclose_reference(data, color=name2color["Reference"])
-
-        # Write the modified data back to the TeX file
-        utils.tex_file_from_data(data, tex_file, start=start, end=end)
-
-    def render_all_env(self, tex_file):
-        self.render_simple_envs(tex_file)
-        self.render_float_envs(tex_file)
-
-    def render(self, origin_tex_file):
-        original_dir = os.path.dirname(origin_tex_file)
-
-        color_tex_file = os.path.join(original_dir, "paper_colored.tex")
-        shutil.copyfile(origin_tex_file, color_tex_file)
-
-        self.add_color_definition(color_tex_file)
-        self.add_layout_definition(color_tex_file)
-        self.remove_hyperref_color(color_tex_file)
-        self.remove_lstlisting_color(color_tex_file)
-
-        self.render_all_env(color_tex_file)
-
-        # change the enclose color of semantic elements one by one and generate corresponding tex files
-        self.render_one_env(original_dir)
-
-        text_file = os.path.join(original_dir, "output/result/texts.json")
-        utils.export_to_json(self.texts, text_file)
+        return result
 
 
 def extract_main_content(tex_file: str) -> Tuple[str, int, int]:
