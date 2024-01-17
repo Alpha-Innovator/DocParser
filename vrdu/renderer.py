@@ -401,17 +401,19 @@ class Renderer:
             content = file.read()
 
         # Define the pattern to match the color definitions
-        # FIXME: use defined color
-        pattern = r"\\definecolor{([^}]+)}{RGB}{(\d+), (\d+), (\d+)}"
+        for name in config.name2rgbcolor.keys():
+            color_name = config.name2color[name]
+            pattern = r"\\definecolor{" + color_name + r"}{RGB}{(\d+), (\d+), (\d+)}"
 
-        # Replace the color definitions with pure white
-        modified_content = re.sub(
-            pattern, r"\\definecolor{\1}{RGB}{255, 255, 255}", content
-        )
+            # Replace the color definitions with pure white
+            content = re.sub(
+                pattern,
+                r"\\definecolor{" + color_name + r"}{RGB}{255, 255, 255}",
+                content,
+            )
 
-        # Write the modified content to the output file
         with open(output_file, "w") as file:
-            file.write(modified_content)
+            file.write(content)
 
     def get_env_orders(self, tex_file: str) -> List[str]:
         """Returns a list of environment orders based on the contents of the given `tex_file`.
