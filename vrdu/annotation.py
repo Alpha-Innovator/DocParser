@@ -25,17 +25,17 @@ class LayoutAnnotation:
     ONE_INCH = 72.27
 
     def __init__(self, path: str) -> None:
-        output_dir = os.path.join(path, "output")
-        self.directory = output_dir
-        self.background_dir = os.path.join(output_dir, "white")
+        self.output_directory = os.path.join(path, "output")
         self.env_dirs = self.get_matching_subdirectories()
         self.layout_metadata: Dict = {}
-        self.text_info = utils.load_json(os.path.join(output_dir, "result/texts.json"))
+        self.text_info = utils.load_json(
+            os.path.join(self.output_directory, "result/texts.json")
+        )
         self.threshold = config.threshold
         self.ppi = config.ppi
 
     def extract_pdf_layouts(self) -> List[LTPage]:
-        rendered_pdf = os.path.join(self.directory, "colored/paper.pdf")
+        rendered_pdf = os.path.join(self.output_directory, "colored/paper.pdf")
         page_layouts = extract_pages(rendered_pdf)
         return list(page_layouts)
 
@@ -45,7 +45,7 @@ class LayoutAnnotation:
         layout_metadata = dict()
 
         # get metadata from log file
-        path = os.path.dirname(self.directory)
+        path = os.path.dirname(self.output_directory)
         log_file = os.path.join(path, "paper_colored.log")
         regex_pattern = r"\[vrdu_data_process: The (.*) is: ([-+]?\d+\.\d+)pt\]"
 
@@ -73,7 +73,7 @@ class LayoutAnnotation:
         margin_height = element2 + element4
         layout_metadata["margin_width"] = margin_width
 
-        pdf_images_path = os.path.join(self.directory, "colored")
+        pdf_images_path = os.path.join(self.output_directory, "colored")
         # sort all images by page index, see utils.pdf2jpg for details
         image_files = sorted(
             glob.glob(os.path.join(pdf_images_path, "*.jpg")), key=lambda x: x[-6:-4]
@@ -108,7 +108,8 @@ class LayoutAnnotation:
             layout_metadata[page_index]["top_margin"] = margin_height * pt2px * px2img
 
         utils.export_to_json(
-            layout_metadata, os.path.join(self.directory, "result/layout_metadata.json")
+            layout_metadata,
+            os.path.join(self.output_directory, "result/layout_metadata.json"),
         )
 
         self.layout_metadata = layout_metadata
@@ -177,6 +178,7 @@ class LayoutAnnotation:
                 layout_info[page_index][index].bbox = BoundingBox(x0, y0, x1, y1)
 
     def generate_non_figure_bb(self) -> Dict[int, List[Block]]:
+        background_directory = os.path.join(self.output_directory, "white")
         layout_info = defaultdict(list)
         env_orders = utils.load_json(
             os.path.join(self.directory, "result/env_orders.json")
@@ -263,10 +265,10 @@ class LayoutAnnotation:
         return layout_info
 
     def generate_reading_annotation(self, layout_info: Dict[int, List[Block]]):
-        result_path = os.path.join(self.directory, "result")
+        result_path = os.path.join(self.output_directory, "result")
         reading_annotation = defaultdict(list)
 
-        pdf_images_path = os.path.join(self.directory, "colored")
+        pdf_images_path = os.path.join(self.output_directory, "colored")
         # sort all images by page index, see utils.pdf2jpg for details
         image_files = sorted(
             glob.glob(os.path.join(pdf_images_path, "*.jpg")), key=lambda x: x[-6:-4]
@@ -296,20 +298,20 @@ class LayoutAnnotation:
         ]
 
         original_tex = os.path.join(
-            os.path.dirname(self.directory), "paper_original.tex"
+            os.path.dirname(self.output_directory), "paper_original.tex"
         )
         reading_annotation["macros"] = utils.extract_macro_definitions(original_tex)
 
         return reading_annotation
 
     def generate_image_annotation(self, layout_info: Dict[int, List[Block]]):
-        pdf_images_path = os.path.join(self.directory, "colored")
+        pdf_images_path = os.path.join(self.output_directory, "colored")
         # sort all images by page index, see utils.pdf2jpg for details
         image_files = sorted(
             glob.glob(os.path.join(pdf_images_path, "*.jpg")), key=lambda x: x[-6:-4]
         )
 
-        result_path = os.path.join(self.directory, "result")
+        result_path = os.path.join(self.output_directory, "result")
         image_info = {}  # annotation image info member of COCO
         for page_index in layout_info.keys():
             page_image = Image.open(image_files[page_index])
@@ -551,12 +553,14 @@ class LayoutAnnotation:
 
         result["page_quality"] = self._compute_overlap(layout_info)
 
-        report_file = os.path.join(self.directory, "result/quality_report.json")
+        report_file = os.path.join(self.output_directory, "result/quality_report.json")
         utils.export_to_json(result, report_file)
 
     def annotate(self):
         layout_info = self.generate_layout_info()
-        layout_info_file = os.path.join(self.directory, "result/layout_info.json")
+        layout_info_file = os.path.join(
+            self.output_directory, "result/layout_info.json"
+        )
         serialized_layout_info = [
             block.to_dict() for blocks in layout_info.values() for block in blocks
         ]
@@ -567,13 +571,13 @@ class LayoutAnnotation:
         order_annotation = self.generate_order_annotation(layout_info)
 
         layout_annotation_file = os.path.join(
-            self.directory, "result/layout_annotation.json"
+            self.output_directory, "result/layout_annotation.json"
         )
         reading_annotation_file = os.path.join(
-            self.directory, "result/reading_annotation.json"
+            self.output_directory, "result/reading_annotation.json"
         )
         order_annotation_file = os.path.join(
-            self.directory, "result/order_annotation.json"
+            self.output_directory, "result/order_annotation.json"
         )
 
         utils.export_to_coco(
