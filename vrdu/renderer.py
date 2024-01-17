@@ -598,9 +598,9 @@ class Renderer:
         ]
 
         if len(indexes) > 1:
-            raise ValueError("more than one title found")
+            raise ValueError("more than one abstract found")
+
         if not indexes:
-            log.debug("no abstract found")
             return
 
         start, end = indexes[0]
