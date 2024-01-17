@@ -482,6 +482,11 @@ class Renderer:
             content = f.read()
 
         pattern = r"\\caption(?:\[[^\]]*\])?(?:\{[^}]*\})"
+        result = self._render_simple_envs(content, pattern, "Caption")
+
+        with open(tex_file, "w") as f:
+            f.write(result)
+
     def render_title(self, tex_file: str) -> None:
         """Renders the title in a LaTeX file.
 
@@ -497,37 +502,11 @@ class Renderer:
         with open(tex_file) as f:
             content = f.read()
 
-        pattern = r"\\title"
-        indexes = [(m.start(), m.end()) for m in re.finditer(pattern, content)]
-
-        if len(indexes) > 1:
-            raise ValueError("more than one title found")
-
-        if len(indexes) == 0:
-            log.debug("no title found")
-            return
-
-        brackets = []
-        start, end = indexes[0]
-        complete = False
-        while True:
-            if content[end] == "{":
-                brackets.append("{")
-                complete = True
-            elif content[end] == "}":
-                brackets.pop()
-            if complete and len(brackets) == 0:
-                break
-            end += 1
-
-        end += 1
-        title = content[start:end]
-        self.texts["PaperTitle"].append(title)
-        colored_title = utils.colorize(title, "PaperTitle")
-        content = content[:start] + colored_title + content[end:]
+        pattern = r"\\title(?:\{[^}]*\})"
+        result = self._render_simple_envs(content, pattern, "PaperTitle")
 
         with open(tex_file, "w") as f:
-            f.write(content)
+            f.write(result)
 
     def render_footnote(self, tex_file: str) -> None:
         """Renders footnotes in a LaTeX file.
@@ -547,24 +526,53 @@ class Renderer:
 
         for env_name in envs.footnote_envs:
             pattern = r"\\" + env_name + r"(?:\[[^\]]*\])?(?:\{[^}]*\})"
-            matches = re.finditer(pattern, content)
 
-            indexes = []
-            indexes.append((0, 0, ""))
+            content = self._render_simple_envs(content, pattern, "Footnote")
 
-            for m in matches:
-                start = m.start()
-                end = m.end()
+        with open(tex_file, "w") as f:
+            f.write(content)
 
-                # the regex is greedy, iterate to find the end of footnote env
-                num_left_brackets = content[start:end].count("{")
-                num_right_brackets = content[start:end].count("}")
-                while num_right_brackets < num_left_brackets:
-                    if content[end] == "{":
-                        num_left_brackets += 1
-                    elif content[end] == "}":
-                        num_right_brackets += 1
-                    end += 1
+    def _render_simple_envs(self, content: str, pattern: str, category: str) -> str:
+        """Renders specific environments in the content using replacement.
+
+        This method searches for occurrences of a pattern in the content and replaces them with colored versions.
+        The replacement is based on the specified category for colorization.
+
+        Args:
+            content (str): The content of the LaTeX file.
+            pattern (str): The regular expression pattern to match.
+            category (str): The category of the environment for colorization.
+
+        Returns:
+            str: The modified content with the rendered environments.
+        """
+        matches = re.finditer(pattern, content)
+        result = ""
+        index = 0
+        for match in matches:
+            start = match.start()
+            end = match.end()
+
+            # the regex is greedy, iterate to find the end of footnote env
+            num_left_brackets = content[start:end].count("{")
+            num_right_brackets = content[start:end].count("}")
+            while num_right_brackets < num_left_brackets:
+                if content[end] == "{":
+                    num_left_brackets += 1
+                elif content[end] == "}":
+                    num_right_brackets += 1
+                end += 1
+
+            category_content = content[start:end]
+
+            self.texts[category].append(category_content)
+            colored_title = utils.colorize(category_content, category)
+            result += content[index:start]
+            result += colored_title
+            index = end
+
+        result += content[index:]
+        return result
 
     def render_abstract(self, tex_file: str) -> None:
         """Renders the abstract section in a LaTeX file.
