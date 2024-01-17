@@ -118,14 +118,14 @@ class LayoutAnnotation:
         for name in os.listdir(self.directory):
             if not os.path.isdir(os.path.join(self.directory, name)):
                 continue
-            if not name.startswith(config.prefix):
+            if not name.startswith(config.folder_prefix):
                 continue
             result.append(name)
         return result
 
     def get_category(self, env_orders: List[str], dir: str):
         dir_name = os.path.basename(dir)
-        order_id = int(dir_name[len(config.prefix) :])
+        order_id = int(dir_name[len(config.folder_prefix) :])
         env_name = env_orders[order_id]
 
         index = -1

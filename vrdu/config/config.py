@@ -87,4 +87,4 @@ sortable_envs = ["Title", "Text", "Text-EQ", "Equation", "Footnote", "List"]
 
 threshold = 0.3
 ppi = 72
-prefix = "block_"
+folder_prefix = "block_"
