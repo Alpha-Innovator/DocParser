@@ -21,84 +21,6 @@ from vrdu import logger
 log = logger.get_logger(__name__)
 
 
-def get_image_pairs(dir1: str, dir2: str):
-    """
-    Generate a list of image pairs based on the directories provided.
-
-    Parameters:
-        dir1 (str): The directory path to the first set of images.
-        dir2 (str): The directory path to the second set of images.
-
-    Raises:
-        FileNotFoundError: If the number of images in each directory does not
-            match or if the page index in the file names does not match.
-
-    Returns:
-        list: A list of tuples representing the image pairs.
-            Each tuple contains the page index, the path to the rendered image,
-            and the path to the changed image.
-    """
-    file_pattern = os.path.join(dir1, "*.jpg")
-    rendered_jpg_files = sorted(glob.glob(file_pattern))
-    file_pattern = os.path.join(dir2, "*.jpg")
-    changed_jpg_files = sorted(glob.glob(file_pattern))
-
-    if len(rendered_jpg_files) != len(changed_jpg_files):
-        raise FileNotFoundError("Wrong image path or file name or page index!")
-
-    def extract_page_index(filename: str) -> int:
-        pattern = r"thread-\d+-page-(\d+)\.jpg"
-
-        match = re.search(pattern, filename)
-        if match:
-            page_index = int(match.group(1))
-            return page_index - 1
-        else:
-            raise ValueError("Cannot found corresponding page index")
-
-    page_indices = []
-    for i in range(len(rendered_jpg_files)):
-        file_name = os.path.basename(rendered_jpg_files[i])
-        page_index = extract_page_index(file_name)
-        page_indices.append(int(page_index))
-
-    image_pairs = list(zip(page_indices, rendered_jpg_files, changed_jpg_files))
-    return image_pairs
-
-
-def generate_geometry_annotation(
-    page_image: Image.Image, layout_elements: List[Block]
-) -> Image.Image:
-    """
-    Generate an annotation for an image.
-
-    Args:
-        page_image (Image.Image): The image to annotate.
-        page_elements (List[LTComponent]): A list of elements to be annotated.
-
-    Returns:
-        Image.Image: The annotated image.
-    """
-    draw = ImageDraw.Draw(page_image)
-    # use `locate .ttf` to find the available fonts
-    font = ImageFont.truetype(
-        config.config["annotation_image_font_type"],
-        config.config["annotation_image_font_size"],
-    )
-
-    for index, element in enumerate(layout_elements):
-        category = element.category
-        draw.rectangle(element.bbox, outline=config.colors_map[str(category)], width=3)
-        draw.text(
-            (element.bbox[0], element.bbox[1]),
-            config.category2name[category],
-            fill=(255, 0, 0),
-            font=font,
-        )
-
-    return page_image
-
-
 class LayoutAnnotation:
     ONE_INCH = 72.27
 
@@ -661,3 +583,81 @@ class LayoutAnnotation:
         utils.export_to_json(order_annotation, order_annotation_file)
 
         self.generate_quality_report(layout_info)
+
+
+def get_image_pairs(dir1: str, dir2: str):
+    """
+    Generate a list of image pairs based on the directories provided.
+
+    Parameters:
+        dir1 (str): The directory path to the first set of images.
+        dir2 (str): The directory path to the second set of images.
+
+    Raises:
+        FileNotFoundError: If the number of images in each directory does not
+            match or if the page index in the file names does not match.
+
+    Returns:
+        list: A list of tuples representing the image pairs.
+            Each tuple contains the page index, the path to the rendered image,
+            and the path to the changed image.
+    """
+    file_pattern = os.path.join(dir1, "*.jpg")
+    rendered_jpg_files = sorted(glob.glob(file_pattern))
+    file_pattern = os.path.join(dir2, "*.jpg")
+    changed_jpg_files = sorted(glob.glob(file_pattern))
+
+    if len(rendered_jpg_files) != len(changed_jpg_files):
+        raise FileNotFoundError("Wrong image path or file name or page index!")
+
+    def extract_page_index(filename: str) -> int:
+        pattern = r"thread-\d+-page-(\d+)\.jpg"
+
+        match = re.search(pattern, filename)
+        if match:
+            page_index = int(match.group(1))
+            return page_index - 1
+        else:
+            raise ValueError("Cannot found corresponding page index")
+
+    page_indices = []
+    for i in range(len(rendered_jpg_files)):
+        file_name = os.path.basename(rendered_jpg_files[i])
+        page_index = extract_page_index(file_name)
+        page_indices.append(int(page_index))
+
+    image_pairs = list(zip(page_indices, rendered_jpg_files, changed_jpg_files))
+    return image_pairs
+
+
+def generate_geometry_annotation(
+    page_image: Image.Image, layout_elements: List[Block]
+) -> Image.Image:
+    """
+    Generate an annotation for an image.
+
+    Args:
+        page_image (Image.Image): The image to annotate.
+        page_elements (List[LTComponent]): A list of elements to be annotated.
+
+    Returns:
+        Image.Image: The annotated image.
+    """
+    draw = ImageDraw.Draw(page_image)
+    # use `locate .ttf` to find the available fonts
+    font = ImageFont.truetype(
+        config.config["annotation_image_font_type"],
+        config.config["annotation_image_font_size"],
+    )
+
+    for index, element in enumerate(layout_elements):
+        category = element.category
+        draw.rectangle(element.bbox, outline=config.colors_map[str(category)], width=3)
+        draw.text(
+            (element.bbox[0], element.bbox[1]),
+            config.category2name[category],
+            fill=(255, 0, 0),
+            font=font,
+        )
+
+    return page_image
