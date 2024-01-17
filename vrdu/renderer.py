@@ -721,6 +721,30 @@ class Renderer:
         result += content[indexes[-1][1] :]
         return result
 
+    def extract_graphics(self, tex_file: str) -> None:
+        """Extracts graphics paths from a LaTeX file.
+
+        This method reads a LaTeX file and extracts the paths of graphics included using the `\\includegraphics` command.
+        The extracted graphics paths are stored in the `texts["Figure"]` list.
+
+        Args:
+            tex_file (str): The path to the LaTeX file to extract graphics from.
+
+        Returns:
+            None
+        """
+        with open(tex_file, "r") as file:
+            content = file.read()
+
+        pattern = r"\\includegraphics(?:\[(.*?)\])?{(.*?)}"
+        matches = re.findall(pattern, content)
+        for match in matches:
+            graphic = "\\includegraphics"
+            if match[0]:
+                graphic += f"[{match[0]}]"
+            graphic += f"{{{match[1]}}}"
+            self.texts["Figure"].append(graphic)
+
 
 def extract_main_content(tex_file: str) -> Tuple[str, int, int]:
     """Extracts the main content from a LaTeX file.
@@ -793,6 +817,42 @@ def tex_file_from_data(
 
     with open(tex_file, "w") as f:
         f.write(content)
+
+
+def replace_nth(string: str, old: str, new: str, n: int) -> str:
+    """
+    Replace the n-th occurrence of a substring in a given string with a new substring.
+
+    Args:
+        string (str): The original string to search and perform the replacement on.
+        old (str): The substring to be replaced.
+        new (str): The substring to replace the n-th occurrence of `old` in `string`.
+        n (int): The occurrence number of `old` to be replaced (1-based index).
+
+    Returns:
+        str: The modified string with the n-th occurrence of `old` replaced by `new`. If the
+        occurrence is not found, the original string is returned.
+
+    Example:
+        >>> replace_nth("Hello, hello, hello!", 'hello', 'hi', 2)
+        'Hello, hello, hi!'
+    """
+    index_of_occurrence = string.find(old)
+    occurrence = int(index_of_occurrence != -1)
+
+    while index_of_occurrence != -1 and occurrence != n:
+        index_of_occurrence = string.find(old, index_of_occurrence + 1)
+        occurrence += 1
+
+    if occurrence == n:
+        return (
+            string[:index_of_occurrence]
+            + new
+            + string[index_of_occurrence + len(old) :]
+        )
+
+    return string
+
 
 def find_env(wrapped_env: dict, query: List[str]) -> Union[str, None]:
     """
