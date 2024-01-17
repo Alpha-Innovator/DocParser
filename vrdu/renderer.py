@@ -15,37 +15,6 @@ import TexSoup.app.conversion as conversion
 log = logger.get_logger(__name__)
 
 
-def find_env(wrapped_env: dict, query: List[str]) -> Union[str, None]:
-    """
-    Finds and returns the environment variable from the given query list
-    that exists in the wrapped_env dictionary.
-
-    Parameters:
-        wrapped_env (dict): A dictionary containing environment variables as keys.
-        query (list): A list of environment variables to search for.
-
-    Returns:
-        Union[str, None]: The environment variable found in the query list that exists in the wrapped_env dictionary, or None
-        if no matching environment variable is found.
-    """
-    for env in query:
-        if env in wrapped_env:
-            return env
-
-    return None
-
-
-def is_text_eq(text: str):
-    pattern = r"(\\\(.*?\\\))|(\$.*?\$)|(\\begin\{math\}.*?\\end\{math\})"
-    matches = re.findall(pattern, text)
-
-    for match in matches:
-        if not re.search(r"\\\$", match[0]):
-            return True
-
-    return False
-
-
 class Renderer:
     def __init__(self) -> None:
         self.texts = defaultdict(list)
@@ -741,3 +710,47 @@ def tex_file_from_data(
 
     with open(tex_file, "w") as f:
         f.write(content)
+
+def find_env(wrapped_env: dict, query: List[str]) -> Union[str, None]:
+    """
+    Finds and returns the environment variable from the given query list
+    that exists in the wrapped_env dictionary.
+
+    Args:
+        wrapped_env (dict): A dictionary containing environment variables as keys.
+        query (list): A list of environment variables to search for.
+
+    Returns:
+        Union[str, None]: The environment variable found in the query list that exists in the wrapped_env dictionary, or None
+        if no matching environment variable is found.
+    """
+    for env in query:
+        if env in wrapped_env:
+            return env
+
+    return None
+
+
+def is_text_eq(text: str) -> bool:
+    """Check if the given text contains any mathematical expressions.
+
+    Args:
+        text (str): The text to be checked for mathematical expressions.
+
+    Returns:
+        bool: True if the text contains mathematical expressions, False otherwise.
+
+    Note:
+        This function uses a regular expression pattern to match mathematical expressions
+
+    Reference:
+        https://www.overleaf.com/learn/latex/Mathematical_expressions
+    """
+    pattern = r"(\\\(.*?\\\))|(\$.*?\$)|(\\begin\{math\}.*?\\end\{math\})"
+    matches = re.findall(pattern, text)
+
+    for match in matches:
+        if not re.search(r"\\\$", match[0]):
+            return True
+
+    return False
