@@ -30,8 +30,6 @@ class LayoutAnnotation:
         self.text_info = utils.load_json(
             os.path.join(self.output_directory, "result/texts.json")
         )
-        self.threshold = config.threshold
-        self.ppi = config.ppi
 
     def extract_pdf_layouts(self) -> List[LTPage]:
         rendered_pdf = os.path.join(self.output_directory, "colored/paper.pdf")
@@ -39,7 +37,7 @@ class LayoutAnnotation:
         return list(page_layouts)
 
     def parse_metadata(self, pdf_layouts: List[LTPage]) -> None:
-        pt2px = self.ppi / self.ONE_INCH
+        pt2px = config.ppi / self.ONE_INCH
 
         layout_metadata = dict()
 
@@ -192,7 +190,9 @@ class LayoutAnnotation:
                 diff_image = np.abs(image2_array - image1_array, dtype=np.uint8)
                 if np.all(diff_image == 0):
                     continue
-                labeled_image, num = label(diff_image > self.threshold, return_num=True)
+                labeled_image, num = label(
+                    diff_image > config.threshold, return_num=True
+                )
                 if num == 0:
                     continue
 
