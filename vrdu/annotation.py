@@ -24,8 +24,9 @@ log = logger.get_logger(__name__)
 class LayoutAnnotation:
     ONE_INCH = 72.27
 
-    def __init__(self, path: str) -> None:
-        self.output_directory = os.path.join(path, "output")
+    def __init__(self, main_directory: str) -> None:
+        self.main_directory = main_directory
+        self.output_directory = os.path.join(main_directory, "output")
         self.layout_metadata: Dict = {}
         self.text_info = utils.load_json(
             os.path.join(self.output_directory, "result/texts.json")
@@ -42,8 +43,7 @@ class LayoutAnnotation:
         layout_metadata = dict()
 
         # get metadata from log file
-        path = os.path.dirname(self.output_directory)
-        log_file = os.path.join(path, "paper_colored.log")
+        log_file = os.path.join(self.main_directory, "paper_colored.log")
         regex_pattern = r"\[vrdu_data_process: The (.*) is: ([-+]?\d+\.\d+)pt\]"
 
         with open(log_file, "r", encoding="latin-1") as file:
