@@ -61,6 +61,17 @@ def add_layout_information(tabular: Dict) -> Dict:
     return tabular
 
 
+def add_linguistic_information(sentence: Dict) -> None:
+    # 1. count the number of words
+    # 2. extract all inline equations
+    pattern = r"(\\\(.*?\\\))|(\$.*?\$)|(\\begin\{math\}.*?\\end\{math\})"
+    matches = re.findall(pattern, sentence["source_code"])
+
+    sentence["inline_equations"] = [match[1] for match in matches]
+    result = re.sub(pattern, "", sentence["source_code"])
+    sentence["num_words"] = len(result.split())
+
+
 def extract_category(
     input_directory: str, category_name: str, output_directory: str
 ) -> List:
@@ -100,6 +111,8 @@ def extract_category(
             # add layout information for tabular data
             if category_name == "Table":
                 block = add_layout_information(block)
+            if category_name == "Text-EQ":
+                add_linguistic_information(block)
             result.append(block)
 
     # save images
