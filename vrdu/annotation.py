@@ -368,7 +368,7 @@ class LayoutAnnotation:
             for block in layout_info[page_index]:
                 cropped_image = page_image.crop(block.bbox)
 
-                image_name = "block_" + str(count).zfill(4) + ".jpg"
+                image_name = config.folder_prefix + str(count).zfill(4) + ".jpg"
                 count += 1
                 image_path = os.path.join(self.result_directory, image_name)
                 cropped_image.save(image_path)
