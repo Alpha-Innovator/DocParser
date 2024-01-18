@@ -476,7 +476,109 @@ class LayoutAnnotation:
 
         return result
 
-    def generate_order_annotation(self, layout_info: Dict[int, List[Block]]):
+    def generate_quality_report(self, layout_info: Dict[int, List[Block]]) -> None:
+        """Generates a quality report based on the provided layout information.
+
+        Args:
+            layout_info (Dict[int, List[Block]]): A dictionary where the keys are page indices
+                and the values are lists of blocks on each page.
+
+        Returns:
+            None
+        """
+        result = {}
+        result["num_pages"] = max(layout_info.keys())
+        result["num_columns"] = self.layout_metadata["num_columns"]
+        result["category_quality"] = []
+
+        total_reading, total_geometry = 0, 0
+        for key, value in self.text_info.items():
+            # currently, ignore graphics
+            if key == config.name2category["Figure"]:
+                continue
+
+            reading_count = len(value)
+            geometry_count = 0
+            for page_index, blocks in layout_info.items():
+                for block in blocks:
+                    # only major block is counted
+                    if (
+                        block.category == config.name2category[key]
+                        and block.parent_block is None
+                    ):
+                        geometry_count += 1
+            missing_rate = (
+                0 if reading_count == 0 else 1 - geometry_count / reading_count
+            )
+            result["category_quality"].append(
+                {
+                    "category": key,
+                    "geometry_count": geometry_count,
+                    "reading_count": len(value),
+                    "missing_rate": missing_rate,
+                }
+            )
+
+            total_reading += reading_count
+            total_geometry += geometry_count
+        result["category_quality"].append(
+            {
+                "category": "Total",
+                "geometry_count": total_geometry,
+                "reading_count": total_reading,
+                "missing_rate": 1 - total_geometry / total_reading,
+            }
+        )
+
+        result["page_quality"] = self._compute_overlap(layout_info)
+
+        report_file = os.path.join(self.result_directory, "quality_report.json")
+        utils.export_to_json(result, report_file)
+
+    def annotate(self):
+        """Annotates the layout, reading, order, and quality report of the given image.
+
+        Returns:
+            None
+        """
+        # step1: generate layout info
+        layout_info = self.generate_layout_info()
+
+        # step2: generate layout detection result
+        image_annotation = self.generate_image_annotation(layout_info)
+        layout_annotation_file = os.path.join(
+            self.result_directory, "layout_annotation.json"
+        )
+        utils.export_to_coco(
+            layout_info, image_annotation, filename=layout_annotation_file
+        )
+
+        # step3: generate reading annotation
+        reading_annotation = self.generate_reading_annotation(layout_info)
+        reading_annotation_file = os.path.join(
+            self.result_directory, "reading_annotation.json"
+        )
+        utils.export_to_json(reading_annotation, reading_annotation_file)
+
+        # step4: generate order annotation
+        vrdu_order_annotation = OrderAnnotation(layout_info)
+        order_annotation = vrdu_order_annotation.annotate()
+
+        order_annotation_file = os.path.join(
+            self.result_directory, "order_annotation.json"
+        )
+
+        utils.export_to_json(order_annotation, order_annotation_file)
+
+        # step5: generate quality report
+        self.generate_quality_report(layout_info)
+
+
+class OrderAnnotation:
+    def __init__(self, layout_info) -> None:
+        self.layout_info = layout_info
+
+    def annotate(self):
         annotations = {}
 
         annotations["orders"] = []
@@ -615,86 +717,6 @@ class LayoutAnnotation:
                 raise ValueError(f"Unsupported category {element.category}")
 
         return annotations
-
-    def generate_quality_report(self, layout_info):
-        result = {}
-        result["num_pages"] = max(layout_info.keys())
-        result["num_columns"] = self.layout_metadata["num_columns"]
-        result["category_quality"] = []
-
-        total_reading, total_geometry = 0, 0
-        for key, value in self.text_info.items():
-            # currently, ignore graphics
-            if key == config.name2category["Figure"]:
-                continue
-
-            reading_count = len(value)
-            geometry_count = 0
-            for page_index, blocks in layout_info.items():
-                for block in blocks:
-                    # only major block is counted
-                    if (
-                        block.category == config.name2category[key]
-                        and block.parent_block is None
-                    ):
-                        geometry_count += 1
-            missing_rate = (
-                0 if reading_count == 0 else 1 - geometry_count / reading_count
-            )
-            result["category_quality"].append(
-                {
-                    "category": key,
-                    "geometry_count": geometry_count,
-                    "reading_count": len(value),
-                    "missing_rate": missing_rate,
-                }
-            )
-
-            total_reading += reading_count
-            total_geometry += geometry_count
-        result["category_quality"].append(
-            {
-                "category": "Total",
-                "geometry_count": total_geometry,
-                "reading_count": total_reading,
-                "missing_rate": 1 - total_geometry / total_reading,
-            }
-        )
-
-        result["page_quality"] = self._compute_overlap(layout_info)
-
-        report_file = os.path.join(self.result_directory, "quality_report.json")
-        utils.export_to_json(result, report_file)
-
-    def annotate(self):
-        layout_info = self.generate_layout_info()
-        layout_info_file = os.path.join(self.result_directory, "layout_info.json")
-        serialized_layout_info = [
-            block.to_dict() for blocks in layout_info.values() for block in blocks
-        ]
-        utils.export_to_json(serialized_layout_info, layout_info_file)
-
-        image_annotation = self.generate_image_annotation(layout_info)
-        reading_annotation = self.generate_reading_annotation(layout_info)
-        order_annotation = self.generate_order_annotation(layout_info)
-
-        layout_annotation_file = os.path.join(
-            self.result_directory, "layout_annotation.json"
-        )
-        reading_annotation_file = os.path.join(
-            self.result_directory, "reading_annotation.json"
-        )
-        order_annotation_file = os.path.join(
-            self.result_directory, "order_annotation.json"
-        )
-
-        utils.export_to_coco(
-            layout_info, image_annotation, filename=layout_annotation_file
-        )
-        utils.export_to_json(reading_annotation, reading_annotation_file)
-        utils.export_to_json(order_annotation, order_annotation_file)
-
-        self.generate_quality_report(layout_info)
 
 
 def get_image_pairs(dir1: str, dir2: str):
