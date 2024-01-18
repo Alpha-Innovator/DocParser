@@ -32,6 +32,7 @@ class LayoutAnnotation:
         self.text_info = utils.load_json(
             os.path.join(self.result_directory, "texts.json")
         )
+        self.pdf_images_path = os.path.join(self.output_directory, "paper_colored")
 
     def extract_pdf_layouts(self) -> List[LTPage]:
         """Extracts layout information of each page from a rendered PDF.
@@ -51,7 +52,7 @@ class LayoutAnnotation:
             <LTPage(2) width:612.0 height:792.0>
             ...
         """
-        rendered_pdf = os.path.join(self.output_directory, "colored/paper.pdf")
+        rendered_pdf = os.path.join(self.main_directory, "paper_colored.pdf")
         page_layouts = extract_pages(rendered_pdf)
         return list(page_layouts)
 
@@ -97,10 +98,9 @@ class LayoutAnnotation:
         margin_height = element2 + element4
         layout_metadata["margin_width"] = margin_width
 
-        pdf_images_path = os.path.join(self.output_directory, "colored")
         # sort all images by page index, see utils.pdf2jpg for details
         image_files = sorted(
-            glob.glob(os.path.join(pdf_images_path, "*.jpg")), key=lambda x: x[-6:-4]
+            glob.glob(f"{self.pdf_images_path}/*.jpg"), key=lambda x: x[-6:-4]
         )
         for page_index, page_layout in enumerate(pdf_layouts):
             layout_metadata[page_index] = {}
@@ -357,10 +357,9 @@ class LayoutAnnotation:
         """
         reading_annotation = defaultdict(list)
 
-        pdf_images_path = os.path.join(self.output_directory, "colored")
         # sort all images by page index, see utils.pdf2jpg for details
         image_files = sorted(
-            glob.glob(os.path.join(pdf_images_path, "*.jpg")), key=lambda x: x[-6:-4]
+            glob.glob(os.path.join(self.pdf_images_path, "*.jpg")), key=lambda x: x[-6:-4]
         )
         count = 0
         for page_index in layout_info.keys():
@@ -400,11 +399,10 @@ class LayoutAnnotation:
         Returns:
             Dict[int, str]: A dictionary mapping page indices to annotated image filenames.
         """
-        pdf_images_path = os.path.join(self.output_directory, "colored")
         # sort all images by page index, see utils.pdf2jpg for details
         # FIXME: use more robust way
         image_files = sorted(
-            glob.glob(os.path.join(pdf_images_path, "*.jpg")), key=lambda x: x[-6:-4]
+            glob.glob(os.path.join(self.pdf_images_path, "*.jpg")), key=lambda x: x[-6:-4]
         )
 
         image_info = {}  # annotation image info member of COCO
