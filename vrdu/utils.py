@@ -111,9 +111,6 @@ def get_main_content(data):
     return main_content, main_content_index
 
 
-
-
-
 def compile_latex(file: str, tex_engine: str = "pdflatex"):
     path_name = os.path.dirname(file)
     file_name = os.path.basename(file)
