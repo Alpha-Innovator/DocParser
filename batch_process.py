@@ -173,10 +173,15 @@ def process_one_category(path, cpu_count, category):
     tex_files = extract_tex_files(category_path)
     log.info(f"Found {len(tex_files)} tex files")
 
-    with multiprocessing.Pool(cpu_count) as pool:
-        pool.map(process_one_file, tex_files)
-    # save log file
-    shutil.move(log_file, f"batch_process_{category}.log")
+    try:
+        with multiprocessing.Pool(cpu_count) as pool:
+            pool.map(process_one_file, tex_files)
+        # save log file
+    except Exception:
+        log.exception(f"[VRDU] category: {category}, failed to process.")
+    finally:
+        # save the process log
+        shutil.move(log_file, f"batch_process_{category}.log")
 
 
 if __name__ == "__main__":
