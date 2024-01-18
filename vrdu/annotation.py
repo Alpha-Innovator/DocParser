@@ -386,11 +386,6 @@ class LayoutAnnotation:
             for index, category, _ in config.config["category_name"]
         ]
 
-        original_tex = os.path.join(
-            os.path.dirname(self.output_directory), "paper_original.tex"
-        )
-        reading_annotation["macros"] = utils.extract_macro_definitions(original_tex)
-
         return reading_annotation
 
     def generate_image_annotation(
