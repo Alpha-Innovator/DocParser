@@ -88,3 +88,18 @@ sortable_envs = ["Title", "Text", "Text-EQ", "Equation", "Footnote", "List"]
 threshold = 0.3
 ppi = 72
 folder_prefix = "block_"
+
+
+command_options = {
+    "latex": {
+        "compiler": "pdflatex",
+        "extra_args": "",
+    },
+    "bib": {
+        "compiler": "bibtex",
+        "extra_args": "",
+    },
+    "latexpand": {
+        "extra_args": "",
+    },
+}
