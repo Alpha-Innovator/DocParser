@@ -594,22 +594,22 @@ class OrderAnnotation:
         annotations = {}
 
         annotations["orders"] = []
-        sortable_annotations = self.generate_sortable_envs_order(layout_info)
+        sortable_annotations = self.generate_sortable_envs_order()
         annotations["orders"].extend(sortable_annotations)
-        float_annotations = self.generate_float_envs_order(layout_info)
+        float_annotations = self.generate_float_envs_order()
         annotations["orders"].extend(float_annotations)
-        cross_reference_annotation = self.generate_cross_reference_order(layout_info)
+        cross_reference_annotation = self.generate_cross_reference_order()
         annotations["orders"].extend(cross_reference_annotation)
         return annotations
 
-    def generate_cross_reference_order(self, layout_info):
+    def generate_cross_reference_order(self):
         # TODO: complete this
         # parse label in texts
         # ref to label
         pass
         return []
 
-    def generate_float_envs_order(self, layout_info):
+    def generate_float_envs_order(self):
         # TODO: complete this
         # caption to env
         # label to env
@@ -618,7 +618,7 @@ class OrderAnnotation:
         # 2. equation-label attach, add label
         return []
 
-    def generate_sortable_envs_order(self, layout_info):
+    def generate_sortable_envs_order(self):
         stack = []
         annotations = []
         relation_map = config.relation_map
@@ -628,8 +628,8 @@ class OrderAnnotation:
 
         sortable_elements = [
             _block
-            for page_index in layout_info.keys()
-            for _block in layout_info[page_index]
+            for page_index in self.layout_info.keys()
+            for _block in self.layout_info[page_index]
             if _block.category in sortable_category
         ]
 
@@ -690,7 +690,7 @@ class OrderAnnotation:
                 prev_title = utils.extract_title_name(stack[-1].source_code)
                 annotations.append(
                     {
-                        "type": relation_map[(cur_title, prev_title)],
+                        "type": config.relation_map[(cur_title, prev_title)],
                         "from": element.block_id,
                         "to": stack[-1].block_id,
                     }
