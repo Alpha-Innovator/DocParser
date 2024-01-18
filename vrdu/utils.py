@@ -179,43 +179,6 @@ def get_all_categories():
     return categories
 
 
-def extract_tex_files(path) -> List[str]:
-    """
-    Given a path, this function extracts all the MAIN .tex files within the
-    specified directory and its subdirectories.
-
-    Args:
-        path (str): The path to the directory where the .tex files are located.
-
-    Returns:
-        List[str]: A list of paths to the .tex files found.
-    """
-    tex_files = []
-
-    for root, dirs, files in os.walk(path):
-        for file in files:
-            # skip non-tex files
-            if not file.endswith(".tex"):
-                continue
-            # skip paper_*.tex files
-            if file.startswith("paper_"):
-                continue
-            tex_file = os.path.join(root, file)
-
-            try:
-                with open(tex_file, "r") as f:
-                    content = f.read()
-            except UnicodeDecodeError:
-                continue
-
-            # skip if this tex is not the main document
-            if "\\begin{document}" not in content:
-                continue
-
-            tex_files.append(tex_file)
-    return tex_files
-
-
 def extract_macro_definitions(tex_file) -> List[str]:
     """
     Extracts macro definitions from a given tex file.
