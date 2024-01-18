@@ -170,20 +170,21 @@ class LayoutAnnotation:
         """
         layout_info = defaultdict(list)
         for page_index, page_layout in enumerate(pdf_layouts):
-            for element in page_layout:
-                # use only figures annotation result
-                if not isinstance(element, LTFigure):
-                    continue
-                layout_info[page_index].append(
+            layout_info[page_index].extend(
+                [
                     Block(
                         bounding_box=BoundingBox(*element.bbox),
                         page_index=page_index,
                         category=config.name2category["Figure"],
-                        # currently, figure block will have no source code match
-                        source_code="",
+                        source_code="",  # currently, figure block will have no source code match
                     )
-                )
+                    for element in page_layout
+                    if isinstance(element, LTFigure)
+                ]
+            )
 
+        # convert bounding boxes from PDF coordinate system to image coordinate system
+        self.transform(layout_info)
         return layout_info
 
     def transform(self, layout_info: Dict[int, List[Block]]) -> None:
@@ -322,7 +323,7 @@ class LayoutAnnotation:
         self.parse_metadata(pdf_layouts)
         layout_info = self.generate_non_figure_bb()
         figure_layout_info = self.generate_figure_bb(pdf_layouts)
-        self.transform(figure_layout_info)
+
         for page_index in layout_info.keys():
             layout_info[page_index].extend(figure_layout_info[page_index])
         return layout_info
