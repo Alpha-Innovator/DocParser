@@ -415,13 +415,29 @@ class LayoutAnnotation:
         image_info = {}  # annotation image info member of COCO
         for page_index in layout_info.keys():
             page_image = Image.open(image_files[page_index])
-            annotated_image = generate_geometry_annotation(
-                page_image, layout_info[page_index]
+            draw = ImageDraw.Draw(page_image)
+            # use `locate .ttf` to find the available fonts
+            font = ImageFont.truetype(
+                config.config["annotation_image_font_type"],
+                config.config["annotation_image_font_size"],
             )
+
+            for element in layout_info[page_index]:
+                category = element.category
+                draw.rectangle(
+                    element.bbox, outline=config.colors_map[str(category)], width=3
+                )
+                draw.text(
+                    (element.bbox[0], element.bbox[1]),
+                    config.category2name[category],
+                    fill=(255, 0, 0),
+                    font=font,
+                )
+
             image_name = "page_" + str(page_index).zfill(4) + ".jpg"
             annotated_image_path = os.path.join(self.result_directory, image_name)
             image_info[page_index] = image_name
-            annotated_image.save(annotated_image_path)
+            page_image.save(annotated_image_path)
             page_image.close()
 
         return image_info
