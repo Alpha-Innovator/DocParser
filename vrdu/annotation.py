@@ -22,6 +22,7 @@ log = logger.get_logger(__name__)
 
 
 class LayoutAnnotation:
+    # https://www.overleaf.com/learn/latex/Lengths_in_LaTeX
     ONE_INCH = 72.27
 
     def __init__(self, main_directory: str) -> None:
