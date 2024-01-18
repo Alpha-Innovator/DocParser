@@ -138,26 +138,6 @@ class LayoutAnnotation:
 
         self.layout_metadata = layout_metadata
 
-    def get_category(self, env_orders: List[str], dir: str) -> Tuple[int, int]:
-        dir_name = os.path.basename(dir)
-        order_id = int(dir_name[len(config.folder_prefix) :])
-        env_name = env_orders[order_id]
-
-        index = -1
-        for i, name in enumerate(env_orders):
-            if name == env_name:
-                index += 1
-            if i == order_id:
-                break
-
-        suffix = "_color"
-        env_name = env_name[: -len(suffix)]
-
-        if env_name not in config.name2category:
-            raise ValueError(f"Invalid directory name: {dir_name}")
-
-        return config.name2category[env_name], index
-
     def generate_figure_bb(self, pdf_layouts: List[LTPage]) -> Dict[int, List[Block]]:
         """Generate bounding boxes for figures in a PDF layout using Pdfminer.
 
@@ -220,19 +200,21 @@ class LayoutAnnotation:
                 The keys represent the page indices, and the values are lists of Block objects
                 representing the elements in the layout.
         """
-        background_directory = os.path.join(self.output_directory, "white")
+        background_directory = os.path.join(self.output_directory, "paper_white")
         block_directories = glob.glob(
-            f"{self.output_directory}/{config.folder_prefix}*"
+            f"{self.output_directory}/paper_{config.folder_prefix}*"
         )
         layout_info = defaultdict(list)
-        env_orders = utils.load_json(
-            os.path.join(self.result_directory, "env_orders.json")
-        )
+        pattern = r"paper_(\w+)_(\d{5})_(.*?)_(\d{5})"
 
         for block_directory in tqdm(sorted(block_directories)):
             log.debug(f"Processing {block_directory}")
             image_pairs = get_image_pairs(block_directory, background_directory)
-            category, index = self.get_category(env_orders, block_directory)
+            matches = re.match(pattern, os.path.basename(block_directory))
+            if not matches:
+                raise ValueError(f"Cannot find the matching pattern: {block_directory}")
+            category = matches.group(3)
+            index = int(matches.group(4))
             log.debug(f"category: {category}, index: {index}")
 
             elements = []
@@ -258,12 +240,11 @@ class LayoutAnnotation:
                     continue
 
                 # We do not consider the cross column case for these envs.
-                category_name = config.category2name[category]
-                if category_name in envs.one_column_envs:
+                if category in envs.one_column_envs:
                     element = Block(
                         bounding_box=BoundingBox.from_list(bounding_boxes),
-                        source_code=self.text_info[category_name][index],
-                        category=category,
+                        source_code=self.text_info[category][index],
+                        category=config.name2category[category],
                         page_index=page_index,
                     )
                     if elements:
@@ -288,8 +269,8 @@ class LayoutAnnotation:
 
                     element = Block(
                         bounding_box=BoundingBox.from_list(column_boxes),
-                        source_code=self.text_info[category_name][index],
-                        category=category,
+                        source_code=self.text_info[category][index],
+                        category=config.name2category[category],
                         page_index=page_index,
                     )
                     if elements:

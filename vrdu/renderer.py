@@ -448,21 +448,25 @@ class Renderer:
         color_tex_file = os.path.join(main_directory, "paper_colored.tex")
         white_tex_file = os.path.join(main_directory, "paper_white.tex")
         self.modify_color_definitions(color_tex_file, white_tex_file)
-        env_orders = self.get_env_orders(white_tex_file)
+        ordered_env_colors = self.get_env_orders(white_tex_file)
+        suffix = "_color"
+        index_map = defaultdict(int)
 
         with open(white_tex_file, "r") as f:
             content = f.read()
 
-        for index, env_color in enumerate(env_orders):
+        for index, env_color in enumerate(ordered_env_colors):
+            env = env_color[: -len(suffix)]
             # the first one is the color definition, skip it
             new_content = replace_nth(
-                content, "{" + env_color + "}", r"{black}", index + 2
+                content, "{" + env_color + "}", r"{black}", index_map[env] + 2
             )
 
             output_file = os.path.join(
                 main_directory,
-                "paper_" + config.folder_prefix + str(index).zfill(5) + ".tex",
+                f"paper_{config.folder_prefix}_{str(index).zfill(5)}_{env}_{str(index_map[env]).zfill(5)}.tex",
             )
+            index_map[env] += 1
             with open(output_file, "w") as f:
                 f.write(new_content)
 
