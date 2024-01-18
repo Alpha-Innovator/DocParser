@@ -1,7 +1,7 @@
 from collections import defaultdict
 import os
 import glob
-from typing import Dict, List, Tuple
+from typing import DefaultDict, Dict, List, Tuple
 import matplotlib.pyplot as plt
 import numpy as np
 from skimage.measure import label, regionprops
@@ -34,17 +34,43 @@ class LayoutAnnotation:
         )
 
     def extract_pdf_layouts(self) -> List[LTPage]:
+        """Extracts layout information of each page from a rendered PDF.
+
+        This method reads the rendered PDF file and extracts the layout information for each page.
+        The layout information includes the position, size, and other attributes of each element on the page.
+
+        Returns:
+            List[LTPage]: A list of LTPage objects representing the layout of each page.
+
+        Example:
+            >>> renderer = PDFRenderer()
+            >>> layouts = renderer.extract_pdf_layouts()
+            >>> for layout in layouts:
+            ...     print(layout)
+            <LTPage(1) width:612.0 height:792.0>
+            <LTPage(2) width:612.0 height:792.0>
+            ...
+        """
         rendered_pdf = os.path.join(self.output_directory, "colored/paper.pdf")
         page_layouts = extract_pages(rendered_pdf)
         return list(page_layouts)
 
     def parse_metadata(self, pdf_layouts: List[LTPage]) -> None:
+        """Parse metadata from PDF layouts and store them in the layout_metadata attribute.
+
+        Args:
+        - pdf_layouts (List[LTPage]): A list of LTPage objects representing the PDF layouts.
+
+        Returns:
+        - None
+        """
         pt2px = config.ppi / self.ONE_INCH
 
         layout_metadata = dict()
 
         # get metadata from log file
         log_file = os.path.join(self.main_directory, "paper_colored.log")
+        # see renderer.py add_layout_definitions for details
         regex_pattern = r"\[vrdu_data_process: The (.*) is: ([-+]?\d+\.\d+)pt\]"
 
         with open(log_file, "r", encoding="latin-1") as file:
@@ -133,6 +159,15 @@ class LayoutAnnotation:
         return config.name2category[env_name], index
 
     def generate_figure_bb(self, pdf_layouts: List[LTPage]) -> Dict[int, List[Block]]:
+        """Generate bounding boxes for figures in a PDF layout using Pdfminer.
+
+        Args:
+            pdf_layouts (List[LTPage]): A list of LTPage objects representing the layout of a PDF.
+
+        Returns:
+            Dict[int, List[Block]]: A dictionary where the keys are page indices and the values are lists of
+            Block objects representing the bounding boxes of figures on each page.
+        """
         layout_info = defaultdict(list)
         for page_index, page_layout in enumerate(pdf_layouts):
             for element in page_layout:
@@ -152,6 +187,17 @@ class LayoutAnnotation:
         return layout_info
 
     def transform(self, layout_info: Dict[int, List[Block]]) -> None:
+        """Transforms bounding boxes from PDF coordinate system to image coordinate system,
+        and change them in place.
+
+        Args:
+            layout_info (Dict[int, List[Block]]): A dictionary containing the layout information of each page.
+                The keys represent the page indices, and the values are lists of Block objects
+                representing the elements in the layout.
+
+        Returns:
+            None
+        """
         for page_index in layout_info.keys():
             pdf_height = self.layout_metadata[page_index]["pdf_height"]
             px2img = self.layout_metadata[page_index]["px2img"]
@@ -166,6 +212,13 @@ class LayoutAnnotation:
                 layout_info[page_index][index].bbox = BoundingBox(x0, y0, x1, y1)
 
     def generate_non_figure_bb(self) -> Dict[int, List[Block]]:
+        """Generates non-figure bounding boxes using the image pairs.
+
+        Returns:
+            Dict[int, List[Block]]: A dictionary containing the layout information of each page.
+                The keys represent the page indices, and the values are lists of Block objects
+                representing the elements in the layout.
+        """
         background_directory = os.path.join(self.output_directory, "white")
         block_directories = glob.glob(
             f"{self.output_directory}/{config.folder_prefix}*"
@@ -248,6 +301,23 @@ class LayoutAnnotation:
         return layout_info
 
     def generate_layout_info(self) -> Dict[int, List[Block]]:
+        """Generate layout information for the given PDF.
+
+        This function extracts the PDF layouts using the `extract_pdf_layouts` method
+        and parses the metadata using the `parse_metadata` method.
+        Then, it generates non-figure bounding boxes using the `generate_non_figure_bb` method
+        and figure bounding boxes using the `generate_figure_bb` method.
+
+        Args:
+            None
+
+        Returns:
+            Dict[int, List[Block]]: A dictionary containing the layout information for
+            each page of the PDF.
+            The keys represent the page indices, and the values are lists of `Block` objects
+            that represent the bounding boxes.
+
+        """
         pdf_layouts = self.extract_pdf_layouts()
         self.parse_metadata(pdf_layouts)
         layout_info = self.generate_non_figure_bb()
@@ -257,7 +327,33 @@ class LayoutAnnotation:
             layout_info[page_index].extend(figure_layout_info[page_index])
         return layout_info
 
-    def generate_reading_annotation(self, layout_info: Dict[int, List[Block]]):
+    def generate_reading_annotation(
+        self, layout_info: Dict[int, List[Block]]
+    ) -> DefaultDict[str, List]:
+        """Generate a reading annotation based on the layout information.
+
+        Args:
+            layout_info (Dict[int, List[Block]]): A dictionary containing the layout information
+                for each page index. The keys are the page indices and the values are lists of
+                `Block` objects representing the blocks on each page.
+
+        Returns:
+            DefaultDict[str, List]: A defaultdict containing the reading annotation. The keys
+            of the defaultdict are the page indices and the values are lists of dictionaries
+            representing the reading annotation for each block on the page. Each dictionary
+            contains the following keys:
+                - "source_code": The source code of the block.
+                - "image_path": The path to the saved image of the block.
+                - "category": The category of the block.
+
+            The defaultdict also contains the following keys:
+                - "categories": A list of dictionaries representing the categories. Each
+                  dictionary contains the following keys:
+                      - "id": The ID of the category.
+                      - "name": The name of the category.
+                - "macros": A dictionary containing the macro definitions extracted from
+                  the original tex file.
+        """
         reading_annotation = defaultdict(list)
 
         pdf_images_path = os.path.join(self.output_directory, "colored")
@@ -296,9 +392,21 @@ class LayoutAnnotation:
 
         return reading_annotation
 
-    def generate_image_annotation(self, layout_info: Dict[int, List[Block]]):
+    def generate_image_annotation(
+        self, layout_info: Dict[int, List[Block]]
+    ) -> Dict[int, str]:
+        """Generate image annotations based on the layout information.
+
+        Args:
+            layout_info (Dict[int, List[Block]]): A dictionary mapping page indices to a list of Block objects
+            representing the layout information.
+
+        Returns:
+            Dict[int, str]: A dictionary mapping page indices to annotated image filenames.
+        """
         pdf_images_path = os.path.join(self.output_directory, "colored")
         # sort all images by page index, see utils.pdf2jpg for details
+        # FIXME: use more robust way
         image_files = sorted(
             glob.glob(os.path.join(pdf_images_path, "*.jpg")), key=lambda x: x[-6:-4]
         )
@@ -318,6 +426,17 @@ class LayoutAnnotation:
         return image_info
 
     def _compute_overlap(self, layout_info: Dict[int, List[Block]]) -> List[Dict]:
+        """Computes the overlap between blocks in a layout.
+
+        Args:
+            layout_info (Dict[int, List[Block]]): A dictionary where the keys are page indices
+                and the values are lists of blocks on each page.
+
+        Returns:
+            List[Dict]: A list of dictionaries containing the overlap information for each page and
+                        the total overlap information.
+
+        """
         result = []
         total_area, total_overlap, total_blocks = 0, 0, 0
         for page_index in layout_info.keys():
