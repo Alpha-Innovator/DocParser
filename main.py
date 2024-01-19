@@ -59,7 +59,9 @@ def remove_redundant_stuff(main_directory: str) -> None:
 
     # remove useless pdf and image files
     # TODO: move this name pattern into config
-    redundant_folders = glob.glob(f"{main_directory}/output/{config.folder_prefix}*")
+    redundant_folders = glob.glob(
+        f"{main_directory}/output/paper_{config.folder_prefix}*"
+    )
     redundant_folders += [
         f"{main_directory}/output/paper_white",
         f"{main_directory}/output/paper_original",
