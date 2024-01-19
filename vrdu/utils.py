@@ -323,16 +323,7 @@ def colorize(text: str, category_name: str) -> str:
         return "{\\color{" + color + "}{" + text + "}}"
     if category_name == "Abstract":
         prefix = len("\\begin{abstract}")
-        suffix = len("\\end{abstract}")
-        return (
-            text[:prefix]
-            + "{\\color{"
-            + color
-            + "}"
-            + text[prefix:-suffix]
-            + "}"
-            + text[-suffix:]
-        )
+        return "{" + text[:prefix] + "\\color{" + color + "}" + text[prefix:] + "}"
     if category_name == "Code":
         return "{\\color{" + color + "}" + text + "}"
 
