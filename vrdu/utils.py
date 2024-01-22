@@ -23,7 +23,7 @@ def export_to_json(data, file_path) -> None:
         file_path (str): The path to the JSON file.
     """
     with open(file_path, "w") as json_file:
-        json.dump(data, json_file)
+        json.dump(data, json_file, indent=4)
 
 
 def load_json(file_path) -> Any:
