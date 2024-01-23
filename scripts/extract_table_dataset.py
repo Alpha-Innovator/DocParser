@@ -244,26 +244,38 @@ def process_one_discpline(path, cpu_count, discpline):
     tex_files = extract_tex_files(discpline_path)
     log.info(f"Found {len(tex_files)} tex files")
 
-    results = []
+    json_file = os.path.join(output_path, f"reading_annotation_{discpline}.json")
+
+    # use 50% files
+    num_samples = int(len(tex_files) * 0.5)
+    random_tex_files = random.sample(tex_files, num_samples)
+    log.info(f"Extract table from {num_samples} tex files")
+    slice_length = 100
+
     try:
-        with multiprocessing.Pool(cpu_count) as pool:
-            parallel_results = pool.map(process_one_file, tex_files)
-            results.extend(
-                [
-                    x
-                    for parallel_result in parallel_results
-                    for x in parallel_result
-                    if x
-                ]
-            )
+        for i in range(0, num_samples, slice_length):
+            results = []
+            batch_tex_files = random_tex_files[i : i + slice_length]
+            with multiprocessing.Pool(cpu_count) as pool:
+                results = pool.map(process_one_file, batch_tex_files)
+                results = [x for result in results for x in result if x]
+
+            for x in results:
+                x["discpline"] = discpline
+
+            if not os.path.exists(json_file):
+                utils.export_to_json(results, json_file)
+            else:
+                json_data = utils.load_json(json_file)
+                json_data.extend(results)
+                utils.export_to_json(json_data, json_file)
+
+            log.debug(f"processed {i,i + slice_length}-th batch")
+
     except Exception:
         log.exception(f"failed to process discpline: {discpline}")
     finally:
-        for x in results:
-            x["discpline"] = discpline
-        utils.export_to_json(
-            results, os.path.join(output_path, f"reading_annotation_{discpline}.json")
-        )
+        os.remove(log_file)
 
 
 def main():
