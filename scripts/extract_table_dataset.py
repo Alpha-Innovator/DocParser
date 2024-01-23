@@ -12,7 +12,7 @@ from uuid import uuid4
 from vrdu import logger
 from vrdu import utils
 
-log_file = str(uuid4()) + ".log"
+log_file = "vrdu_table_" + str(uuid4()) + ".log"
 log = logger.setup_app_level_logger(file_name=log_file, level="INFO", mode="a")
 
 
