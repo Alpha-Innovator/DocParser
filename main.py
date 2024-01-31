@@ -158,7 +158,9 @@ def main() -> None:
         vrdu_annotation = annotation.LayoutAnnotation(main_directory)
         vrdu_annotation.annotate()
 
-        log.info(f"[VRDU] file: {original_tex}, successfully processed.")
+        log.info(
+            f"[VRDU] file: {original_tex}, successfully processed. Directory: {main_directory}"
+        )
 
     except Exception:
         log.exception(f"[VRDU] file: {original_tex}, failed.")
