@@ -347,7 +347,8 @@ class LayoutAnnotation:
 
         # sort all images by page index, see utils.pdf2jpg for details
         image_files = sorted(
-            glob.glob(os.path.join(self.pdf_images_path, "*.jpg")), key=lambda x: x[-6:-4]
+            glob.glob(os.path.join(self.pdf_images_path, "*.jpg")),
+            key=lambda x: x[-6:-4],
         )
         count = 0
         for page_index in layout_info.keys():
@@ -390,7 +391,8 @@ class LayoutAnnotation:
         # sort all images by page index, see utils.pdf2jpg for details
         # FIXME: use more robust way
         image_files = sorted(
-            glob.glob(os.path.join(self.pdf_images_path, "*.jpg")), key=lambda x: x[-6:-4]
+            glob.glob(os.path.join(self.pdf_images_path, "*.jpg")),
+            key=lambda x: x[-6:-4],
         )
 
         image_info = {}  # annotation image info member of COCO
