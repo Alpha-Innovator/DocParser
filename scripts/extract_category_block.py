@@ -113,6 +113,11 @@ def extract_category(
                 block = add_layout_information(block)
             if category_name == "Text-EQ":
                 add_linguistic_information(block)
+
+            # ignores all identical blocks
+            if result and block["source_code"] == result[-1]["source_code"]:
+                result.pop()
+                continue
             result.append(block)
 
     # save images
