@@ -1,4 +1,5 @@
 import os
+import time
 import arxiv
 import shutil
 
@@ -34,12 +35,12 @@ def retrive_metadata_for_files(path: str) -> None:
     files = [f for f in os.listdir(path) if os.path.isfile(os.path.join(path, f))]
     # filter the files have format xxxx.yyyy.ext
     filtered_files = [
-        f for f in files if f[:4].isdigit() and f[5:].isdigit() and f[4] == "."
+        f for f in files if f[:4].isdigit() and f[5:9].isdigit() and f[4] == "."
     ]
     num_papers = len(filtered_files)
     log.info("There are {} files".format(num_papers))
-    client = arxiv.Client(delay_seconds=5)
-    slice_length = 50
+    client = arxiv.Client()
+    slice_length = 100
 
     for i in range(0, num_papers, slice_length):
         filename_without_extensions = [
@@ -98,7 +99,7 @@ def retrive_metadata_for_folders(path: str) -> None:
     ]
     num_papers = len(filtered_subfolders)
     log.info("There are {} subfolders".format(num_papers))
-    client = arxiv.Client(delay_seconds=5)
+    client = arxiv.Client()
     slice_length = 100
     for i in range(0, num_papers, slice_length):
         slice_list = filtered_subfolders[i : i + slice_length]
