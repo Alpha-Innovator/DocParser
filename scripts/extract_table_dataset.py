@@ -270,15 +270,12 @@ def generate_annotation(tabular_data: Dict) -> None:
             os.remove(file)
 
 
-    return data
-
-
-def extract_caption(table: str):
+def extract_caption(table: str) -> str:
     pattern = r"\\caption\{(.*?)\}"
     matches = re.finditer(pattern, table)
-    for match in matches:
-        start = match.start()
-        end = match.end()
+    for m in matches:
+        start = m.start()
+        end = m.end()
 
         # the regex is greedy, iterate to find the end of footnote env
         num_left_brackets = table[start:end].count("{")
@@ -292,7 +289,7 @@ def extract_caption(table: str):
 
         return table[start:end]
 
-    return None
+    return ""
 
 
 def process_one_file(tex_file):
