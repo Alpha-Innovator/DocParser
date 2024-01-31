@@ -195,46 +195,80 @@ def remove_comments(tabular: str) -> str:
         output += "\n"
 
     return output
+
+
+def generate_annotation(tabular_data: Dict) -> None:
+    prefix = r"""
+    \documentclass[10pt]{article}
+    \usepackage[a3paper, margin=1in]{geometry}
+    \usepackage[table,dvipsnames]{xcolor}
+    \usepackage{booktabs}
+    \usepackage{tabularx, tabulary, makecell, multirow}
+    \usepackage{graphicx}
+    \usepackage{array}
+    \usepackage{hyperref}
+    \usepackage{longtable}
+    \usepackage{amsmath}
+    \usepackage{amssymb}
+    \usepackage{amsbsy}
+    \pagenumbering{gobble}
+    \begin{document}
+    \begin{table*}[t]
+    \centering
+
+    """
+
+    suffix = r"""
+
+    \end{table*}
+    \end{document}
+    """
+
+    tabular = tabular_data["source_code"]
     if "\\includegraphic" in tabular:
-        return data
+        return
 
-    tabular = remove_cite(tabular)
-    data["source_code"] = tabular
-
-    tex_content = prefix + data["source_code"] + suffix
     temp_filename = str(uuid4())
     temp_file = temp_filename + ".tex"
     pdf_file = temp_file.replace("tex", "pdf")
-    with open(temp_file, "w") as f:
-        f.write(tex_content)
-
-    try:
-        utils.compile_latex(temp_file)
-        data["quality"] = "high"
-    except Exception:
-        data["quality"] = "uncompiable"
-        data["image_path"] = None
-
     png_filename = str(uuid4()) + ".png"
     output_png_file = os.path.join(output_path, png_filename)
+
     try:
-        utils.convert_pdf_figure_to_png_image(pdf_file, output_png_file, dpi=dpi)
-        data["image_path"] = png_filename
-    except Exception:
-        data["quality"] = "uncompiable"
-        data["image_path"] = None
+        # step1: remove redundant stuff
+        tabular = remove_cite(tabular)
+        tabular = remove_comments(tabular)
 
-    if not os.path.exists(output_png_file):
-        data["quality"] = "uncompiable"
-        data["image_path"] = None
-    data["added_date"] = str(datetime.today())
+        tabular_data["source_code"] = tabular
 
-    # remove files
-    files = glob.glob(f"{os.getcwd()}/{temp_filename}.*")
-    for file in files:
-        os.remove(file)
+        # step2: compile tex into png images
+        tex_content = prefix + tabular + suffix
+        with open(temp_file, "w") as f:
+            f.write(tex_content)
 
-    add_layout_information(data)
+            # FIXME: add a timeout to control running time
+            # utils.compile_latex(temp_file)
+        subprocess.run(["pdflatex", temp_file], check=True, timeout=100)
+        utils.convert_pdf_figure_to_png_image(pdf_file, output_png_file, dpi=200)
+        tabular_data["image_path"] = png_filename
+
+        # step3: add layout metadata
+        add_layout_information(tabular_data)
+
+        # step4: classify quality
+        classify_quality(tabular_data)
+    except Exception as e:
+        error_type = e.__class__.__name__
+        error_info = str(e)
+        log.error(
+            f"[VRDU] failed to process tabular: {tabular}, type: {error_type}, message: {error_info}"
+        )
+    finally:
+        # remove files
+        files = glob.glob(f"{os.getcwd()}/{temp_filename}.*")
+        for file in files:
+            os.remove(file)
+
 
     return data
 
