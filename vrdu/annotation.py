@@ -95,8 +95,10 @@ class LayoutAnnotation:
         element2 = self.ONE_INCH + layout_metadata["voffset"]
         element3 = layout_metadata["oddsidemargin"]
         element4 = layout_metadata["topmargin"]
+        element5 = layout_metadata["headheight"]
+        element6 = layout_metadata["headsep"]
         margin_width = element1 + element3
-        margin_height = element2 + element4
+        margin_height = (element2 - (element4 - element5)) + element6 / 2
         layout_metadata["margin_width"] = margin_width
 
         # sort all images by page index, see utils.pdf2jpg for details
@@ -130,7 +132,7 @@ class LayoutAnnotation:
                 x += separation
             # TODO: consider the margin notes
             layout_metadata[page_index]["separations"].append(pdf_width * px2img)
-            layout_metadata[page_index]["top_margin"] = margin_height * pt2px * px2img
+            layout_metadata[page_index]["top_margin"] = margin_height
 
         utils.export_to_json(
             layout_metadata,
@@ -240,10 +242,16 @@ class LayoutAnnotation:
                 if len(bounding_boxes) == 0:
                     continue
 
+                separations = self.layout_metadata[page_index]["separations"]
+                top_margin = self.layout_metadata[page_index]["top_margin"]
+
                 # We do not consider the cross column case for these envs.
                 if category in envs.one_column_envs:
+                    bboxes = [bb for bb in bounding_boxes if bb[0] >= top_margin]
+                    if len(bboxes) == 0:
+                        continue
                     element = Block(
-                        bounding_box=BoundingBox.from_list(bounding_boxes),
+                        bounding_box=BoundingBox.from_list(bboxes),
                         source_code=self.text_info[category][index],
                         category=config.name2category[category],
                         page_index=page_index,
@@ -254,8 +262,6 @@ class LayoutAnnotation:
                     continue
 
                 # consider possible cross column case
-                separations = self.layout_metadata[page_index]["separations"]
-                top_margin = self.layout_metadata[page_index]["top_margin"]
                 for column in range(self.layout_metadata["num_columns"]):
                     # min_x: bb[1], min_y: bb[0], max_x: bb[4], max_y: bb[3]
                     column_boxes = [
