@@ -1,12 +1,12 @@
 from datetime import datetime
-from functools import partial
 import glob
 import multiprocessing
 import os
 import argparse
 import random
 import re
-from subprocess import CalledProcessError
+import shutil
+import subprocess
 from typing import Dict, List
 from uuid import uuid4
 
@@ -397,26 +397,39 @@ def process_one_discpline(path, cpu_count, discpline):
         )
     unique_tex_files = [x for x in tex_files if x not in existed_source]
     random.shuffle(unique_tex_files)
+
+    log.info(f"Extract table from {len(unique_tex_files)} tex files")
+
+    try:
+        # use mini-batch to prevent memory overflow
+        slice_length = 100
+        for i in range(0, len(unique_tex_files), slice_length):
+            batch_tex_files = unique_tex_files[i : i + slice_length]
             with multiprocessing.Pool(cpu_count) as pool:
-                results = pool.map(process_one_file, batch_tex_files)
-                results = [x for result in results for x in result if x]
+                # results = pool.map(process_one_file, batch_tex_files)
+                results = pool.map_async(process_one_file, batch_tex_files)
+                results = results.get(timeout=300)  # Timeout value in seconds
+
+            # filter all empty items
+            results = [x for result in results for x in result if x]
+            log.info(f"there are {len(results)} items")
 
             for x in results:
                 x["discpline"] = discpline
 
-            if not os.path.exists(json_file):
-                utils.export_to_json(results, json_file)
-            else:
+            # use append mode to update json file
+            json_data = []
+            if os.path.exists(json_file):
                 json_data = utils.load_json(json_file)
-                json_data.extend(results)
-                utils.export_to_json(json_data, json_file)
 
-            log.debug(f"processed {i,i + slice_length}-th batch")
+            json_data.extend(results)
+            utils.export_to_json(json_data, json_file)
 
+            log.info(f"processed {i,i + slice_length}-th batch")
     except Exception:
-        log.exception(f"failed to process discpline: {discpline}")
+        log.error(f"failed to process discpline: {discpline}")
     finally:
-        os.remove(log_file)
+        shutil.move(log_file, f"vrdu_table_{discpline}.log")
 
 
 def main():
