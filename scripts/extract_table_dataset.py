@@ -146,24 +146,34 @@ def extract_columns(tabular) -> int:
 def remove_cite(tex_content: str) -> str:
     # remove all cites in a string representing latex content
     # https://www.overleaf.com/learn/latex/Natbib_citation_styles
-    tex_content = re.sub(r"\\cite\{.*?\}", "", tex_content)
-    tex_content = re.sub(r"\\cite\*\{.*?\}", "", tex_content)
-    tex_content = re.sub(r"\\citet\{.*?\}", "", tex_content)
-    tex_content = re.sub(r"\\citep\{.*?\}", "", tex_content)
-    tex_content = re.sub(r"\\citet\*\{.*?\}", "", tex_content)
-    tex_content = re.sub(r"\\citep\*\{.*?\}", "", tex_content)
-    tex_content = re.sub(r"\\citeauthor\{.*?\}", "", tex_content)
-    tex_content = re.sub(r"\\citeyear\{.*?\}", "", tex_content)
+    cite_patterns = "|".join(
+        [
+            r"\\cite\{.*?\}",
+            r"\\cite\*\{.*?\}",
+            r"\\citet\{.*?\}",
+            r"\\citet\*\{.*?\}",
+            r"\\citep\{.*?\}",
+            r"\\citep\*\{.*?\}",
+            r"\\citeauthor\{.*?\}",
+            r"\\citeyear\{.*?\}",
+        ]
+    )
+    tex_content = re.sub(cite_patterns, "", tex_content)
 
     # remove ref
     # https://en.wikibooks.org/wiki/LaTeX/Labels_and_Cross-referencing
-    tex_content = re.sub(r"\\ref\{.*?\}", "", tex_content)
-    tex_content = re.sub(r"\\eqref\{.*?\}", "", tex_content)
-    tex_content = re.sub(r"\\pageref\{.*?\}", "", tex_content)
-    tex_content = re.sub(r"\\autoref\{.*?\}", "", tex_content)
-    tex_content = re.sub(r"\\vref\{.*?\}", "", tex_content)
-    tex_content = re.sub(r"\\cref\{.*?\}", "", tex_content)
-    tex_content = re.sub(r"\\labelcref\{.*?\}", "", tex_content)
+    ref_patterns = "|".join(
+        [
+            r"\\ref\{.*?\}",
+            r"\\eqref\{.*?\}",
+            r"\\pageref\{.*?\}",
+            r"\\autoref\{.*?\}",
+            r"\\vref\{.*?\}",
+            r"\\cref\{.*?\}",
+            r"\\labelcref\{.*?\}",
+        ]
+    )
+    tex_content = re.sub(ref_patterns, "", tex_content)
 
     return tex_content
 
