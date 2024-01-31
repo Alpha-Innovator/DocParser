@@ -297,39 +297,77 @@ def extract_caption(table: str):
 
 def process_one_file(tex_file):
     log.debug(f"tex_file={tex_file}")
+    result = []
+
     try:
         with open(tex_file) as f:
             tex_content = f.read()
     except UnicodeDecodeError:
-        return []
+        return result
 
-    tabular_pattern = r"\\begin{tabular}.*?\\end{tabular}"
+    # use this pattern to extract all tabulars
+    tabular_pattern = "|".join(
+        [
+            r"\\begin{tabular}.*?\\end{tabular}",
+            r"\\begin{tabular*}.*?\\end{tabular*}",
+            r"\\begin{tabularx}.*?\\end{tabularx}",
+            r"\\begin{tabulary}.*?\\end{tabulary}",
+        ]
+    )
+
+    # use this pattern to find all caption
+    table_pattern = "|".join(
+        [
+            r"\\begin{table}.*?\\end{table}",
+            r"\\begin{table*}.*?\\end{table*}",
+            r"\\begin{wraptable}.*?\\end{wraptable}",
+        ]
+    )
+
     tabular_indexes = [
         (m.start(), m.end())
         for m in re.finditer(tabular_pattern, tex_content, re.DOTALL)
     ]
     tabulars = [tex_content[index[0] : index[1]] for index in tabular_indexes]
 
-    result = [generate_annotation(tabular) for tabular in tabulars]
+    if not tabulars:
+        return result
 
-    # retrive caption
-    table_pattern = r"\\begin{table}.*?\\end{table}"
     table_indexes = [
         (m.start(), m.end()) for m in re.finditer(table_pattern, tex_content, re.DOTALL)
     ]
+    captions = [
+        (
+            start,
+            end,
+            extract_caption(tex_content[start:end]),
+        )
+        for start, end in table_indexes
+    ]
 
-    for i, data in enumerate(result):
-        data["paper_source"] = tex_file
-        data["caption"] = None
-        for table_index in table_indexes:
-            if (
-                tabular_indexes[i][0] >= table_index[0]
-                and tabular_indexes[i][1] <= table_index[1]
-            ):
-                data["caption"] = extract_caption(
-                    tex_content[table_index[0] : table_index[1]]
-                )
+    for index, tabular in enumerate(tabulars):
+        log.info(f"processing tabular: {tabular}")
+        data = {
+            "source_code": tabular,
+            "paper_source": tex_file,
+            "caption": None,
+            "quality": "uncompiable",
+            "image_path": None,
+            "added_date": str(datetime.today()),
+            "cols": 0,
+            "rows": 0,
+            "multicol": 0,
+            "multirow": 0,
+        }
+        generate_annotation(data)
+
+        # try to retrive caption
+        for start, end, caption in captions:
+            if tabular_indexes[index][0] >= start and tabular_indexes[index][1] <= end:
+                data["caption"] = caption
                 break
+
+        result.append(data)
 
     log.info(f"Extract {len(result)} tabular data in {tex_file}")
     return result
