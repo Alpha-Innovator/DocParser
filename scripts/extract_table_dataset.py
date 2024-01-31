@@ -47,43 +47,85 @@ def extract_tex_files(path) -> List[str]:
     return tex_files
 
 
-def expand_column_patterns(column_patterns: str) -> str:
-    expanded_columns = ""
-    pattern_parts = column_patterns.split("|")
-    for pattern in pattern_parts:
-        if pattern.startswith("*{") and pattern.endswith("}"):
-            sub_pattern = pattern[2:-1]
-            num, form = sub_pattern.split("}{")
-            num = int(num)
-            expanded_columns += form * num
-        else:
-            expanded_columns += pattern
-        expanded_columns += "|"
-    return expanded_columns.rstrip("|")
-
-
-def add_layout_information(tabular: Dict):
-    tabular["cols"] = 0
-    tabular["rows"] = 0
-    # count the number of rows and columns
-    cols_match = re.search(
-        r"\\begin{tabular}\n?(?:\[.*?\])?{(.*)}", tabular["source_code"]
-    )
+def extract_columns(tabular) -> int:
+    # step0: extract the column field from table
+    # \begin{tabular*}[]{cccccccccc}
+    cols_match = re.search(r"\\begin{tabular}\n?(?:\[.*?\])?{(.*)}", tabular)
 
     if not cols_match:
-        log.debug(f"cols not found for {tabular}")
-        return tabular
-    cols = cols_match.group(1)
+        return 0
 
-    align_patterns = ["c", "r", "l", "p"]
-    try:
-        expanded_cols = expand_column_patterns(cols)
-    except Exception:
-        log.exception(f"Error processing data: {tabular}")
-        return tabular
+    col_spec = cols_match.group(1)
+    if len(col_spec) == 1:
+        return 1
 
-    num_columns = sum(expanded_cols.count(ch) for ch in align_patterns)
-    tabular["cols"] = num_columns
+    start = tabular.find(col_spec)
+    end = start
+    num_left_bracket = 1
+    num_right_bracket = 0
+    while num_right_bracket < num_left_bracket:
+        if tabular[end] == "{":
+            num_left_bracket += 1
+        elif tabular[end] == "}":
+            num_right_bracket += 1
+        end += 1
+
+    cols = tabular[start : end - 1]
+
+    # step1: remove |
+    cols = cols.replace("|", "")
+    cols = cols.replace(" ", "")
+    cols = cols.replace("\\centering", "")
+    cols = cols.replace("\\arraybackslash", "")
+
+    # step2: expand column patterns
+    # step2.1 remove @{}, >{}, <{}, !{}
+    for ch in ["@", ">", "<", "!"]:
+        while cols.find(ch) != -1:
+            result = ""
+            index = cols.find(ch)
+            start = index
+            end = start
+            num_left_bracket = 0
+            num_right_bracket = 0
+            while num_left_bracket == 0 or num_right_bracket < num_left_bracket:
+                if cols[end] == "{":
+                    num_left_bracket += 1
+                elif cols[end] == "}":
+                    num_right_bracket += 1
+                end += 1
+            if start == 0:
+                result = cols[end:]
+            else:
+                result = cols[:start] + cols[end:]
+            cols = result
+
+    # step2.2 delete width brackets
+    cols = re.sub(r"(p|m|b)\{.*?\}", r"\1", cols)
+    # step2.3 expand abbreviations
+    result = 0
+
+    pattern1 = r"\*(\d+)\{(.+?)\}"
+    matches = re.findall(pattern1, cols)
+    for match in matches:
+        num_repetitions = int(match[0])
+        col_spec = match[1]
+        result += (num_repetitions - 1) * len(col_spec)
+
+    pattern2 = r"\*{(.*?)}\{(.+?)\}"
+    matches = re.findall(pattern2, cols)
+    for match in matches:
+        num_repetitions = int(match[0])
+        col_spec = match[1]
+        result += (num_repetitions - 1) * len(col_spec)
+
+    # step3: extract columns
+    for c in cols:
+        if c.isalpha():
+            result += 1
+
+    return result
+
 
     # count the number of rows
     num_rows = tabular["source_code"].count("\\\\")
