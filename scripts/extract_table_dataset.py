@@ -4,6 +4,7 @@ import glob
 import multiprocessing
 import os
 import argparse
+import random
 import re
 from subprocess import CalledProcessError
 from typing import Dict, List
@@ -379,16 +380,23 @@ def process_one_discpline(path, cpu_count, discpline):
 
     json_file = os.path.join(output_path, f"reading_annotation_{discpline}.json")
 
-    # use 50% files
-    num_samples = int(len(tex_files) * 0.5)
-    random_tex_files = random.sample(tex_files, num_samples)
-    log.info(f"Extract table from {num_samples} tex files")
-    slice_length = 100
-
-    try:
-        for i in range(0, num_samples, slice_length):
-            results = []
-            batch_tex_files = random_tex_files[i : i + slice_length]
+    # use existed source to filter processed tex files
+    existed_json_file = os.path.join(
+        output_path, f"{discpline}/reading_annotation_{discpline}.json"
+    )
+    existed_source = set()
+    if os.path.exists(existed_json_file):
+        existed_json_data = utils.load_json(existed_json_file)
+        existed_source = set(
+            x["paper_source"] for x in existed_json_data if "paper_source" in x
+        )
+    if os.path.exists(json_file):
+        existed_json_data = utils.load_json(json_file)
+        existed_source.union(
+            set(x["paper_source"] for x in existed_json_data if "paper_source" in x)
+        )
+    unique_tex_files = [x for x in tex_files if x not in existed_source]
+    random.shuffle(unique_tex_files)
             with multiprocessing.Pool(cpu_count) as pool:
                 results = pool.map(process_one_file, batch_tex_files)
                 results = [x for result in results for x in result if x]
