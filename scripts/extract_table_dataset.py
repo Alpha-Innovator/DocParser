@@ -178,11 +178,13 @@ def remove_cite(tex_content: str) -> str:
     return tex_content
 
 
-def generate_annotation(tabular: str) -> Dict:
-    prefix = "\\documentclass[10pt]{article}\n\\usepackage[a3paper, margin=1in]{geometry}\n\\usepackage[table,dvipsnames]{xcolor}\n\\usepackage{booktabs}\n\\usepackage{tabularx, makecell, multirow}\n\\usepackage{graphicx}\n\\usepackage{array}\n\\usepackage{longtable}\n\\usepackage{amsmath}\n\\usepackage{amssymb}\n\\usepackage{amsbsy}\n\\pagenumbering{gobble}\n\\begin{document}\n"
-    suffix = "\n\\end{document}"
-    data = {}
+def remove_comments(tabular: str) -> str:
+    output = ""
+    for line in tabular.splitlines():
+        output += re.sub(r"(?<!\\)%.*?(?=$|(?<!\\)\%)", "", line, flags=re.DOTALL)
+        output += "\n"
 
+    return output
     if "\\includegraphic" in tabular:
         return data
 
