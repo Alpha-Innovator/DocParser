@@ -127,20 +127,30 @@ def extract_columns(tabular) -> int:
     return result
 
 
+def classify_quality(tabular_data: Dict):
+    # mark table with <= 3 columns or rows <= 3 as low quality
+    if not tabular_data["image_path"]:
+        return
+    if tabular_data["cols"] <= 3 or tabular_data["rows"] <= 3:
+        tabular_data["quality"] = "low"
+        return
+    tabular_data["quality"] = "high"
+
+
+def add_layout_information(tabular_data: Dict):
+    # count the number ofcolumns
+    tabular_data["cols"] = extract_columns(tabular_data["source_code"])
+
     # count the number of rows
-    num_rows = tabular["source_code"].count("\\\\")
-    num_rows += tabular["source_code"].count("\\tabularnewline")
-    tabular["rows"] = num_rows
+    num_rows = tabular_data["source_code"].count("\\\\")
+    num_rows += tabular_data["source_code"].count("\\tabularnewline")
+    tabular_data["rows"] = num_rows
 
     # add the count of multicolumn and multirows
-    multirow_count = len(re.findall(r"\\multirow", tabular["source_code"]))
-    multicolumn_count = len(re.findall(r"\\multicolumn", tabular["source_code"]))
-    tabular["multirow"] = multirow_count
-    tabular["multicol"] = multicolumn_count
-
-    # mark table with <= 3 columns or rows <= 3 as low quality
-    if num_columns <= 3 or num_rows <= 3:
-        tabular["quality"] = "low"
+    multirow_count = len(re.findall(r"\\multirow", tabular_data["source_code"]))
+    multicolumn_count = len(re.findall(r"\\multicolumn", tabular_data["source_code"]))
+    tabular_data["multirow"] = multirow_count
+    tabular_data["multicol"] = multicolumn_count
 
 
 def remove_cite(tex_content: str) -> str:
