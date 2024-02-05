@@ -20,43 +20,6 @@ log_file = str(uuid4()) + ".log"
 log = logger.setup_app_level_logger(file_name=log_file, level="INFO", mode="a")
 
 
-def extract_tex_files(path) -> List[str]:
-    """
-    Given a path, this function extracts all the MAIN .tex files within the
-    specified directory and its subdirectories.
-
-    Args:
-        path (str): The path to the directory where the .tex files are located.
-
-    Returns:
-        List[str]: A list of paths to the .tex files found.
-    """
-    tex_files = []
-
-    for root, dirs, files in os.walk(path):
-        for file in files:
-            # skip non-tex files
-            if not file.endswith(".tex"):
-                continue
-            # skip paper_*.tex files
-            if file.startswith("paper_"):
-                continue
-            tex_file = os.path.join(root, file)
-
-            try:
-                with open(tex_file, "r") as f:
-                    content = f.read()
-            except UnicodeDecodeError:
-                continue
-
-            # skip if this tex is not the main document
-            if "\\begin{document}" not in content:
-                continue
-
-            tex_files.append(tex_file)
-    return tex_files
-
-
 def transform_tex_to_images(main_directory: str) -> None:
     """
     Transforms TeX files with pattern paper_*.tex in the specified directory into jpg images.
@@ -172,7 +135,7 @@ def process_one_category(path, cpu_count, category):
     category_path = os.path.join(path, category)
     log.info(f"path to raw data: {category_path}")
     log.info(f"Using cpu counts: {cpu_count}")
-    tex_files = extract_tex_files(category_path)
+    tex_files = utils.extract_all_tex_files(category_path)
     log.info(f"Found {len(tex_files)} tex files")
 
     try:

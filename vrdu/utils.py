@@ -14,6 +14,30 @@ from pdf2image import generators
 from vrdu.config import config
 
 
+def extract_all_tex_files(path) -> List[str]:
+    """
+    Given a path, this function extracts all the MAIN .tex files within the
+    specified directory and its subdirectories.
+
+    Args:
+        path (str): The path to the directory where the .tex files are located.
+
+    Returns:
+        List[str]: A list of paths to the .tex files found.
+    """
+    tex_files = []
+
+    for root, dirs, files in os.walk(path):
+        for file in files:
+            # skip non-tex files
+            if not file.endswith(".tex"):
+                continue
+            tex_file = os.path.join(root, file)
+
+            tex_files.append(tex_file)
+    return tex_files
+
+
 def export_to_json(data, file_path) -> None:
     """
     Write the contents of a dictionary to a JSON file.
