@@ -131,11 +131,40 @@ def process_one_file(file_name) -> None:
         os.chdir(cwd)
 
 
+def filter_tex_files(tex_files: List[str]) -> List[str]:
+    """extract all MAIN.tex files for processing
+
+    Args:
+        tex_files (List[str]): list of tex files
+
+    Returns:
+        List[str]: list of tex files that are compiable.
+    """
+    result = []
+    for tex_file in tex_files:
+        # prevent processing previous generated files
+        if os.path.basename(tex_file).startswith("paper_"):
+            log.debug(f"{tex_file} should be deleted.")
+            continue
+        try:
+            with open(tex_file) as f:
+                content = f.read()
+            if content.find(r"\\begin{document}") == -1:
+                continue
+            result.append(tex_file)
+        except UnicodeDecodeError:
+            log.debug(f"failed to read tex file: {tex_file}")
+            continue
+
+    return result
+
+
 def process_one_category(path, cpu_count, category):
     category_path = os.path.join(path, category)
     log.info(f"path to raw data: {category_path}")
     log.info(f"Using cpu counts: {cpu_count}")
     tex_files = utils.extract_all_tex_files(category_path)
+    tex_files = filter_tex_files(tex_files)
     log.info(f"Found {len(tex_files)} tex files")
 
     try:
