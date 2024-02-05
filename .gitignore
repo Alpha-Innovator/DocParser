@@ -177,3 +177,7 @@ output.txt
 
 vrdu_arxiv
 COCO_datasets
+
+*.tex
+*.aux
+*.pdf
