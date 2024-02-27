@@ -630,8 +630,12 @@ class Renderer:
         """
         with open(tex_file) as f:
             content = f.read()
-
-        pattern = r"\\begin{tabular}.*?\\end{tabular}"
+        pattern = "|".join(
+            [
+                r"\\begin{0}.*?\\end{0}".format(tabular_env)
+                for tabular_env in envs.tabular_envs
+            ]
+        )
         result = self._render_float_envs(content, pattern, "Table")
 
         with open(tex_file, "w") as f:
