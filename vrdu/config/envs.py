@@ -60,9 +60,7 @@ tabular_envs = [
     "tabular*",
     "tabularx",
     "tabulary",
-    "longtable",
     "tabu",
-    "longtabu",
 ]
 
 figure_envs = [
