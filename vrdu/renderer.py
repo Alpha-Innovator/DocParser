@@ -721,10 +721,10 @@ class Renderer:
         for i, _ in enumerate(indexes):
             if i > 0:
                 result += content[indexes[i - 1][1] : indexes[i][0]]
-            algorithm = content[indexes[i][0] : indexes[i][1]]
-            self.texts[category].append(algorithm)
-            colored_algorithm = utils.colorize(algorithm, category)
-            result += colored_algorithm
+            float_env = content[indexes[i][0] : indexes[i][1]]
+            self.texts[category].append(float_env)
+            colored_float_env = utils.colorize(float_env, category)
+            result += colored_float_env
 
         result += content[indexes[-1][1] :]
         return result
