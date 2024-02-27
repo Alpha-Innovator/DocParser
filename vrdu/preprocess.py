@@ -181,8 +181,8 @@ def run(original_tex: str) -> None:
     """
     Generates a modified version of the given LaTeX document by performing the following steps:
 
-    Step 0: Replace EPS figures with PDF to make the LaTeX document compilable with pdflatex.
-    Step 1: Clean the LaTeX document with arxiv_cleaner package.
+    Step 0: Clean the LaTeX document with arxiv_cleaner package.
+    Step 1: Replace EPS figures with PDF to make the LaTeX document compilable with pdflatex.
     Step 2: Replace PDF figures with PNG to make pdfminer work.
     Step 3: Delete the table of contents from the LaTeX document.
 
@@ -192,11 +192,11 @@ def run(original_tex: str) -> None:
     Returns:
         None
     """
-    # Step 0: replace eps figures to make the tex compilable
-    replace_eps_figures_with_pdf(original_tex)
-
-    # Step 1: clean tex
+    # Step 0: clean tex
     clean_tex(original_tex)
+
+    # Step 1: replace eps figures to make the tex compilable
+    replace_eps_figures_with_pdf(original_tex)
 
     # Step 2: process images
     replace_pdf_figures_with_png(original_tex)
