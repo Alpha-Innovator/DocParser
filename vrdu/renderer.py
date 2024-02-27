@@ -722,6 +722,13 @@ class Renderer:
             if i > 0:
                 result += content[indexes[i - 1][1] : indexes[i][0]]
             float_env = content[indexes[i][0] : indexes[i][1]]
+
+            # filter tablle of figures
+            if category == "Table" and float_env.find("\\includegraphics") != -1:
+                continue
+
+            # TODO: filter table in equation envs
+
             self.texts[category].append(float_env)
             colored_float_env = utils.colorize(float_env, category)
             result += colored_float_env
