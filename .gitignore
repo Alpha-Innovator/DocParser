@@ -173,11 +173,8 @@ Texsoup/docs/
 TexSoup/docs/
 TexSoup/examples/
 TexSoup/tests/
-output.txt
 
-vrdu_arxiv
-COCO_datasets
-
+# tex relate files
 *.tex
 *.aux
 *.pdf
