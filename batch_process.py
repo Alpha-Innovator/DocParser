@@ -131,17 +131,21 @@ def process_one_file(file_name) -> None:
         os.chdir(cwd)
 
 
-def filter_tex_files(tex_files: List[str]) -> List[str]:
-    """extract all MAIN.tex files for processing
+def filter_tex_files(tex_files: List[str], main_path: str = None) -> List[str]:
+    """extract all MAIN.tex files for processing, if main_path is not None, then
+    only extract MAIN.tex files in the main_path (not recursive)
 
     Args:
         tex_files (List[str]): list of tex files
+        main_path (str, optional): path to main directory. Defaults to None.
 
     Returns:
         List[str]: list of tex files that are compiable.
     """
     result = []
     for tex_file in tex_files:
+        if main_path and os.path.dirname(os.path.dirname(tex_file)) != main_path:
+            continue
         # prevent processing previous generated files
         if os.path.basename(tex_file).startswith("paper_"):
             log.debug(f"{tex_file} should be deleted.")
@@ -164,7 +168,7 @@ def process_one_category(path, cpu_count, category):
     log.info(f"path to raw data: {category_path}")
     log.info(f"Using cpu counts: {cpu_count}")
     tex_files = utils.extract_all_tex_files(category_path)
-    tex_files = filter_tex_files(tex_files)
+    tex_files = filter_tex_files(tex_files, category_path)
     log.info(f"Found {len(tex_files)} tex files")
 
     try:
