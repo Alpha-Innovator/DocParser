@@ -145,15 +145,13 @@ def filter_tex_files(tex_files: List[str], main_path: str = None) -> List[str]:
     result = []
     for tex_file in tex_files:
         if main_path and os.path.dirname(os.path.dirname(tex_file)) != main_path:
+            log.info(f"not the valid tex file: {tex_file}")
             continue
         # prevent processing previous generated files
-        if os.path.basename(tex_file).startswith("paper_"):
-            log.debug(f"{tex_file} should be deleted.")
-            continue
         try:
             with open(tex_file) as f:
                 content = f.read()
-            if content.find(r"\\begin{document}") == -1:
+            if "\\begin{document}" not in content:
                 continue
             result.append(tex_file)
         except UnicodeDecodeError:
