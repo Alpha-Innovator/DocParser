@@ -71,7 +71,8 @@ def remove_redundant_stuff(main_directory: str) -> None:
         f"{main_directory}/output/paper_original",
     ]
     for folder in redundant_folders:
-        shutil.rmtree(folder)
+        if os.path.exists(folder):
+            shutil.rmtree(folder)
 
 
 def process_one_file(file_name) -> None:
