@@ -67,7 +67,65 @@ def remove_redundant_stuff(main_directory: str) -> None:
         f"{main_directory}/output/paper_original",
     ]
     for folder in redundant_folders:
-        shutil.rmtree(folder)
+        if os.path.exists(folder):
+            shutil.rmtree(folder)
+
+
+def process_one_file(file_name) -> None:
+    main_directory = os.path.dirname(file_name)
+    log.info(f"[VRDU] file: {file_name}, start processing.")
+
+    # check if this paper has been processed
+    quality_report_file = os.path.join(
+        main_directory, "output/result/quality_report.json"
+    )
+    if os.path.exists(quality_report_file):
+        log.info(f"[VRDU] file: {file_name}, paper has been processed")
+        return
+
+    # make a copy of the original tex file
+    original_tex = os.path.join(main_directory, "paper_original.tex")
+    shutil.copyfile(file_name, original_tex)
+
+    cwd = os.getcwd()
+
+    try:
+        # change the working directory to the main directory
+        os.chdir(main_directory)
+        preprocess.run(original_tex)
+
+        # run rendering
+        vrdu_renderer = renderer.Renderer()
+        vrdu_renderer.render(original_tex)
+
+        # compile into PDFs, and then convert into images
+        log.info(
+            f"[VRDU] file: {original_tex}, start transforming into images, this may take a while..."
+        )
+        transform_tex_to_images(main_directory)
+
+        # generate annotations
+        log.info(
+            f"[VRDU] file: {original_tex}, start generating annotations, this may take a while..."
+        )
+        vrdu_annotation = annotation.LayoutAnnotation(main_directory)
+        vrdu_annotation.annotate()
+
+        log.info(f"[VRDU] file: {original_tex}, successfully processed.")
+
+    except Exception as e:
+        error_type = e.__class__.__name__
+        error_info = str(e)
+        log.error(
+            f"[VRDU] file: {file_name}, type: {error_type}, message: {error_info}"
+        )
+
+    finally:
+        # remove redundant files
+        remove_redundant_stuff(main_directory)
+
+        # Change back to original dir
+        os.chdir(cwd)
 
 
 def parse_arguments() -> str:
@@ -120,57 +178,7 @@ def main() -> None:
         None
     """
     file_name = parse_arguments()
-    main_directory = os.path.dirname(file_name)
-    log.info(f"[VRDU] file: {file_name}, start processing.")
-
-    # remove output folder if it exists
-    output_directory = os.path.join(main_directory, "output")
-    if os.path.exists(output_directory):
-        shutil.rmtree(output_directory)
-
-    # make a copy of the original tex file
-    original_tex = os.path.join(main_directory, "paper_original.tex")
-    shutil.copyfile(file_name, original_tex)
-
-    cwd = os.getcwd()
-
-    try:
-        # change the working directory to the main directory
-        os.chdir(main_directory)
-        log.info(f"[VRDU] file: {original_tex}, start pre processing.")
-        preprocess.run(original_tex)
-
-        # run rendering
-        log.info(f"[VRDU] file: {original_tex}, start rendering.")
-        vrdu_renderer = renderer.Renderer()
-        vrdu_renderer.render(original_tex)
-
-        # compile into PDFs, and then convert into images
-        log.info(
-            f"[VRDU] file: {original_tex}, start transforming into images, this may take a while..."
-        )
-        transform_tex_to_images(main_directory)
-
-        # generate annotations
-        log.info(
-            f"[VRDU] file: {original_tex}, start generating annotations, this may take a while..."
-        )
-        vrdu_annotation = annotation.LayoutAnnotation(main_directory)
-        vrdu_annotation.annotate()
-
-        log.info(
-            f"[VRDU] file: {original_tex}, successfully processed. Directory: {main_directory}"
-        )
-
-    except Exception:
-        log.exception(f"[VRDU] file: {original_tex}, failed.")
-
-    finally:
-        # remove redundant files
-        remove_redundant_stuff(main_directory)
-
-        # Change back to original dir
-        os.chdir(cwd)
+    process_one_file(file_name)
 
 
 if __name__ == "__main__":
