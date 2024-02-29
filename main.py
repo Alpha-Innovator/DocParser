@@ -82,6 +82,10 @@ def process_one_file(file_name) -> None:
     if os.path.exists(quality_report_file):
         log.info(f"[VRDU] file: {file_name}, paper has been processed")
         return
+    else:
+        output_directory = os.path.join(main_directory, "output")
+        if os.path.exists(output_directory):
+            shutil.rmtree(output_directory)
 
     # make a copy of the original tex file
     original_tex = os.path.join(main_directory, "paper_original.tex")
