@@ -145,7 +145,6 @@ def filter_tex_files(tex_files: List[str], main_path: str = None) -> List[str]:
     result = []
     for tex_file in tex_files:
         if main_path and os.path.dirname(os.path.dirname(tex_file)) != main_path:
-            log.info(f"not the valid tex file: {tex_file}")
             continue
         # prevent processing previous generated files
         try:
