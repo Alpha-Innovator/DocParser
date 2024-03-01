@@ -88,10 +88,10 @@ def replace_pdf_ps_figures_with_png(original_tex: str) -> None:
         graphic_path = ""
 
     # Replace \psfig{...} with \includegraphics{...}
-    content = re.sub(r'\\psfig{([^}]*)}', r'\\includegraphics{\1}', content)
-    
+    content = re.sub(r"\\psfig{([^}]*)}", r"\\includegraphics{\1}", content)
+
     # Replace \epsfig{...} with \includegraphics{...}
-    content = re.sub(r'\\epsfig{([^}]*)}', r'\\includegraphics{\1}', content)
+    content = re.sub(r"\\epsfig{([^}]*)}", r"\\includegraphics{\1}", content)
 
     # Regular expression pattern to match \includegraphics
     # commands with PDF files
