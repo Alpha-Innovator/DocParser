@@ -95,25 +95,49 @@ def replace_pdf_ps_figures_with_png(original_tex: str) -> None:
 
     # Regular expression pattern to match \includegraphics
     # commands with PDF files
-    pattern = r"\\includegraphics(\[.*?\])?\{(.*?\.pdf)\}"
+    pattern = r"\\includegraphics(\[.*?\])?\{(.*?)\}"
 
     # Find all matches of \includegraphics with PDF files
     matches = re.findall(pattern, content)
 
     # Replace PDF paths with PNG paths
+    ext_patterns = [".eps", ".ps", ".jpg", ".jpeg", ".png", ".pdf"]
     for match in matches:
         image_name = match[1]
-        image_file = os.path.join(main_directory, graphic_path, image_name)
-        if not os.path.exists(image_file):
-            raise FileNotFoundError(f"File not found: {image_file}")
+        if not any(ext in image_name for ext in ext_patterns):
+            for ext in ext_patterns:
+                image_file = os.path.join(main_directory, graphic_path, image_name, ext)
+                if os.path.exists(image_file):
+                    image_name = image_name + ext
+                    break
 
-        png_image_name = os.path.splitext(image_name)[0] + ".png"
-        png_image = os.path.join(main_directory, graphic_path, png_image_name)
+        # detectable image type, see pdfminer.six for details
+        if any(ext in image_name for ext in [".jpg", ".jpeg", "png"]):
+            content = content.replace(match[1], image_name)
+            continue
 
-        utils.convert_pdf_figure_to_png_image(image_file, png_image)
+        # convert eps to pdf
+        if any(ext in image_name for ext in [".eps", ".ps"]):
+            eps_image = os.path.join(main_directory, graphic_path, image_name)
+            if not os.path.exists(eps_image):
+                log.error(f"File not found: {eps_image}")
+                continue
+            pdf_image = os.path.splitext(eps_image) + ".pdf"
+            utils.convert_eps_image_to_pdf_image(eps_image, pdf_image)
+            image_name = os.path.basename(pdf_image)
+
+        # convert pdf to png
+        if image_name.endswith(".pdf"):
+            pdf_image = os.path.join(main_directory, graphic_path, image_name)
+            if not os.path.exists(eps_image):
+                log.error(f"File not found: {eps_image}")
+                continue
+            png_image = os.path.splitext(pdf_image) + ".png"
+            utils.convert_pdf_figure_to_png_image(pdf_image, png_image)
+            image_name = os.path.splitext(image_name)[0] + ".png"
 
         # replace the reference in tex file
-        content = content.replace(match[1], png_image_name)
+        content = content.replace(match[1], image_name)
 
     with open(original_tex, "w") as f:
         f.write(content)
