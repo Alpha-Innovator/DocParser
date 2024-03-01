@@ -81,6 +81,27 @@ def replace_eps_figures_with_pdf(original_tex: str) -> None:
         f.write(content)
 
 
+def remove_comments(original_tex: str) -> None:
+    """
+    Removes comments from a TeX file.
+
+    Args:
+        original_tex (str): The path to the original TeX file.
+
+    Returns:
+        None
+    """
+    with open(original_tex, "r") as file:
+        content = file.read()
+
+    # Remove LaTeX comments
+    pattern = r"\\begin{comment}(.*?)\\end{comment}"
+    removed_comments = re.sub(pattern, "", content, flags=re.DOTALL)
+
+    with open(original_tex, "w") as file:
+        file.write(removed_comments)
+
+
 def clean_tex(original_tex: str) -> None:
     """
     Clean the given TeX file by creating a cleaner object and running the clean method.
@@ -105,6 +126,9 @@ def clean_tex(original_tex: str) -> None:
 
     # Run the cleaner
     cleaner.clean()
+
+    # remove comments
+    remove_comments(original_tex)
 
 
 def replace_pdf_figures_with_png(original_tex: str) -> None:
