@@ -11,24 +11,6 @@ import vrdu.logger as logger
 log = logger.get_logger(__name__)
 
 
-def get_graphicspath(latex: str) -> str:
-    """
-    Returns the graphics path from a LaTeX string.
-
-    Args:
-        latex (str): The LaTeX string to search for the graphics path.
-
-    Returns:
-        str: The graphics path found in the LaTeX string, or an empty string if no graphics path is found.
-    """
-    graphicspath_re = r"\\graphicspath\{\{(.+?)}"
-
-    match = re.search(graphicspath_re, latex, re.DOTALL)
-    if match:
-        return match.group(1)
-    else:
-        return ""
-
 
 def remove_comments(original_tex: str) -> None:
     """
@@ -98,7 +80,12 @@ def replace_pdf_ps_figures_with_png(original_tex: str) -> None:
     with open(original_tex) as f:
         content = f.read()
 
-    graphic_path = get_graphicspath(content)
+    graphicspath_pattern = r"\\graphicspath\{\{(.+?)}"
+    match = re.search(graphicspath_pattern, content, re.DOTALL)
+    if match:
+        graphic_path = match.group(1)
+    else:
+        graphic_path = ""
 
     # Replace \psfig{...} with \includegraphics{...}
     content = re.sub(r'\\psfig{([^}]*)}', r'\\includegraphics{\1}', content)
