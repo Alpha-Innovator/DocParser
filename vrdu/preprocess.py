@@ -136,16 +136,12 @@ def replace_pdf_figures_with_png(original_tex: str) -> None:
     # Replace PDF paths with PNG paths
     for match in matches:
         image_name = match[1]
-        image_file = os.path.join(
-            main_directory, os.path.join(graphic_path, image_name)
-        )
+        image_file = os.path.join(main_directory, graphic_path, image_name)
         if not os.path.exists(image_file):
             raise FileNotFoundError(f"File not found: {image_file}")
 
         png_image_name = os.path.splitext(image_name)[0] + ".png"
-        png_image = os.path.join(
-            main_directory, os.path.join(graphic_path, png_image_name)
-        )
+        png_image = os.path.join(main_directory, graphic_path, png_image_name)
 
         utils.convert_pdf_figure_to_png_image(image_file, png_image)
 
