@@ -282,6 +282,33 @@ class LayoutAnnotation:
                     )
                     if elements:
                         element.parent_block = elements[-1].block_id
+
+                    if (
+                        len(elements) > 0
+                        and elements[-1].category == element.category
+                        and elements[-1].page_index == element.page_index
+                        and elements[-1].source_code == element.source_code
+                        and elements[-1].bbox.overlaps(element.bbox)
+                    ):
+                        elements[-1].bbox = BoundingBox(
+                            min(
+                                elements[-1].bbox.x0,
+                                element.bbox.x0,
+                            ),
+                            min(
+                                elements[-1].bbox.y0,
+                                element.bbox.y0,
+                            ),
+                            max(
+                                elements[-1].bbox.x1,
+                                element.bbox.x1,
+                            ),
+                            max(
+                                elements[-1].bbox.y1,
+                                element.bbox.y1,
+                            ),
+                        )
+                        continue
                     elements.append(element)
 
             for element in elements:
