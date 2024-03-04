@@ -1,7 +1,7 @@
 from collections import defaultdict
 import os
 import glob
-from typing import DefaultDict, Dict, List, Tuple
+from typing import Any, DefaultDict, Dict, List, Tuple
 import matplotlib.pyplot as plt
 import numpy as np
 from skimage.measure import label, regionprops
@@ -378,7 +378,7 @@ class LayoutAnnotation:
 
     def generate_image_annotation(
         self, layout_info: Dict[int, List[Block]]
-    ) -> Dict[int, str]:
+    ) -> Dict[int, Dict[str, Any]]:
         """Generate image annotations based on the layout information.
 
         Args:
@@ -386,7 +386,7 @@ class LayoutAnnotation:
             representing the layout information.
 
         Returns:
-            Dict[int, str]: A dictionary mapping page indices to annotated image filenames.
+            Dict[int, Dict[str, Any]]: A dictionary mapping page indices to annotated image info.
         """
         # sort all images by page index, see utils.pdf2jpg for details
         # FIXME: use more robust way
@@ -397,6 +397,7 @@ class LayoutAnnotation:
 
         image_info = {}  # annotation image info member of COCO
         for page_index in layout_info.keys():
+            image_info[page_index] = {}
             page_image = Image.open(image_files[page_index])
             draw = ImageDraw.Draw(page_image)
             # use `locate .ttf` to find the available fonts
@@ -419,7 +420,9 @@ class LayoutAnnotation:
 
             image_name = "page_" + str(page_index).zfill(4) + ".jpg"
             annotated_image_path = os.path.join(self.result_directory, image_name)
-            image_info[page_index] = image_name
+            image_info[page_index]["file_name"] = image_name
+            image_info[page_index]["width"] = page_image.width
+            image_info[page_index]["height"] = page_image.height
             page_image.save(annotated_image_path)
             page_image.close()
 
