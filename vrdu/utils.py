@@ -273,8 +273,7 @@ def export_to_coco(
             }
             result["annotations"].append(annotation)
 
-    with open(filename, "w") as f:
-        json.dump(result, f)
+    export_to_json(result, filename)
 
 
 def extract_title_name(title) -> str:
