@@ -4,6 +4,7 @@ import argparse
 import multiprocessing
 from typing import List
 from uuid import uuid4
+import pandas as pd
 
 from vrdu import logger
 from vrdu import utils
@@ -11,6 +12,8 @@ from main import process_one_file
 
 log_file = str(uuid4()) + ".log"
 log = logger.setup_app_level_logger(file_name=log_file, level="INFO", mode="a")
+
+database = "processed_paper_database.csv"
 
 
 def filter_tex_files(tex_files: List[str], main_path: str = None) -> List[str]:
@@ -39,6 +42,13 @@ def filter_tex_files(tex_files: List[str], main_path: str = None) -> List[str]:
             log.debug(f"failed to read tex file: {tex_file}")
             continue
 
+    log.info(f"Before filtering, Found {len(result)} tex files")
+    if os.path.exists(database):
+        df = pd.read_csv(database)
+        processed_papers = set(df[df["status"] != "processing"]["path"])
+        result = [x for x in result if os.path.dirname(x) not in processed_papers]
+
+    log.info(f"After filtering, Found {len(result)} tex files")
     return result
 
 
