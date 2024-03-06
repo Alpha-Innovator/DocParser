@@ -52,7 +52,7 @@ def filter_tex_files(tex_files: List[str], main_path: str = None) -> List[str]:
     return result
 
 
-def process_one_category(path: str, cpu_count: int, discpline: str) -> None:
+def process_one_discpline(path: str, cpu_count: int, discpline: str) -> None:
     discpline_path = os.path.join(path, discpline)
     log.info(f"path to raw data: {discpline_path}")
     log.info(f"Using cpu counts: {cpu_count}")
@@ -65,7 +65,7 @@ def process_one_category(path: str, cpu_count: int, discpline: str) -> None:
             pool.map(process_one_file, tex_files)
         # save log file
     except Exception:
-        log.exception(f"[VRDU] category: {discpline}, failed to process.")
+        log.exception(f"[VRDU] discpline: {discpline}, failed to process.")
     finally:
         # save the process log
         shutil.move(log_file, f"batch_process_{discpline}.log")
@@ -89,8 +89,8 @@ def main():
     args = parser.parse_args()
     path, cpu_count, discpline = args.path, args.cpu_count, args.discpline
 
-    log.info(f"Processing single category: {discpline}")
-    process_one_category(path, cpu_count, discpline)
+    log.info(f"Processing single discpline: {discpline}")
+    process_one_discpline(path, cpu_count, discpline)
 
 
 if __name__ == "__main__":
