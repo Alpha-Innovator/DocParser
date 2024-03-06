@@ -69,7 +69,7 @@ def process_one_discpline(path: str, cpu_count: int, discpline: str) -> None:
     finally:
         # save the process log
         log.info(f"[VRDU] discpline: {discpline}, finished processing.")
-        shutil.move(log_file, f"batch_process_{discpline}.log")
+        shutil.move(log_file, f"data/batch_process_{discpline}.log")
 
 
 def main():
