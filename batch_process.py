@@ -84,16 +84,13 @@ def main():
         help="cpu count for multiprocessing",
     )
     parser.add_argument(
-        "-t", "--discpline", type=str, required=False, help="discpline to process"
+        "-t", "--discpline", type=str, required=True, help="discpline to process"
     )
     args = parser.parse_args()
     path, cpu_count, discpline = args.path, args.cpu_count, args.discpline
 
-    categories = [discpline] if discpline is not None else utils.get_all_categories()
-
-    for discpline in categories:
-        log.info(f"Processing single category: {discpline}")
-        process_one_category(path, cpu_count, discpline)
+    log.info(f"Processing single category: {discpline}")
+    process_one_category(path, cpu_count, discpline)
 
 
 if __name__ == "__main__":
