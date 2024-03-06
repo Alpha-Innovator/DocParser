@@ -42,23 +42,22 @@ def filter_tex_files(tex_files: List[str], main_path: str = None) -> List[str]:
             log.debug(f"failed to read tex file: {tex_file}")
             continue
 
-    log.info(f"Before filtering, Found {len(result)} tex files")
+    log.info(f"[VRDU] Before filtering, found {len(result)} tex files")
     if os.path.exists(database):
         df = pd.read_csv(database)
         processed_papers = set(df[df["status"] != "processing"]["path"])
         result = [x for x in result if os.path.dirname(x) not in processed_papers]
 
-    log.info(f"After filtering, Found {len(result)} tex files")
+    log.info(f"[VRDU] After filtering, found {len(result)} tex files")
     return result
 
 
 def process_one_discpline(path: str, cpu_count: int, discpline: str) -> None:
     discpline_path = os.path.join(path, discpline)
-    log.info(f"path to raw data: {discpline_path}")
-    log.info(f"Using cpu counts: {cpu_count}")
+    log.info(f"[VRDU] Path to raw data: {discpline_path}")
+    log.info(f"[VRDU] Using cpu counts: {cpu_count}")
     tex_files = utils.extract_all_tex_files(discpline_path)
     tex_files = filter_tex_files(tex_files, discpline_path)
-    log.info(f"Found {len(tex_files)} tex files")
 
     try:
         with multiprocessing.Pool(cpu_count) as pool:
