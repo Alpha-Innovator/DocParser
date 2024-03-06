@@ -1,7 +1,7 @@
 from collections import defaultdict
 import os
 import glob
-from typing import DefaultDict, Dict, List, Tuple
+from typing import Any, DefaultDict, Dict, List, Tuple
 import matplotlib.pyplot as plt
 import numpy as np
 from skimage.measure import label, regionprops
@@ -282,6 +282,33 @@ class LayoutAnnotation:
                     )
                     if elements:
                         element.parent_block = elements[-1].block_id
+
+                    if (
+                        len(elements) > 0
+                        and elements[-1].category == element.category
+                        and elements[-1].page_index == element.page_index
+                        and elements[-1].source_code == element.source_code
+                        and elements[-1].bbox.overlap(element.bbox)
+                    ):
+                        elements[-1].bbox = BoundingBox(
+                            min(
+                                elements[-1].bbox.x0,
+                                element.bbox.x0,
+                            ),
+                            min(
+                                elements[-1].bbox.y0,
+                                element.bbox.y0,
+                            ),
+                            max(
+                                elements[-1].bbox.x1,
+                                element.bbox.x1,
+                            ),
+                            max(
+                                elements[-1].bbox.y1,
+                                element.bbox.y1,
+                            ),
+                        )
+                        continue
                     elements.append(element)
 
             for element in elements:
@@ -378,7 +405,7 @@ class LayoutAnnotation:
 
     def generate_image_annotation(
         self, layout_info: Dict[int, List[Block]]
-    ) -> Dict[int, str]:
+    ) -> Dict[int, Dict[str, Any]]:
         """Generate image annotations based on the layout information.
 
         Args:
@@ -386,7 +413,7 @@ class LayoutAnnotation:
             representing the layout information.
 
         Returns:
-            Dict[int, str]: A dictionary mapping page indices to annotated image filenames.
+            Dict[int, Dict[str, Any]]: A dictionary mapping page indices to annotated image info.
         """
         # sort all images by page index, see utils.pdf2jpg for details
         # FIXME: use more robust way
@@ -397,6 +424,7 @@ class LayoutAnnotation:
 
         image_info = {}  # annotation image info member of COCO
         for page_index in layout_info.keys():
+            image_info[page_index] = {}
             page_image = Image.open(image_files[page_index])
             draw = ImageDraw.Draw(page_image)
             # use `locate .ttf` to find the available fonts
@@ -419,7 +447,9 @@ class LayoutAnnotation:
 
             image_name = "page_" + str(page_index).zfill(4) + ".jpg"
             annotated_image_path = os.path.join(self.result_directory, image_name)
-            image_info[page_index] = image_name
+            image_info[page_index]["file_name"] = image_name
+            image_info[page_index]["width"] = page_image.width
+            image_info[page_index]["height"] = page_image.height
             page_image.save(annotated_image_path)
             page_image.close()
 
@@ -581,6 +611,12 @@ class OrderAnnotation:
     def annotate(self):
         annotations = {}
 
+        annotations["annotations"] = [
+            _block.to_dict()
+            for page_index in self.layout_info.keys()
+            for _block in self.layout_info[page_index]
+        ]
+
         annotations["orders"] = []
         sortable_annotations = self.generate_sortable_envs_order()
         annotations["orders"].extend(sortable_annotations)
@@ -611,7 +647,7 @@ class OrderAnnotation:
         annotations = []
         relation_map = config.relation_map
         sortable_category = [
-            config.name2category[name] for name in config.sortable_envs
+            config.name2category[name] for name in config.sortable_categories
         ]
 
         sortable_elements = [

@@ -178,3 +178,6 @@ TexSoup/tests/
 *.tex
 *.aux
 *.pdf
+
+# jupyter notebook
+*.ipynb

@@ -234,7 +234,7 @@ def extract_macro_definitions(tex_file) -> List[str]:
 
 def export_to_coco(
     layout_info: Dict,
-    image_infos: Dict[int, str],
+    image_infos: Dict[int, Dict[str, Any]],
     filename: str,
 ) -> None:
     category_info = [
@@ -249,18 +249,19 @@ def export_to_coco(
         "categories": category_info,
     }
 
-    for page_index, page_elements in layout_info.items():
-        page_layout = page_elements[0]
-        image = {
+    result["images"] = [
+        {
             "id": page_index,
-            "width": page_layout.width,
-            "height": page_layout.height,
-            "file_name": image_infos[page_index],
+            "width": image_infos[page_index]["width"],
+            "height": image_infos[page_index]["height"],
+            "file_name": image_infos[page_index]["file_name"],
+            **config.config["coco_image_info"],
         }
-        image.update(config.config["coco_image_info"])
-        result["images"].append(image)
+        for page_index in layout_info.keys()
+    ]
 
-        for index, element in enumerate(page_elements[1:]):
+    for page_index, page_elements in layout_info.items():
+        for index, element in enumerate(page_elements):
             width, height = element.width, element.height
             annotation = {
                 "id": index,
@@ -273,8 +274,7 @@ def export_to_coco(
             }
             result["annotations"].append(annotation)
 
-    with open(filename, "w") as f:
-        json.dump(result, f)
+    export_to_json(result, filename)
 
 
 def extract_title_name(title) -> str:
