@@ -64,8 +64,8 @@ def run_statistics():
             if not line.startswith("["):
                 continue
 
-            if line.find("Line 93") != -1:
-                discpline = line.split("discpline: ")[1].split(", ")[0]
+            if line.find("Line 75") != -1:
+                discpline = line.split(": ")[1]
                 continue
 
             if line.find("[VRDU] file") == -1:
