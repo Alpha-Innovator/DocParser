@@ -11,9 +11,9 @@ from vrdu import utils
 from main import process_one_file
 
 log_file = str(uuid4()) + ".log"
-log = logger.setup_app_level_logger(file_name=log_file, level="INFO", mode="a")
+log = logger.setup_app_level_logger(file_name=log_file, level="INFO")
 
-database = "processed_paper_database.csv"
+database = "data/processed_paper_database.csv"
 
 
 def filter_tex_files(tex_files: List[str], main_path: str = None) -> List[str]:
@@ -52,12 +52,12 @@ def filter_tex_files(tex_files: List[str], main_path: str = None) -> List[str]:
     return result
 
 
-def process_one_category(path, cpu_count, category):
-    category_path = os.path.join(path, category)
-    log.info(f"path to raw data: {category_path}")
+def process_one_category(path: str, cpu_count: int, discpline: str) -> None:
+    discpline_path = os.path.join(path, discpline)
+    log.info(f"path to raw data: {discpline_path}")
     log.info(f"Using cpu counts: {cpu_count}")
-    tex_files = utils.extract_all_tex_files(category_path)
-    tex_files = filter_tex_files(tex_files, category_path)
+    tex_files = utils.extract_all_tex_files(discpline_path)
+    tex_files = filter_tex_files(tex_files, discpline_path)
     log.info(f"Found {len(tex_files)} tex files")
 
     try:
@@ -65,22 +65,36 @@ def process_one_category(path, cpu_count, category):
             pool.map(process_one_file, tex_files)
         # save log file
     except Exception:
-        log.exception(f"[VRDU] category: {category}, failed to process.")
+        log.exception(f"[VRDU] category: {discpline}, failed to process.")
     finally:
         # save the process log
-        shutil.move(log_file, f"batch_process_{category}.log")
+        shutil.move(log_file, f"batch_process_{discpline}.log")
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "-p", "--path", type=str, required=True, help="path to raw data"
+    )
+    parser.add_argument(
+        "-c",
+        "--cpu_count",
+        type=int,
+        required=True,
+        help="cpu count for multiprocessing",
+    )
+    parser.add_argument(
+        "-t", "--discpline", type=str, required=False, help="discpline to process"
+    )
+    args = parser.parse_args()
+    path, cpu_count, discpline = args.path, args.cpu_count, args.discpline
+
+    categories = [discpline] if discpline is not None else utils.get_all_categories()
+
+    for discpline in categories:
+        log.info(f"Processing single category: {discpline}")
+        process_one_category(path, cpu_count, discpline)
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-p", "--path", type=str, required=True)
-    parser.add_argument("-c", "--cpu_count", type=int, required=True)
-    parser.add_argument("-t", "--category", type=str, required=False)
-    args = parser.parse_args()
-    path, cpu_count, category = args.path, args.cpu_count, args.category
-
-    categories = [category] if category is not None else utils.get_all_categories()
-
-    for category in categories:
-        log.info(f"Processing single category: {category}")
-        process_one_category(path, cpu_count, category)
+    main()
