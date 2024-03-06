@@ -68,6 +68,7 @@ def process_one_discpline(path: str, cpu_count: int, discpline: str) -> None:
         log.exception(f"[VRDU] discpline: {discpline}, failed to process.")
     finally:
         # save the process log
+        log.info(f"[VRDU] discpline: {discpline}, finished processing.")
         shutil.move(log_file, f"batch_process_{discpline}.log")
 
 
@@ -89,7 +90,7 @@ def main():
     args = parser.parse_args()
     path, cpu_count, discpline = args.path, args.cpu_count, args.discpline
 
-    log.info(f"Processing single discpline: {discpline}")
+    log.info(f"[VRDU] discpline: {discpline}, start to process.")
     process_one_discpline(path, cpu_count, discpline)
 
 
