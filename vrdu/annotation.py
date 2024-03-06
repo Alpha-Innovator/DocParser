@@ -641,7 +641,7 @@ class OrderAnnotation:
         annotations = []
         relation_map = config.relation_map
         sortable_category = [
-            config.name2category[name] for name in config.sortable_envs
+            config.name2category[name] for name in config.sortable_categories
         ]
 
         sortable_elements = [

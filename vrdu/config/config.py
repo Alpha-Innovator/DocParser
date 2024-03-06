@@ -70,19 +70,16 @@ relation_map = {
     ("subsubsection", "subsubsection"): "peer",
 }
 
-sortable_envs = [
+sortable_categories = [
+    "Papertitle",
+    "Abstract",
     "Title",
     "Text",
     "Text-EQ",
     "Equation",
     "Footnote",
     "List",
-    "PaperTitle",
-    "Abstract",
 ]
-
-
-sortable_envs = ["Title", "Text", "Text-EQ", "Equation", "Footnote", "List"]
 
 
 threshold = 0.3
