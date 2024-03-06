@@ -129,8 +129,8 @@ def replace_pdf_ps_figures_with_png(original_tex: str) -> None:
         # convert pdf to png
         if image_name.endswith(".pdf"):
             pdf_image = os.path.join(main_directory, graphic_path, image_name)
-            if not os.path.exists(eps_image):
-                log.error(f"File not found: {eps_image}")
+            if not os.path.exists(pdf_image):
+                log.error(f"File not found: {pdf_image}")
                 continue
             png_image = os.path.splitext(pdf_image) + ".png"
             utils.convert_pdf_figure_to_png_image(pdf_image, png_image)
