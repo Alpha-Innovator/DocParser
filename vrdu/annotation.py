@@ -611,6 +611,12 @@ class OrderAnnotation:
     def annotate(self):
         annotations = {}
 
+        annotations["annotations"] = [
+            _block
+            for page_index in self.layout_info.keys()
+            for _block in self.layout_info[page_index]
+        ]
+
         annotations["orders"] = []
         sortable_annotations = self.generate_sortable_envs_order()
         annotations["orders"].extend(sortable_annotations)
