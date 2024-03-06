@@ -1,84 +1,36 @@
 import os
 import re
 
-from vrdu.config import envs, config
-from vrdu import utils
 from arxiv_cleaner.cleaner import Cleaner
 
+from vrdu.config import envs, config
+from vrdu import utils
+import vrdu.logger as logger
 
-def get_graphicspath(latex: str) -> str:
+
+log = logger.get_logger(__name__)
+
+
+
+def remove_comments(original_tex: str) -> None:
     """
-    Returns the graphics path from a LaTeX string.
+    Removes comments from a TeX file.
 
     Args:
-        latex (str): The LaTeX string to search for the graphics path.
+        original_tex (str): The path to the original TeX file.
 
     Returns:
-        str: The graphics path found in the LaTeX string, or an empty string if no graphics path is found.
+        None
     """
-    graphicspath_re = r"\\graphicspath\{\{(.+?)}"
+    with open(original_tex, "r") as file:
+        content = file.read()
 
-    match = re.search(graphicspath_re, latex, re.DOTALL)
-    if match:
-        return match.group(1)
-    else:
-        return ""
+    # Remove LaTeX comments
+    pattern = r"\\begin{comment}(.*?)\\end{comment}"
+    removed_comments = re.sub(pattern, "", content, flags=re.DOTALL)
 
-
-def replace_eps_figures_with_pdf(original_tex: str) -> None:
-    """
-    Replaces EPS figures with PDF files in a given LaTeX file.
-
-    Args:
-        original_tex (str): The path to the original LaTeX file.
-
-    Returns:
-        None: This function does not return anything.
-
-    Raises:
-        FileNotFoundError: If any of the EPS files specified in the LaTeX file are not found.
-
-    Notes:
-        This function reads the content of the original LaTeX file and searches for
-        \includegraphics commands that reference EPS or PS files.
-        It then replaces the EPS paths with PDF paths and converts the EPS images to PDF format.
-        Finally, it updates the references in the LaTeX file with the names of the converted PDF images.
-    """
-    main_directory = os.path.dirname(original_tex)
-    with open(original_tex) as f:
-        content = f.read()
-
-    # get the graphicspath configuration
-    graphic_path = get_graphicspath(content)
-
-    # Regular expression pattern to match \includegraphics of type .eps or .ps with PDF files
-    pattern = r"\\includegraphics(\[.*?\])?\{(.*?\.e?ps)\}"
-
-    # Find all matches of \includegraphics with PDF files
-    matches = re.findall(pattern, content)
-
-    # Replace eps paths with pdf paths
-    for match in matches:
-        eps_image_name = match[1]
-        eps_image = os.path.join(
-            main_directory, os.path.join(graphic_path, eps_image_name)
-        )
-        if not os.path.exists(eps_image):
-            raise FileNotFoundError(f"File not found: {eps_image}")
-
-        pdf_image_name = os.path.splitext(eps_image_name)[0] + ".pdf"
-        pdf_image = os.path.join(
-            main_directory, os.path.join(graphic_path, pdf_image_name)
-        )
-
-        utils.convert_eps_image_to_pdf_image(eps_image, pdf_image)
-
-        # replace the reference in tex file
-        content = content.replace(match[1], pdf_image_name)
-
-    # Write the modified content back to the tex file
-    with open(original_tex, "w") as f:
-        f.write(content)
+    with open(original_tex, "w") as file:
+        file.write(removed_comments)
 
 
 def clean_tex(original_tex: str) -> None:
@@ -106,10 +58,14 @@ def clean_tex(original_tex: str) -> None:
     # Run the cleaner
     cleaner.clean()
 
+    # remove comments
+    remove_comments(original_tex)
 
-def replace_pdf_figures_with_png(original_tex: str) -> None:
+
+def replace_pdf_ps_figures_with_png(original_tex: str) -> None:
     """
-    Replaces PDF figures with PNG figures in a TeX file.
+    Replaces PDF, ps, eps figures with PNG figures in a TeX file
+    to support pdfminer detecting bounding box.
 
     Args:
         original_tex (str): The path to the original TeX file.
@@ -124,33 +80,64 @@ def replace_pdf_figures_with_png(original_tex: str) -> None:
     with open(original_tex) as f:
         content = f.read()
 
-    graphic_path = get_graphicspath(content)
+    graphicspath_pattern = r"\\graphicspath\{\{(.+?)}"
+    match = re.search(graphicspath_pattern, content, re.DOTALL)
+    if match:
+        graphic_path = match.group(1)
+    else:
+        graphic_path = ""
+
+    # Replace \psfig{...} with \includegraphics{...}
+    content = re.sub(r"\\psfig{([^}]*)}", r"\\includegraphics{\1}", content)
+
+    # Replace \epsfig{...} with \includegraphics{...}
+    content = re.sub(r"\\epsfig{([^}]*)}", r"\\includegraphics{\1}", content)
 
     # Regular expression pattern to match \includegraphics
     # commands with PDF files
-    pattern = r"\\includegraphics(\[.*?\])?\{(.*?\.pdf)\}"
+    pattern = r"\\includegraphics(\[.*?\])?\{(.*?)\}"
 
     # Find all matches of \includegraphics with PDF files
     matches = re.findall(pattern, content)
 
     # Replace PDF paths with PNG paths
+    ext_patterns = [".eps", ".ps", ".jpg", ".jpeg", ".png", ".pdf"]
     for match in matches:
         image_name = match[1]
-        image_file = os.path.join(
-            main_directory, os.path.join(graphic_path, image_name)
-        )
-        if not os.path.exists(image_file):
-            raise FileNotFoundError(f"File not found: {image_file}")
+        if not any(ext in image_name for ext in ext_patterns):
+            for ext in ext_patterns:
+                image_file = os.path.join(main_directory, graphic_path, image_name, ext)
+                if os.path.exists(image_file):
+                    image_name = image_name + ext
+                    break
 
-        png_image_name = os.path.splitext(image_name)[0] + ".png"
-        png_image = os.path.join(
-            main_directory, os.path.join(graphic_path, png_image_name)
-        )
+        # detectable image type, see pdfminer.six for details
+        if any(ext in image_name for ext in [".jpg", ".jpeg", "png"]):
+            content = content.replace(match[1], image_name)
+            continue
 
-        utils.convert_pdf_figure_to_png_image(image_file, png_image)
+        # convert eps to pdf
+        if any(ext in image_name for ext in [".eps", ".ps"]):
+            eps_image = os.path.join(main_directory, graphic_path, image_name)
+            if not os.path.exists(eps_image):
+                log.error(f"File not found: {eps_image}")
+                continue
+            pdf_image = os.path.splitext(eps_image) + ".pdf"
+            utils.convert_eps_image_to_pdf_image(eps_image, pdf_image)
+            image_name = os.path.basename(pdf_image)
+
+        # convert pdf to png
+        if image_name.endswith(".pdf"):
+            pdf_image = os.path.join(main_directory, graphic_path, image_name)
+            if not os.path.exists(eps_image):
+                log.error(f"File not found: {eps_image}")
+                continue
+            png_image = os.path.splitext(pdf_image) + ".png"
+            utils.convert_pdf_figure_to_png_image(pdf_image, png_image)
+            image_name = os.path.splitext(image_name)[0] + ".png"
 
         # replace the reference in tex file
-        content = content.replace(match[1], png_image_name)
+        content = content.replace(match[1], image_name)
 
     with open(original_tex, "w") as f:
         f.write(content)
@@ -195,11 +182,8 @@ def run(original_tex: str) -> None:
     # Step 0: clean tex
     clean_tex(original_tex)
 
-    # Step 1: replace eps figures to make the tex compilable
-    replace_eps_figures_with_pdf(original_tex)
-
     # Step 2: process images
-    replace_pdf_figures_with_png(original_tex)
+    replace_pdf_ps_figures_with_png(original_tex)
 
     # Step 3: delete table of contents
     delete_table_of_contents(original_tex)
