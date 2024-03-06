@@ -159,7 +159,6 @@ def run_statistics():
         df.loc[index, "overlap"] = quality_report["page_quality"][-1]["ratio"]
 
         for item in quality_report["category_quality"]:
-            log.debug(f"category: {item['category']}")
             if item["category"] in category_names:
                 df.loc[index, item["category"]] = item["geometry_count"]
 
