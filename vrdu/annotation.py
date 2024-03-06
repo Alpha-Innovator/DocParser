@@ -612,7 +612,7 @@ class OrderAnnotation:
         annotations = {}
 
         annotations["annotations"] = [
-            _block
+            _block.to_dict()
             for page_index in self.layout_info.keys()
             for _block in self.layout_info[page_index]
         ]
