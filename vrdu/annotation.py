@@ -288,7 +288,7 @@ class LayoutAnnotation:
                         and elements[-1].category == element.category
                         and elements[-1].page_index == element.page_index
                         and elements[-1].source_code == element.source_code
-                        and elements[-1].bbox.overlaps(element.bbox)
+                        and elements[-1].bbox.overlap(element.bbox)
                     ):
                         elements[-1].bbox = BoundingBox(
                             min(
