@@ -181,3 +181,6 @@ COCO_datasets
 *.tex
 *.aux
 *.pdf
+
+# jupyter notebook
+*.ipynb
