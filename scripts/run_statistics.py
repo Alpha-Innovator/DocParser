@@ -113,7 +113,7 @@ def run_statistics():
 
             # file has been processed, update information
             if line.find("Line 83") != -1:
-                if df.loc[index, "status"].item() == "success":
+                if df.loc[index, "status"].item() != "processing":
                     continue
 
                 df.loc[index, "status"] = "processed"
@@ -126,6 +126,8 @@ def run_statistics():
                 continue
             # failed to process file, update status and eror information
             if line.find("Line 123") != -1:
+                if df.loc[index, "status"].item() != "processing":
+                    continue
                 df.loc[index, "status"] = "failure"
                 error_type = line.split("type: ")[1].split(",")[0]
                 error_info = line.split("message: ")[1][:-1]
