@@ -12,13 +12,18 @@ from vrdu import logger
 log = logger.setup_app_level_logger(file_name="statistics.log")
 
 
-def extract_time(line: str):
+data_file = "processed_paper_database.csv"
+
+
+def extract_time(line: str) -> datetime:
     time_format = "%Y-%m-%d %H:%M:%S,%f"
     log_time = line.split(" - ")[0][1:]
     return datetime.strptime(log_time, time_format)
 
 
 def init_dataframe() -> pd.DataFrame:
+    if os.path.exists(data_file):
+        return pd.read_csv(data_file)
     columns = [
         "uuid",
         "title",
@@ -36,143 +41,98 @@ def init_dataframe() -> pd.DataFrame:
         "overlap",
     ]
     df = pd.DataFrame(columns=columns)
-
-    # df["duration"] = pd.to_timedelta(df["duration"], unit="sec")
     return df
 
 
-def run_statistics_v2():
+def run_statistics():
+    """store the information of processed papers into a csv file
+    """
     df = init_dataframe()
-
-    pattern = r"(\d+\.\d+v\d+)\.(.*)"  # used for filter uuid and title
 
     log_files = glob.glob("batch_process_*.log")
     for log_file in log_files:
-        log.debug(f"processing log file: {log_file}")
-        discpline = "unknown"
+        if log_file == "statistics.log":
+            continue
+        log.info(f"processing log file: {log_file}")
+
+        if not os.path.exists(log_file):
+            continue
         with open(log_file, "r") as f:
-            for line in f.readlines():
-                log.debug(f"line={line}")
-                if not line.startswith("["):
+            lines = [line.strip() for line in f.readlines()]
+
+        for line in lines:
+            if not line.startswith("["):
+                continue
+
+            if line.find("Line 75") != -1:
+                discpline = line.split(": ")[1]
+                continue
+
+            if line.find("[VRDU] file") == -1:
+                continue
+            tex_file = line.split("[VRDU] file: ")[1].split(" ")[0]
+            path = os.path.dirname(tex_file)
+            if os.path.basename(os.path.dirname(path)) != discpline:
+                log.debug(f"unknown discpline: {tex_file}")
+                continue
+
+            # extract uuid and title
+            match = re.search(r"(\d+\.\d+v\d+)\.(.*)", path)
+            if not match:
+                continue
+
+            uuid = match.group(1)
+            title = match.group(2)
+
+            index = df[df["uuid"] == uuid].index
+            current_time = extract_time(line)
+
+            if line.find("Line 76") != -1:  # start processing, record it
+                if not index.empty:
                     continue
-                if line.find("Line 139") != -1:  # determine discpline
-                    index = line.find("category: ")
-                    discpline = line[index + len("category: ") : -1]
-                    log.debug(f"displine: {discpline}")
+
+                # new file
+                data_item = {
+                    "uuid": uuid,
+                    "title": title,
+                    "discpline": discpline,
+                    "path": path,
+                    "status": "processing",
+                    "start_time": str(current_time),
+                    "end_time": "",
+                    "error_type": "",
+                    "error_info": "",
+                    "date": "",
+                    "pages": 0,
+                    "columns": 0,
+                    "blocks": 0,
+                    "overlap": 0.0,
+                }
+                df.loc[len(df)] = data_item
+                continue
+
+            # file has been processed, update information
+            if line.find("Line 83") != -1:
+                if df.loc[index, "status"].item() == "success":
                     continue
-                if line.find("Line 74") != -1:  # start processing, record it
-                    index = line.find("processing file ")
-                    file = line[index + len("processing file ") :]
-                    log.debug(f"processing file {file}")
-                    path = os.path.dirname(file)
-                    if os.path.basename(os.path.dirname(path)) != discpline:
-                        log.debug(f"unknown discpline: {file}")
-                        continue
 
-                    match = re.search(pattern, path)
-                    if not match:
-                        log.debug(f"unknown path: {path}")
-                        continue
-
-                    uuid = match.group(1)
-                    title = match.group(2)
-
-                    if uuid in df["uuid"].values:
-                        # paper has been processed
-                        continue
-
-                    start_time = extract_time(line)
-                    data = [
-                        uuid,
-                        title,
-                        discpline,
-                        path,
-                        "unknown",
-                        str(start_time),
-                        "",
-                        "",
-                        "",
-                        "",
-                        0,
-                        0,
-                        0,
-                        0.0,
-                    ]
-                    df.loc[len(df)] = data
-                    continue
-                # file has been processed, update information
-                if line.find("Line 79") != -1:
-                    file = line.split("File ")[1].split(" ")[0]
-                    path = os.path.dirname(file)
-                    if os.path.basename(os.path.dirname(path)) != discpline:
-                        log.debug(f"unknown discpline: {file}")
-                        continue
-
-                    pattern = r"(\d+\.\d+v\d+)\.(.*)"
-                    match = re.search(pattern, path)
-                    if not match:
-                        log.debug(f"unknown path: {path}")
-                        continue
-
-                    uuid = match.group(1)
-                    title = match.group(2)
-                    existed_index = df[df["uuid"] == uuid].index
-
-                    df.loc[existed_index, "status"] = "processed"
-                    df.loc[existed_index, "end_time"] = df.loc[
-                        existed_index, "start_time"
-                    ]
-                    continue
-                # success processing file, update information
-                if line.find("Line 103") != -1:
-                    index = line.find("processing file ")
-                    file = line[index + len("processing file ") :]
-                    path = os.path.dirname(file)
-                    if os.path.basename(os.path.dirname(path)) != discpline:
-                        log.debug(f"unknown discpline: {file}")
-                        continue
-
-                    match = re.search(pattern, path)
-                    if not match:
-                        log.debug(f"unknown path: {path}")
-                        continue
-
-                    uuid = match.group(1)
-                    title = match.group(2)
-                    existed_index = df[df["uuid"] == uuid].index
-
-                    df.loc[existed_index, "status"] = "success"
-                    end_time = extract_time(line)
-
-                    df.loc[existed_index, "end_time"] = end_time
-                    continue
-                # failed to process file, update status and eror information
-                if line.find("Line 108") != -1:
-                    # Extract variables using split()
-                    file = line.split("processing file ")[1].split(",")[0]
-                    error_type = line.split("type: ")[1].split(",")[0]
-                    error_info = line.split("message: ")[1][:-1]
-                    path = os.path.dirname(file)
-                    if os.path.basename(os.path.dirname(path)) != discpline:
-                        log.debug(f"unknown discpline: {file}")
-                        continue
-
-                    match = re.search(pattern, path)
-                    if not match:
-                        log.debug(f"unknown discpline: {discpline}")
-                        continue
-
-                    uuid = match.group(1)
-                    title = match.group(2)
-                    existed_index = df[df["uuid"] == uuid].index
-
-                    df.loc[existed_index, "status"] = "failure"
-                    df.loc[existed_index, "error_type"] = error_type
-                    df.loc[existed_index, "error_info"] = error_info
-                    end_time = extract_time(line)
-
-                    df.loc[existed_index, "end_time"] = end_time
-                    continue
+                df.loc[index, "status"] = "processed"
+                df.loc[index, "end_time"] = df.loc[index, "start_time"]
+                continue
+            # success processing file, update information
+            if line.find("Line 118") != -1:
+                df.loc[index, "status"] = "success"
+                df.loc[index, "end_time"] = current_time
+                continue
+            # failed to process file, update status and eror information
+            if line.find("Line 123") != -1:
+                df.loc[index, "status"] = "failure"
+                error_type = line.split("type: ")[1].split(",")[0]
+                error_info = line.split("message: ")[1][:-1]
+                df.loc[index, "error_type"] = error_type
+                df.loc[index, "error_info"] = error_info
+                df.loc[index, "end_time"] = current_time
+                continue
 
     category_names = list(config.category2name.values())
     for category_name in category_names:
@@ -180,6 +140,9 @@ def run_statistics_v2():
 
     for index in range(len(df)):
         if df.loc[index, "status"] != "success":
+            continue
+
+        if df.loc[index, "pages"] != 0:
             continue
         # use output result to update information
         path = df.loc[index, "path"]
@@ -202,10 +165,8 @@ def run_statistics_v2():
         layout_annotation = utils.load_json(layout_annotation_file)
         df.loc[index, "date"] = layout_annotation["info"]["date_created"]
 
-    df.to_csv("data.csv", index=False)
+    df.to_csv(data_file)
 
 
 if __name__ == "__main__":
-    # path = "/cpfs01/shared/ADLab/datasets/arxiv_source/arxiv_source_uncompressed/"
-    # run_statistics_v1(path)
-    run_statistics_v2()
+    run_statistics()
