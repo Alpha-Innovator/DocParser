@@ -132,30 +132,6 @@ def process_one_file(file_name) -> None:
         os.chdir(cwd)
 
 
-def parse_arguments() -> str:
-    """
-    Parses the command line arguments and returns the name of the tex file.
-
-    Returns:
-        str: The name of the tex file with full path.
-
-    Raises:
-        argparse.ArgumentError: If the required file name argument is not provided.
-    """
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "-f",
-        "--file_name",
-        type=str,
-        required=True,
-        help="The name of the tex file will full path",
-    )
-    args = parser.parse_args()
-    file_name = args.file_name
-
-    return file_name
-
-
 def main() -> None:
     """
     The main function that executes the entire program.
@@ -181,7 +157,17 @@ def main() -> None:
     Returns:
         None
     """
-    file_name = parse_arguments()
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "-f",
+        "--file_name",
+        type=str,
+        required=True,
+        help="The name of the tex file will full path",
+    )
+    args = parser.parse_args()
+    file_name = args.file_name
+
     process_one_file(file_name)
 
 
