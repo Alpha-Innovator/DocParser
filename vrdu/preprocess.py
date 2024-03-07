@@ -122,7 +122,7 @@ def replace_pdf_ps_figures_with_png(original_tex: str) -> None:
             if not os.path.exists(eps_image):
                 log.error(f"File not found: {eps_image}")
                 continue
-            pdf_image = os.path.splitext(eps_image) + ".pdf"
+            pdf_image = os.path.splitext(eps_image)[0] + ".pdf"
             utils.convert_eps_image_to_pdf_image(eps_image, pdf_image)
             image_name = os.path.basename(pdf_image)
 
@@ -132,7 +132,7 @@ def replace_pdf_ps_figures_with_png(original_tex: str) -> None:
             if not os.path.exists(pdf_image):
                 log.error(f"File not found: {pdf_image}")
                 continue
-            png_image = os.path.splitext(pdf_image) + ".png"
+            png_image = os.path.splitext(pdf_image)[0] + ".png"
             utils.convert_pdf_figure_to_png_image(pdf_image, png_image)
             image_name = os.path.splitext(image_name)[0] + ".png"
 
