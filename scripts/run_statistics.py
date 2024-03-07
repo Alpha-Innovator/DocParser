@@ -3,6 +3,7 @@ import os
 import re
 import pandas as pd
 from datetime import datetime
+import argparse
 
 from vrdu import utils
 from vrdu.config import config
@@ -12,7 +13,7 @@ from vrdu import logger
 log = logger.setup_app_level_logger(file_name="statistics.log")
 
 
-data_file = "processed_paper_database.csv"
+data_file = "data/processed_paper_database.csv"
 
 
 def extract_time(line: str) -> datetime:
@@ -26,7 +27,6 @@ def init_dataframe() -> pd.DataFrame:
         return pd.read_csv(data_file)
     columns = [
         "uuid",
-        "title",
         "discpline",
         "path",
         "status",
@@ -44,15 +44,12 @@ def init_dataframe() -> pd.DataFrame:
     return df
 
 
-def run_statistics():
-    """store the information of processed papers into a csv file
-    """
+def run_statistics(input_path: str):
+    """store the information of processed papers into a csv file"""
     df = init_dataframe()
 
-    log_files = glob.glob("batch_process_*.log")
+    log_files = glob.glob(os.path.join(input_path, "batch_process_*.log"))
     for log_file in log_files:
-        if log_file == "statistics.log":
-            continue
         log.info(f"processing log file: {log_file}")
 
         if not os.path.exists(log_file):
@@ -64,37 +61,30 @@ def run_statistics():
             if not line.startswith("["):
                 continue
 
-            if line.find("Line 92") != -1:
+            if line.find("start to process") != -1:
                 discpline = line.split("discpline: ")[1].split(", ")[0]
                 continue
 
             if line.find("[VRDU] file") == -1:
                 continue
-            tex_file = line.split("[VRDU] file: ")[1].split(" ")[0]
+            tex_file = line.split("[VRDU] file: ")[1].split(", ")[0]
             path = os.path.dirname(tex_file)
             if os.path.basename(os.path.dirname(path)) != discpline:
                 log.debug(f"unknown discpline: {tex_file}")
                 continue
 
             # extract uuid and title
-            match = re.search(r"(\d+\.\d+v\d+)\.(.*)", path)
-            if not match:
-                continue
-
-            uuid = match.group(1)
-            title = match.group(2)
+            uuid = os.path.basename(path)
 
             index = df[df["uuid"] == uuid].index
             current_time = extract_time(line)
 
-            if line.find("Line 76") != -1:  # start processing, record it
+            # new file
+            if line.find("start processing") != -1:
                 if not index.empty:
                     continue
-
-                # new file
                 data_item = {
                     "uuid": uuid,
-                    "title": title,
                     "discpline": discpline,
                     "path": path,
                     "status": "processing",
@@ -111,26 +101,16 @@ def run_statistics():
                 df.loc[len(df)] = data_item
                 continue
 
-            # file has been processed, update information
-            if line.find("Line 83") != -1:
-                if df.loc[index, "status"].item() != "processing":
-                    continue
-
-                df.loc[index, "status"] = "processed"
-                df.loc[index, "end_time"] = df.loc[index, "start_time"]
-                continue
             # success processing file, update information
-            if line.find("Line 118") != -1:
+            if line.find("successfully processed") != -1:
                 df.loc[index, "status"] = "success"
                 df.loc[index, "end_time"] = current_time
                 continue
             # failed to process file, update status and eror information
-            if line.find("Line 123") != -1:
-                if df.loc[index, "status"].item() != "processing":
-                    continue
+            if line.find("message: ") != -1:
                 df.loc[index, "status"] = "failure"
-                error_type = line.split("type: ")[1].split(",")[0]
-                error_info = line.split("message: ")[1][:-1]
+                error_type = line.split("type: ")[1].split(", ")[0]
+                error_info = line.split("message: ")[1].strip()
                 df.loc[index, "error_type"] = error_type
                 df.loc[index, "error_info"] = error_info
                 df.loc[index, "end_time"] = current_time
@@ -169,5 +149,12 @@ def run_statistics():
     df.to_csv(data_file)
 
 
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--input_path", type=str, default="data/")
+    args = parser.parse_args()
+    run_statistics(args.input_path)
+
+
 if __name__ == "__main__":
-    run_statistics()
+    main()
