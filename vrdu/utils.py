@@ -140,7 +140,7 @@ def compile_latex(file: str, tex_engine: str = "pdflatex"):
     file_name = os.path.basename(file)
     if tex_engine == "pdflatex":
         script_path = os.path.expanduser("compile_latex.sh")
-        subprocess.run(["bash", script_path, path_name, file_name], check=True)
+        subprocess.run(["bash", script_path, path_name, file_name], check=True, timeout=1000)
     elif tex_engine == "xelatex":
         subprocess.run(["xelatex", file], check=True)
 
