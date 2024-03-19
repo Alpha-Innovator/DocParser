@@ -29,6 +29,18 @@ def filter_tex_files(tex_files: List[str], main_path: str = None) -> List[str]:
     """
     result = []
     for tex_file in tex_files:
+        if "paper_block" in tex_file:
+            continue
+
+        if "paper_colored" in tex_file:
+            continue
+
+        if "paper_white" in tex_file:
+            continue
+
+        if "paper_original" in tex_file:
+            continue
+
         if main_path and os.path.dirname(os.path.dirname(tex_file)) != main_path:
             continue
         # prevent processing previous generated files
