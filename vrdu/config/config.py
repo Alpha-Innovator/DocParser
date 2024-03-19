@@ -71,8 +71,8 @@ relation_map = {
 }
 
 sortable_categories = [
-    # "Papertitle",
-    # "Abstract",
+    "Papertitle",
+    "Abstract",
     "Title",
     "Text",
     "Text-EQ",
