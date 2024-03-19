@@ -606,86 +606,140 @@ class LayoutAnnotation:
 
 class OrderAnnotation:
     def __init__(self, layout_info) -> None:
-        self.layout_info = layout_info
-
-    def annotate(self):
-        annotations = {}
-
-        annotations["annotations"] = [
+        self.annotations = {}
+        self.annotations["annotations"] = [
             _block.to_dict()
-            for page_index in self.layout_info.keys()
-            for _block in self.layout_info[page_index]
+            for page_index in layout_info.keys()
+            for _block in layout_info[page_index]
         ]
 
-        annotations["orders"] = []
-        sortable_annotations = self.generate_sortable_envs_order()
-        annotations["orders"].extend(sortable_annotations)
-        float_annotations = self.generate_float_envs_order()
-        annotations["orders"].extend(float_annotations)
-        cross_reference_annotation = self.generate_cross_reference_order()
-        annotations["orders"].extend(cross_reference_annotation)
-        return annotations
+    def annotate(self):
+        self.annotations["orders"] = []
+        self.generate_sortable_envs_order()
+
+        self.generate_float_envs_order()
+
+        self.generate_cross_reference_order()
+
+        return self.annotations
 
     def generate_cross_reference_order(self):
-        # TODO: complete this
-        # parse label in texts
-        # ref to label
-        pass
-        return []
+        annotations = []
+
+        # map from label to block_id
+        label_to_block_id = {}
+        for block in self.annotations["annotations"]:
+            if "labels" not in block:
+                continue
+            for label in block["labels"]:
+                label_to_block_id[label] = block["block_id"]
+
+        ref_patterns = "|".join(
+            [
+                r"\\ref\{(.*?)\}",
+                r"\\eqref\{(.*?)\}",
+                r"\\pageref\{(.*?)\}",
+                r"\\autoref\{(.*?)\}",
+                r"\\vref\{(.*?)\}",
+                r"\\cref\{(.*?)\}",
+                r"\\labelcref\{(.*?)\}",
+            ]
+        )
+        # generate reference according to label
+        for block in self.annotations["annotations"]:
+            if config.category2name[block["category"]] not in ["Text", "Text-EQ"]:
+                continue
+            block["references"] = re.findall(ref_patterns, block["source_code"])
+            for label in block["references"]:
+                if label in label_to_block_id:
+                    annotations.append(
+                        {
+                            "type": "explicit-cite",
+                            "from": block["block_id"],
+                            "to": label_to_block_id[label],
+                        }
+                    )
+
+        self.annotations["orders"].extend(annotations)
 
     def generate_float_envs_order(self):
+        annotations = []
+        pattern = r"\\label\{(.*?)\}"
+        # 0, add labels for titles
+        for block in self.annotations["annotations"]:
+            if config.category2name[block["category"]] != "Title":
+                continue
+            block["labels"] = re.findall(pattern, block["source_code"])
+
+        # 1. add labels for equations
+        for block in self.annotations["annotations"]:
+            if config.category2name[block["category"]] != "Equation":
+                continue
+            block["labels"] = re.findall(pattern, block["source_code"])
+
+        # 2. match caption to tabulars and generate labels
+        # find the interval of tabulars
+        # find the intetval of tables
+        # find the interval of captions
+        # match caption to tables and generate labels
+
+        # 3. match caption to figure and generate labels
         # TODO: complete this
+        # 4. match caption to algorithms and generate labels
+
+        # 5. match caption to codings and generate labels
+
         # caption to env
         # label to env
-        pass
         # 1. caption-env attach, implicit cite and add label
         # 2. equation-label attach, add label
-        return []
+        self.annotations["orders"].extend(annotations)
 
     def generate_sortable_envs_order(self):
-        stack = []
         annotations = []
-        relation_map = config.relation_map
-        sortable_category = [
+        sortable_categories = [
             config.name2category[name] for name in config.sortable_categories
         ]
 
         sortable_elements = [
             _block
-            for page_index in self.layout_info.keys()
-            for _block in self.layout_info[page_index]
-            if _block.category in sortable_category
+            for _block in self.annotations["annotations"]
+            if _block.category in sortable_categories
         ]
 
-        # TODO: move this to config
-        peer_title_categories = [
+        title_categories = [
             config.name2category[x] for x in ["Title", "PaperTitle", "Abstract"]
         ]
 
-        peer_text_categories = [
+        text_categories = [
             config.name2category[x] for x in ["Text", "Text-EQ", "Equation", "List"]
         ]
 
+        stack = []
         for index, element in enumerate(sortable_elements):
-            if index == 0:
+            if index == 0 or not stack:
                 stack.append(element)
                 continue
 
-            if element.category in peer_title_categories:
-                while stack and stack[-1].category not in peer_title_categories:
-                    stack.pop()
+            # case 0: both corresponding to the same text, mark as identical
+            if element.parent_block == stack[-1].block_id:
+                annotations.append(
+                    {
+                        "type": "identical",
+                        "from": element.block_id,
+                        "to": stack[-1].block_id,
+                    }
+                )
+                stack.pop()
+                stack.append(element)
+                continue
 
-                # no peer categories
-                if not stack:
-                    stack.append(element)
-                    continue
-
-                # not in the same category, label it as peer relationship
-                # or in the same category but the category is not Title
-                if (
-                    element.category != stack[-1].category
-                    or element.category == config.name2category["Title"]
-                ):
+            # case 1: both in the text category, mark as peer
+            if (
+                element.category in text_categories
+                and stack[-1].category in text_categories
+            ):
+                if element.category != stack[-1].category:
                     annotations.append(
                         {
                             "type": "peer",
@@ -693,66 +747,50 @@ class OrderAnnotation:
                             "to": stack[-1].block_id,
                         }
                     )
-                    stack.append(element)
-                    continue
-
-                # both are in the Title category
-                cur_title = utils.extract_title_name(element.source_code)
-                while (
-                    stack
-                    and (cur_title, utils.extract_title_name(stack[-1].source_code))
-                    not in config.relation_map
-                ):
                     stack.pop()
+                    stack.append(element)
+                    continue
 
-                # no relation found
+            # case 2: current in text, prev in title, mark as sub
+            if (
+                element.category in text_categories
+                and stack[-1].category in title_categories
+            ):
+                if element.category != stack[-1].category:
+                    annotations.append(
+                        {
+                            "type": "sub",
+                            "from": element.block_id,
+                            "to": stack[-1].block_id,
+                        }
+                    )
+                    stack.append(element)
+                    continue
+
+            # case 3: current in title, prev in text, find the most recent title
+            if (
+                element.category in title_categories
+                and stack[-1].category in text_categories
+            ):
+                while stack:
+                    if stack[-1].category not in title_categories:
+                        stack.pop()
+
                 if not stack:
                     stack.append(element)
                     continue
 
-                # determine the relation in Title category
-                prev_title = utils.extract_title_name(stack[-1].source_code)
                 annotations.append(
                     {
-                        "type": config.relation_map[(cur_title, prev_title)],
+                        "type": "peer",
                         "from": element.block_id,
                         "to": stack[-1].block_id,
                     }
                 )
                 stack.append(element)
-            elif element.category == config.name2category["Footnote"]:
-                # FIXME: this may happens when PaperTitle is not parsed and authors is represented as Footnote
-                if not stack:
-                    continue
+                continue
 
-                annotations.append(
-                    {
-                        "type": "inline",
-                        "from": element.block_id,
-                        "to": stack[-1].block_id,
-                    }
-                )
-                # the footnote element is not appended to the stack due to inline relationship is a container
-
-            elif element.category in peer_text_categories:
-                cur_name = config.category2name[element.category]
-                prev_name = config.category2name[stack[-1].category]
-                annotations.append(
-                    {
-                        "type": relation_map.get(
-                            (cur_name, prev_name),
-                            "Unknown",
-                        ),
-                        "from": element.block_id,
-                        "to": stack[-1].block_id,
-                    }
-                )
-                stack.append(element)
-
-            else:
-                raise ValueError(f"Unsupported category {element.category}")
-
-        return annotations
+        self.annotations["orders"].extend(annotations)
 
 
 def get_image_pairs(dir1: str, dir2: str):
