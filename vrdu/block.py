@@ -171,7 +171,7 @@ class Block:
     @classmethod
     def from_dict(cls, data: Dict[str, Any]):
         return cls(
-            BoundingBox.from_dict(data["bbox"]),
+            BoundingBox.from_dict(data),
             category=data["category"],
             previous_block=data["previous_block"],
             parent_block=data["parent_block"],
