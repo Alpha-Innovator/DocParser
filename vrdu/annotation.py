@@ -631,8 +631,8 @@ class OrderAnnotation:
         for block in self.annotations["annotations"]:
             if "labels" not in block:
                 continue
-            for label in block["labels"]:
-                label_to_block_id[label] = block["block_id"]
+            for _label in block["labels"]:
+                label_to_block_id[_label] = block["block_id"]
 
         ref_patterns = "|".join(
             [
