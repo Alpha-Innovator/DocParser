@@ -788,6 +788,22 @@ class OrderAnnotation:
                 stack.append(element)
                 continue
 
+            # case 4: both in titles, mark as peer
+            if (
+                element.category in title_categories
+                and stack[-1].category in title_categories
+            ):
+                annotations.append(
+                    {
+                        "type": "peer",
+                        "from": element.block_id,
+                        "to": stack[-1].block_id,
+                    }
+                )
+                stack.pop()
+                stack.append(element)
+                continue
+
         self.annotations["orders"].extend(annotations)
 
 
