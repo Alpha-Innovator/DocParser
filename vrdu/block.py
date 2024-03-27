@@ -177,4 +177,5 @@ class Block:
             parent_block=data["parent_block"],
             next_block=data["next_block"],
             source_code=data["source_code"],
+            page_index=data["page_index"],
         )
