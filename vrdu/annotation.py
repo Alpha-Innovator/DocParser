@@ -608,7 +608,7 @@ class OrderAnnotation:
     def __init__(self, layout_info) -> None:
         self.annotations = {}
         self.annotations["annotations"] = [
-            _block.to_dict()
+            _block
             for page_index in layout_info.keys()
             for _block in layout_info[page_index]
         ]
