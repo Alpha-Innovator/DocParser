@@ -734,22 +734,21 @@ class OrderAnnotation:
                 stack.append(element)
                 continue
 
-            # case 1: both in the text category, mark as peer
+            # case 1: both in the text category, mark as adj
             if (
                 element.category in text_categories
                 and stack[-1].category in text_categories
             ):
-                if element.category != stack[-1].category:
-                    annotations.append(
-                        {
-                            "type": "peer",
-                            "from": element.block_id,
-                            "to": stack[-1].block_id,
-                        }
-                    )
-                    stack.pop()
-                    stack.append(element)
-                    continue
+                annotations.append(
+                    {
+                        "type": "adj",
+                        "from": element.block_id,
+                        "to": stack[-1].block_id,
+                    }
+                )
+                stack.pop()
+                stack.append(element)
+                continue
 
             # case 2: current in text, prev in title, mark as sub
             if (
