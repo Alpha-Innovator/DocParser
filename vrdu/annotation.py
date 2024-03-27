@@ -771,9 +771,8 @@ class OrderAnnotation:
                 element.category in title_categories
                 and stack[-1].category in text_categories
             ):
-                while stack:
-                    if stack[-1].category not in title_categories:
-                        stack.pop()
+                while stack and stack[-1].category not in title_categories:
+                    stack.pop()
 
                 if not stack:
                     stack.append(element)
