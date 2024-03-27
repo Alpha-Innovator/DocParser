@@ -75,6 +75,7 @@ class Block:
 
     def __init__(
         self,
+        block_id: int = None,
         bounding_box: BoundingBox = None,
         category: int = None,
         page_index: int = None,
@@ -83,8 +84,11 @@ class Block:
         next_block: int = None,
         source_code: str = None,
     ) -> None:
-        self.id = Block.current_id
-        Block.current_id += 1
+        if not block_id:
+            self.id = Block.current_id
+            Block.current_id += 1
+        else:
+            self.id = block_id
 
         self._category = category
         self._page_index = page_index
@@ -171,7 +175,8 @@ class Block:
     @classmethod
     def from_dict(cls, data: Dict[str, Any]):
         return cls(
-            BoundingBox.from_dict(data),
+            block_id=data["block_id"],
+            bounding_box=BoundingBox.from_dict(data),
             category=data["category"],
             previous_block=data["previous_block"],
             parent_block=data["parent_block"],
