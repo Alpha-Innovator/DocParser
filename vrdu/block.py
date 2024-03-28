@@ -83,6 +83,8 @@ class Block:
         parent_block: int = None,
         next_block: int = None,
         source_code: str = None,
+        labels: List[str] = None,
+        references: List[str] = None,
     ) -> None:
         if not block_id:
             self.id = Block.current_id
@@ -97,6 +99,8 @@ class Block:
         self._parent_block = parent_block
         self._next_block = next_block
         self._source_code = source_code
+        self._labels = labels
+        self._references = references
 
     def __repr__(self) -> str:
         return f"Block(id={self.id}, category={self.category}, page_index={self.page_index}, bbox={self.bbox}), source_code={self.source_code}"
@@ -108,6 +112,22 @@ class Block:
     @bbox.setter
     def bbox(self, value: BoundingBox) -> None:
         self._bounding_box = value
+
+    @property
+    def labels(self) -> List[str]:
+        return self._labels
+
+    @labels.setter
+    def labels(self, value: List[str]) -> None:
+        self._labels = value
+
+    @property
+    def references(self) -> List[str]:
+        return self._references
+
+    @references.setter
+    def references(self, value: List[str]) -> None:
+        self._references = value
 
     @property
     def block_id(self) -> int:
@@ -168,6 +188,8 @@ class Block:
                 "parent_block": self.parent_block,
                 "next_block": self.next_block,
                 "source_code": self.source_code,
+                "labels": self.labels,
+                "references": self.references,
             }
         )
         return data
