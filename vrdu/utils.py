@@ -16,7 +16,7 @@ from vrdu.config import config
 
 def extract_all_tex_files(path) -> List[str]:
     """
-    Given a path, this function extracts all the MAIN .tex files within the
+    Given a path, this function extracts all the .tex files within the
     specified directory and its subdirectories.
 
     Args:
@@ -27,14 +27,10 @@ def extract_all_tex_files(path) -> List[str]:
     """
     tex_files = []
 
-    for root, dirs, files in os.walk(path):
-        for file in files:
-            # skip non-tex files
-            if not file.endswith(".tex"):
-                continue
-            tex_file = os.path.join(root, file)
-
-            tex_files.append(tex_file)
+    for root, _, files in os.walk(path):
+        tex_files.extend(
+            [os.path.join(root, file) for file in files if file.endswith(".tex")]
+        )
     return tex_files
 
 
@@ -140,7 +136,9 @@ def compile_latex(file: str, tex_engine: str = "pdflatex"):
     file_name = os.path.basename(file)
     if tex_engine == "pdflatex":
         script_path = os.path.expanduser("compile_latex.sh")
-        subprocess.run(["bash", script_path, path_name, file_name], check=True, timeout=1000)
+        subprocess.run(
+            ["bash", script_path, path_name, file_name], check=True, timeout=1000
+        )
     elif tex_engine == "xelatex":
         subprocess.run(["xelatex", file], check=True)
 
