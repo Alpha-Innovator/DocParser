@@ -629,10 +629,10 @@ class OrderAnnotation:
         # map from label to block_id
         label_to_block_id = {}
         for block in self.annotations["annotations"]:
-            if "labels" not in block:
+            if not block.labels:
                 continue
-            for _label in block["labels"]:
-                label_to_block_id[_label] = block["block_id"]
+            for _label in block.labels:
+                label_to_block_id[_label] = block.block_id
 
         ref_patterns = "|".join(
             [
@@ -647,7 +647,7 @@ class OrderAnnotation:
         )
         # generate reference according to label
         for block in self.annotations["annotations"]:
-            if config.category2name[block["category"]] not in ["Text", "Text-EQ"]:
+            if config.category2name[block.category] not in ["Text", "Text-EQ"]:
                 continue
             block["references"] = re.findall(ref_patterns, block["source_code"])
             for _label in block["references"]:
@@ -655,7 +655,7 @@ class OrderAnnotation:
                     annotations.append(
                         {
                             "type": "explicit-cite",
-                            "from": block["block_id"],
+                            "from": block.block_id,
                             "to": label_to_block_id[_label],
                         }
                     )
