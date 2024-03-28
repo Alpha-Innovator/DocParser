@@ -61,7 +61,7 @@ def filter_tex_files(tex_files: List[str], main_path: str = None) -> List[str]:
     log.info(f"[VRDU] Before filtering, found {len(result)} tex files")
     if os.path.exists(database):
         df = pd.read_csv(database)
-        processed_papers = set(df[df["status"] != "processing"]["path"])
+        processed_papers = set(df["path"])
         result = [x for x in result if os.path.dirname(x) not in processed_papers]
 
     log.info(f"[VRDU] After filtering, found {len(result)} tex files")
