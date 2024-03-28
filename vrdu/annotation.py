@@ -668,19 +668,19 @@ class OrderAnnotation:
         self.annotations["orders"].extend(annotations)
 
     def generate_float_envs_order(self):
-        annotations = []
+        # annotations = []
         pattern = r"\\label\{(.*?)\}"
         # 0, add labels for titles
         for block in self.annotations["annotations"]:
-            if config.category2name[block["category"]] != "Title":
+            if config.category2name[block.category] != "Title":
                 continue
-            block["labels"] = re.findall(pattern, block["source_code"])
+            block.labels = re.findall(pattern, block.source_code)
 
         # 1. add labels for equations
         for block in self.annotations["annotations"]:
-            if config.category2name[block["category"]] != "Equation":
+            if config.category2name[block.category] != "Equation":
                 continue
-            block["labels"] = re.findall(pattern, block["source_code"])
+            block.labels = re.findall(pattern, block.source_code)
 
         # 2. match caption to tabulars and generate labels
         # find the interval of tabulars
@@ -698,7 +698,7 @@ class OrderAnnotation:
         # label to env
         # 1. caption-env attach, implicit cite and add label
         # 2. equation-label attach, add label
-        self.annotations["orders"].extend(annotations)
+        # self.annotations["orders"].extend(annotations)
 
     def generate_sortable_envs_order(self):
         annotations = []
