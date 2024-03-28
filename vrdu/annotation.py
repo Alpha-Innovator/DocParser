@@ -649,8 +649,13 @@ class OrderAnnotation:
         for block in self.annotations["annotations"]:
             if config.category2name[block.category] not in ["Text", "Text-EQ"]:
                 continue
-            block["references"] = re.findall(ref_patterns, block["source_code"])
-            for _label in block["references"]:
+            block.references = [
+                x
+                for group in re.findall(ref_patterns, block.source_code)
+                for x in group
+                if x
+            ]
+            for _label in block.references:
                 if _label in label_to_block_id:
                     annotations.append(
                         {
