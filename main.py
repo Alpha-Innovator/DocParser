@@ -71,7 +71,7 @@ def remove_redundant_stuff(main_directory: str) -> None:
             shutil.rmtree(folder)
 
 
-def process_one_file(file_name) -> None:
+def process_one_file(file_name: str) -> None:
     main_directory = os.path.dirname(file_name)
     log.info(f"[VRDU] file: {file_name}, start processing.")
 
