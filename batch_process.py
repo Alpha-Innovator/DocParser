@@ -27,20 +27,22 @@ def filter_tex_files(tex_files: List[str], main_path: str = None) -> List[str]:
     Returns:
         List[str]: list of tex files that are compiable.
     """
+
+    # TODO: move this to config
+    redundant_tex_files = [
+        "paper_block.tex",
+        "paper_colored.tex",
+        "paper_white.tex",
+        "paper_original.tex",
+    ]
+
     result = []
     for tex_file in tex_files:
-        if "paper_block" in tex_file:
+        if os.path.basename(tex_file) in redundant_tex_files:
             continue
 
-        if "paper_colored" in tex_file:
-            continue
-
-        if "paper_white" in tex_file:
-            continue
-
-        if "paper_original" in tex_file:
-            continue
-
+        # ensure the tex files inside a subfolder is not included
+        # ex: cs.AI/1234.4567/figs/draw.tex will be excluded
         if main_path and os.path.dirname(os.path.dirname(tex_file)) != main_path:
             continue
 
