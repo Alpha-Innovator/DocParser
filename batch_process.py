@@ -43,7 +43,8 @@ def filter_tex_files(tex_files: List[str], main_path: str = None) -> List[str]:
 
         if main_path and os.path.dirname(os.path.dirname(tex_file)) != main_path:
             continue
-        # prevent processing previous generated files
+
+        # make sure the tex file is compiable (main document)
         try:
             with open(tex_file) as f:
                 content = f.read()
@@ -51,9 +52,10 @@ def filter_tex_files(tex_files: List[str], main_path: str = None) -> List[str]:
                 continue
             result.append(tex_file)
         except UnicodeDecodeError:
-            log.debug(f"failed to read tex file: {tex_file}")
+            log.debug(f"failed to read tex file: {tex_file} due to UnicodeDecodeError")
             continue
 
+    # skip processed papers
     log.info(f"[VRDU] Before filtering, found {len(result)} tex files")
     if os.path.exists(database):
         df = pd.read_csv(database)
@@ -65,6 +67,19 @@ def filter_tex_files(tex_files: List[str], main_path: str = None) -> List[str]:
 
 
 def process_one_discpline(path: str, cpu_count: int, discpline: str) -> None:
+    """Process the data in a specific discpline.
+
+    Args:
+        path (str): The path to the raw data.
+        cpu_count (int): The number of CPUs to use for multiprocessing.
+        discpline (str): The discpline to process.
+
+    Raises:
+        Exception: If the processing fails.
+
+    Returns:
+        None
+    """
     discpline_path = os.path.join(path, discpline)
     log.info(f"[VRDU] Path to raw data: {discpline_path}")
     log.info(f"[VRDU] Using cpu counts: {cpu_count}")
@@ -74,7 +89,6 @@ def process_one_discpline(path: str, cpu_count: int, discpline: str) -> None:
     try:
         with multiprocessing.Pool(cpu_count) as pool:
             pool.map(process_one_file, tex_files)
-        # save log file
     except Exception:
         log.exception(f"[VRDU] discpline: {discpline}, failed to process.")
     finally:
@@ -84,6 +98,23 @@ def process_one_discpline(path: str, cpu_count: int, discpline: str) -> None:
 
 
 def main():
+    """This function is the entry point of the application.
+
+    Args:
+        path (str): The path to the raw data.
+        cpu_count (int): The number of CPUs to use for multiprocessing.
+        discpline (str): The discpline to process.
+
+    Raises:
+        Exception: If the processing fails.
+
+    Returns:
+        None
+
+    References:
+        https://arxiv.org/category_taxonomy
+    """
+    # parse arguments
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "-p", "--path", type=str, required=True, help="path to raw data"
