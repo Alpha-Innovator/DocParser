@@ -9,23 +9,28 @@ from vrdu.config import config
 pn.extension()
 
 
-data_path = "/home/PJLAB/maosong/vrdu_data/"
-default_path = os.path.expanduser("/home/PJLAB/maosong/vrdu_data/icml2022/output")
+data_path = (
+    "/cpfs01/shared/ADLab/ADLab_hdd/vrdu_arxiv/vrdu_autolabel_final_3_120w/nlin.AO"
+)
+default_path = os.path.expanduser(
+    "/cpfs01/shared/ADLab/ADLab_hdd/vrdu_arxiv/vrdu_autolabel_final_3_120w/nlin.AO/0809.2301"
+)
 
 # get all renderable paper paths
 paper_paths = []
 for root, dirs, files in os.walk(data_path):
-    if "layout_info.json" in files:
-        paper_paths.append(os.path.dirname(root))
+    if "order_annotation.json" in files:
+        paper_paths.append(root)
 
 # generate select widget from paper paths
 paper_select = pn.widgets.Select(value=default_path, options=paper_paths)
 
 # load layout info from a given paper
-layout_info = utils.load_json(os.path.join(default_path, "result/layout_info.json"))
+layout_info = utils.load_json(os.path.join(default_path, "order_annotation.json"))
+layout_info = layout_info["annotations"]
 
 # get all image paths of a given paper
-image_paths = sorted(glob.glob(os.path.join(default_path, "colored/page_*.png")))
+image_paths = sorted(glob.glob(os.path.join(default_path, "original-page-*.jpg")))
 
 # generate select widget from image paths
 image_select = pn.widgets.Select(value=image_paths[0], options=image_paths)
@@ -45,8 +50,9 @@ category_select = pn.widgets.Select(
 @pn.depends(paper_select.param.value)
 def update_paper(path):
     global layout_info
-    layout_info = utils.load_json(os.path.join(path, "result/layout_info.json"))
-    image_paths = sorted(glob.glob(os.path.join(path, "colored/*.png")))
+    layout_info = utils.load_json(os.path.join(path, "order_annotation.json"))
+    layout_info = layout_info["annotations"]
+    image_paths = sorted(glob.glob(os.path.join(path, "original-page-*.jpg")))
     image_select.options = image_paths
 
 
@@ -71,7 +77,8 @@ def update_annotation(image_path, category):
 
     # filter blocks
     if category == "All":
-        blocks = [block for block in layout_info if block["page_index"] == image_id]
+        print(layout_info)
+        blocks = [block for block in layout_info if block["page_index"] == 0]
     else:
         blocks = [
             block
