@@ -78,7 +78,7 @@ def update_annotation(image_path, category):
     # filter blocks
     if category == "All":
         print(layout_info)
-        blocks = [block for block in layout_info if block["page_index"] == 0]
+        blocks = [block for block in layout_info if block["page_index"] == image_id]
     else:
         blocks = [
             block
