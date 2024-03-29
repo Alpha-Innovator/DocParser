@@ -9,7 +9,7 @@ from vrdu import logger
 from vrdu import utils
 from vrdu import renderer
 from vrdu import preprocess
-from vrdu import annotation
+from vrdu import order_annotation as order
 from vrdu.config import config
 
 
@@ -112,8 +112,9 @@ def process_one_file(file_name: str) -> None:
         log.info(
             f"[VRDU] file: {original_tex}, start generating annotations, this may take a while..."
         )
-        vrdu_annotation = annotation.LayoutAnnotation(main_directory)
-        vrdu_annotation.annotate()
+
+        vrdu_order_annotation = order.OrderAnnotation(original_tex)
+        vrdu_order_annotation.annotate()
 
         log.info(f"[VRDU] file: {original_tex}, successfully processed.")
 
