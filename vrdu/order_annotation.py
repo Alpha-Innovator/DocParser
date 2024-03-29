@@ -7,18 +7,16 @@ from vrdu import utils
 
 
 class OrderAnnotation:
-    def __init__(self, tex_file: str, layout_info) -> None:
+    def __init__(self, tex_file: str) -> None:
         self.tex_file = tex_file
         self.main_directory = os.path.dirname(tex_file)
         self.result_directory = os.path.join(self.main_directory, "output/result")
-        layout_info_file = os.path.join(self.main_directory, "layout_info.json")
+        layout_info_file = os.path.join(self.result_directory, "layout_info.json")
         layout_info_data = utils.load_json(layout_info_file)
-        layout_info = {}
-        for item in layout_info_data:
-            page_index = item["page_index"]
-            if page_index not in layout_info:
-                layout_info[page_index] = []
-            layout_info[page_index].append(Block.from_dict(item))
+        layout_info = {
+            int(key): [Block.from_dict(item) for item in values]
+            for key, values in layout_info_data.items()
+        }
 
         # result
         self.annotations = {}
@@ -40,7 +38,12 @@ class OrderAnnotation:
             self.result_directory, "order_annotation.json"
         )
 
-        utils.export_to_json(self.annotations, order_annotation_file)
+        transformed_annotations = {
+            "annotations": [x.to_dict() for x in self.annotations["annotations"]],
+            "orders": self.annotations["orders"],
+        }
+
+        utils.export_to_json(transformed_annotations, order_annotation_file)
 
     def generate_cross_reference_order(self):
         annotations = []

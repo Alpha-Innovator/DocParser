@@ -463,6 +463,11 @@ class LayoutAnnotation:
         """
         # step1: generate layout info
         layout_info = self.generate_layout_info()
+        layout_info_data = {
+            key: [x.to_dict() for x in values] for key, values in layout_info.items()
+        }
+        layout_info_file = os.path.join(self.result_directory, "layout_info.json")
+        utils.export_to_json(layout_info_data, layout_info_file)
 
         # step2: generate layout detection result
         image_annotation = self.generate_image_annotation(layout_info)
