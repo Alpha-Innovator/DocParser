@@ -22,11 +22,13 @@ json_files = [
 def extract_processed_papers(database_file: str) -> List[str]:
     df = pd.read_csv(database_file)
     processed_papers = df[df["status"] == "success"]["path"].tolist()
+    log.info(f"There are {len(processed_papers)} papers")
     return processed_papers
 
 
 def export_to_dataset(processed_papers: List[str], target_path: str) -> None:
     for main_path in tqdm(processed_papers):
+        log.info(f"processing paper: {main_path}")
         output_path = os.path.join(main_path, "output")
         result_path = os.path.join(output_path, "result")
 
