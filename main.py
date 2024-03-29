@@ -12,7 +12,7 @@ from vrdu import preprocess
 from vrdu import layout_annotation as layout
 from vrdu import order_annotation as order
 from vrdu.config import config
-
+from vrdu.quality_check import generate_quality_report
 
 log = logger.setup_app_level_logger(file_name="vrdu_debug.log")
 
@@ -118,6 +118,8 @@ def process_one_file(file_name: str) -> None:
 
         vrdu_order_annotation = order.OrderAnnotation(original_tex)
         vrdu_order_annotation.annotate()
+
+        generate_quality_report(main_directory)
 
         log.info(f"[VRDU] file: {original_tex}, successfully processed.")
 
