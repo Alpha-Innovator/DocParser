@@ -26,6 +26,9 @@ def generate_quality_report(main_directory: str) -> None:
 
     layout_info_file = os.path.join(result_directory, "layout_info.json")
     layout_info_data = utils.load_json(layout_info_file)
+    # order_annotation_file = os.path.join(result_directory, "order_annotation.json")
+    # order_annotation = utils.load_json(order_annotation_file)
+    # layout_info_data = order_annotation["annotation"]
     layout_info = {
         int(key): [Block.from_dict(item) for item in values]
         for key, values in layout_info_data.items()
