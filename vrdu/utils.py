@@ -143,26 +143,26 @@ def compile_latex(file: str, tex_engine: str = "pdflatex"):
         subprocess.run(["xelatex", file], check=True)
 
 
-def pdf2jpg(pdf: str, path: str) -> None:
+def pdf2jpg(pdf_path: str, output_directory: str) -> None:
     """
     Convert a PDF file into a series of jpg images.
 
     Parameters:
-        pdf (str): The path of the PDF file to be converted.
-        path (str): The directory where the converted images will be saved.
+        pdf_path (str): The path of the PDF file to be converted.
+        output_directory (str): The directory where the converted images will be saved.
     Returns:
         None
 
     Reference:
         https://pypi.org/project/pdf2image/
     """
-    os.makedirs(path, exist_ok=True)
+    os.makedirs(output_directory, exist_ok=True)
     # the output images has name of format: thread-000x-yz.png
     # where x is the thread index, yz is the index of pdf page start from 1
     pdf2image.convert_from_path(
-        pdf,
+        pdf_path,
         fmt="jpg",
-        output_folder=path,
+        output_folder=output_directory,
         output_file=generators.counter_generator(prefix="thread-", suffix="-page"),
     )
 
