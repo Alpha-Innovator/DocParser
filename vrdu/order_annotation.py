@@ -1,5 +1,6 @@
 import re
 import os
+from uuid import uuid4
 
 from vrdu.block import Block
 from vrdu.config import config
@@ -87,6 +88,22 @@ class OrderAnnotation:
                         }
                     )
 
+        for block in self.annotations["annotations"]:
+            if config.category2name[block.category] != "Caption":
+                continue
+            if not block.references:
+                continue
+            for _label in block.references:
+                if _label not in label_to_block_id:
+                    continue
+                annotations.append(
+                    {
+                        "type": "implicit-cite",
+                        "from": block.block_id,
+                        "to": label_to_block_id[_label],
+                    }
+                )
+
         self.annotations["orders"].extend(annotations)
 
     def generate_float_envs_order(self):
@@ -105,9 +122,49 @@ class OrderAnnotation:
             block.labels = re.findall(pattern, block.source_code)
 
         # 2. match caption to tabulars and generate labels
-        # find the interval of tabulars
+        with open(self.tex_file, "r") as f:
+            latex_content = f.read()
         # find the intetval of tables
+        table_pattern = re.compile(
+            r"\\begin\{table\*?\}(.*?)\\end\{table\*?\}", re.DOTALL
+        )
+        table_indices = []
+        for _match in table_pattern.finditer(latex_content):
+            table_indices.append((_match.start(), _match.end(), str(uuid4())))
+
+        # find the interval of tabulars
+        for block in self.annotations["annotations"]:
+            if config.category2name[block.category] != "Table":
+                continue
+            start_index = latex_content.find(block.source_code)
+            if start_index == -1:
+                continue
+            end_index = start_index + len(block.source_code)
+
+            for table_index in table_indices:
+                if start_index >= table_index[0] and end_index <= table_index[1]:
+                    labels = re.findall(
+                        pattern, latex_content[table_index[0] : table_index[1]]
+                    )
+                    block.labels = labels
+                    if not block.labels:
+                        block.labels = [table_index[2]]
         # find the interval of captions
+        for block in self.annotations["annotations"]:
+            if config.category2name[block.category] != "Caption":
+                continue
+            start_index = latex_content.find(block.source_code)
+            if start_index == -1:
+                continue
+            end_index = start_index + len(block.source_code)
+            for table_index in table_indices:
+                if start_index >= table_index[0] and end_index <= table_index[1]:
+                    labels = re.findall(
+                        pattern, latex_content[table_index[0] : table_index[1]]
+                    )
+                    block.references = labels
+                    if not block.references:
+                        block.references = [table_index[2]]
         # match caption to tables and generate labels
 
         # 3. match caption to figure and generate labels
