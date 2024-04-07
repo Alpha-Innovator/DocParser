@@ -279,7 +279,11 @@ def export_to_coco(
         https://cocodataset.org/#format-data
     """
     category_info = [
-        {"id": index, "name": category, "supercategory": supercategory}
+        {
+            "id": index,
+            "name": category,
+            "supercategory": supercategory,
+        }
         for index, category, supercategory in config.config["category_name"]
     ]
     result = {
