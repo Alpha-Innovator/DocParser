@@ -11,6 +11,7 @@ import uuid
 from pdf2image import pdf2image
 from pdf2image import generators
 
+from vrdu.block import Block
 from vrdu.config import config
 
 
@@ -259,7 +260,7 @@ def extract_macro_definitions(tex_file) -> List[str]:
 
 
 def export_to_coco(
-    layout_info: Dict,
+    layout_info: Dict[int, List[Block]],
     image_infos: Dict[int, Dict[str, Any]],
     filename: str,
 ) -> None:
