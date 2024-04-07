@@ -348,6 +348,16 @@ def extract_title_name(title) -> str:
 
 
 def colorize(text: str, category_name: str) -> str:
+    """
+    Given a piece of text and a category name, colorizes the text based on the category.
+    
+    Args:
+        text (str): The text to be colorized.
+        category_name (str): The category name to determine the colorization.
+        
+    Returns:
+        str: The colorized text based on the category.
+    """
     color = config.name2color[category_name]
     if category_name == "Caption":
         index = text.find("{")
