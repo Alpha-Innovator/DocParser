@@ -132,6 +132,16 @@ def get_main_content(data):
 
 
 def compile_latex(file: str, tex_engine: str = "pdflatex"):
+    """
+    Compile a LaTeX file using either pdflatex or xelatex as the tex engine.
+
+    Parameters:
+        file (str): The path to the LaTeX file to be compiled.
+        tex_engine (str): The LaTeX engine to use for compilation. Default is "pdflatex".
+
+    Returns:
+        None
+    """
     path_name = os.path.dirname(file)
     file_name = os.path.basename(file)
     if tex_engine == "pdflatex":
@@ -168,6 +178,17 @@ def pdf2jpg(pdf_path: str, output_directory: str) -> None:
 
 
 def convert_pdf_figure_to_png_image(pdf_image: str, png_image: str, dpi: int = 72):
+    """
+    Convert a PDF to a PNG image.
+
+    Parameters:
+        pdf_image (str): The filepath of the PDF image to convert.
+        png_image (str): The filepath where the PNG image will be saved.
+        dpi (int): The resolution for the conversion (default is 72).
+
+    Returns:
+        None
+    """
     # crop the pdf image
     subprocess.run(
         ["pdfcrop", pdf_image, pdf_image],
@@ -179,6 +200,13 @@ def convert_pdf_figure_to_png_image(pdf_image: str, png_image: str, dpi: int = 7
 
 
 def convert_eps_image_to_pdf_image(eps_image_path: str, pdf_image_path: str):
+    """
+    A function that converts an EPS image to a PDF image.
+
+    Args:
+        eps_image_path (str): The file path of the EPS image to convert.
+        pdf_image_path (str): The file path where the PDF image will be saved.
+    """
     subprocess.run(["epspdf", eps_image_path, pdf_image_path])
 
 
@@ -235,6 +263,20 @@ def export_to_coco(
     image_infos: Dict[int, Dict[str, Any]],
     filename: str,
 ) -> None:
+    """
+    Export the given layout information and image information to a COCO format JSON file.
+
+    Args:
+        layout_info (Dict[int, List[Block]]): A dictionary mapping page indices to lists of Block objects.
+        image_infos (Dict[int, Dict[str, Any]]): A dictionary mapping page indices to dictionaries containing image information.
+        filename (str): The name of the output JSON file.
+
+    Returns:
+        None
+
+    Reference:
+        https://cocodataset.org/#format-data
+    """
     category_info = [
         {"id": index, "name": category, "supercategory": supercategory}
         for index, category, supercategory in config.config["category_name"]
