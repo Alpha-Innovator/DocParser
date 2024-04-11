@@ -132,26 +132,22 @@ def get_main_content(data):
     return main_content, main_content_index
 
 
-def compile_latex(file: str, tex_engine: str = "pdflatex"):
+def compile_latex(file: str):
     """
     Compile a LaTeX file using either pdflatex or xelatex as the tex engine.
 
     Parameters:
         file (str): The path to the LaTeX file to be compiled.
-        tex_engine (str): The LaTeX engine to use for compilation. Default is "pdflatex".
 
     Returns:
         None
     """
     path_name = os.path.dirname(file)
     file_name = os.path.basename(file)
-    if tex_engine == "pdflatex":
-        script_path = os.path.expanduser("compile_latex.sh")
-        subprocess.run(
-            ["bash", script_path, path_name, file_name], check=True, timeout=1000
-        )
-    elif tex_engine == "xelatex":
-        subprocess.run(["xelatex", file], check=True)
+    script_path = os.path.expanduser("compile_latex.sh")
+    subprocess.run(
+        ["bash", script_path, path_name, file_name], check=True, timeout=1000
+    )
 
 
 def pdf2jpg(pdf_path: str, output_directory: str) -> None:
