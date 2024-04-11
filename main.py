@@ -113,7 +113,7 @@ def process_one_file(file_name: str) -> None:
         log.info(
             f"[VRDU] file: {original_tex}, start generating annotations, this may take a while..."
         )
-        vrdu_layout_annotation = layout.LayoutAnnotation(main_directory)
+        vrdu_layout_annotation = layout.LayoutAnnotation(original_tex)
         vrdu_layout_annotation.annotate()
 
         vrdu_order_annotation = order.OrderAnnotation(original_tex)

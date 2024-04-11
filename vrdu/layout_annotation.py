@@ -25,9 +25,10 @@ class LayoutAnnotation:
     # https://www.overleaf.com/learn/latex/Lengths_in_LaTeX
     ONE_INCH = 72.27
 
-    def __init__(self, main_directory: str) -> None:
-        self.main_directory = main_directory
-        self.output_directory = os.path.join(main_directory, "output")
+    def __init__(self, tex_file: str) -> None:
+        self.tex_file = tex_file
+        self.main_directory = os.path.dirname(tex_file)
+        self.output_directory = os.path.join(self.main_directory, "output")
         self.result_directory = os.path.join(self.output_directory, "result")
         self.layout_metadata: Dict = {}
         self.text_info = utils.load_json(
