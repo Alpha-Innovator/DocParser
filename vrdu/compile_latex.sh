@@ -38,7 +38,7 @@ else
     pdflatex -interaction=nonstopmode  "$main_file.tex" > /dev/null
 
     # Compile the main LaTeX file one more time for proper references
-    pdflatex -interaction=nonstopmode  "$main_file.tex" > /dev/null
+    pdflatex -interaction=nonstopmode  -synctex=1 "$main_file.tex" > /dev/null
 fi
 
 
