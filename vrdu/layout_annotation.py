@@ -154,18 +154,24 @@ class LayoutAnnotation:
         """
         layout_info = defaultdict(list)
         for page_index, page_layout in enumerate(pdf_layouts):
-            layout_info[page_index].extend(
-                [
+            height = page_layout.height
+            for element in page_layout:
+                if not isinstance(element, LTFigure):
+                    continue
+                # the coordinate system of Pdfminer is in contrast to the coordinate system of the image
+                # by fliping the y axis
+                y0 = height - element.bbox[3]
+                y1 = height - element.bbox[1]
+                x0 = element.bbox[0]
+                x1 = element.bbox[2]
+                layout_info[page_index].append(
                     Block(
-                        bounding_box=BoundingBox(*element.bbox),
+                        bounding_box=BoundingBox(x0, y0, x1, y1),
                         page_index=page_index,
                         category=config.name2category["Figure"],
-                        source_code="",  # currently, figure block will have no source code match
+                        source_code="",
                     )
-                    for element in page_layout
-                    if isinstance(element, LTFigure)
-                ]
-            )
+                )
 
         # convert bounding boxes from PDF coordinate system to image coordinate system
         self.transform(layout_info)
@@ -184,12 +190,9 @@ class LayoutAnnotation:
             None
         """
         for page_index in layout_info.keys():
-            pdf_height = self.layout_metadata[page_index]["pdf_height"]
             px2img = self.layout_metadata[page_index]["px2img"]
             for index, element in enumerate(layout_info[page_index]):
                 x0, y0, x1, y1 = element.bbox
-                # flip the y-axis
-                y0, y1 = pdf_height - y1, pdf_height - y0
                 # scale
                 width, height = element.width, element.height
                 x0, y0 = x0 * px2img, y0 * px2img
