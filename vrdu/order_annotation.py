@@ -130,14 +130,31 @@ class OrderAnnotation:
         self.annotations["orders"].extend(annotations)
 
     def generate_float_envs_order(self):
-        # annotations = []
         label_pattern = r"\\label\{(.*?)\}"
+
+        with open(self.tex_file, "r") as f:
+            latex_content = f.read()
         # 0, add labels for titles
         # TODO: add labels for other types of titles
         for block in self.annotations["annotations"]:
             if config.category2name[block.category] != "Title":
                 continue
             block.labels = re.findall(label_pattern, block.source_code)
+
+            start_index = latex_content.find(block.source_code)
+            if start_index == -1:
+                continue
+            end_index = start_index + len(block.source_code)
+            _matches = re.finditer(label_pattern, latex_content[end_index:], re.DOTALL)
+            for _match in _matches:
+                label_start_index, label_end_index = (
+                    _match.start() + end_index,
+                    _match.end() + end_index,
+                )
+                label_content = latex_content[label_start_index:label_end_index]
+                if latex_content[end_index:label_start_index].isspace():
+                    block.labels = re.findall(label_pattern, label_content)
+                    break
 
         # 1. add labels for equations
         for block in self.annotations["annotations"]:
@@ -146,9 +163,6 @@ class OrderAnnotation:
             block.labels = re.findall(label_pattern, block.source_code)
 
         # 2. add labels for float envs
-        # colored_tex_file = self.tex_file.replace("paper_original", "paper_colored")
-        with open(self.tex_file, "r") as f:
-            latex_content = f.read()
         # find the intetval of tables
         category_to_patterns = {
             "Table": re.compile(
