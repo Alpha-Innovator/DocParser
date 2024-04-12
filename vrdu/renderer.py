@@ -117,23 +117,23 @@ class Renderer:
             None
         """
 
-        # Step 1: Render captions
-        self.render_caption(tex_file)
-
-        # Step 2: Render footnotes
-        self.render_footnote(tex_file)
-
-        # Step 3: Extract graphics paths
-        self.extract_graphics(tex_file)
-
-        # Step 4: Render algorithm environments
+        # Step 1: Render algorithm environments
         self.render_algorithm(tex_file)
 
-        # Step 5: Render tabular environments
+        # Step 2: Render tabular environments
         self.render_tabular(tex_file)
 
-        # Step 6: Render code environments
+        # Step 3: Render code environments
         self.render_code(tex_file)
+
+        # Step 4: Render footnotes
+        self.render_footnote(tex_file)
+
+        # Step 5: Extract graphics paths
+        self.extract_graphics(tex_file)
+
+        # Step 6: Render captions
+        self.render_caption(tex_file)
 
         # the following two envs are placed here because they also use string regex to render
         # Step 7: Render titles
