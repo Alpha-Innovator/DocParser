@@ -104,6 +104,26 @@ class OrderAnnotation:
                     }
                 )
 
+        # generate reference for float environments
+        for block in self.annotations["annotations"]:
+            if config.category2name[block.category] not in ["Table", "Algorithm"]:
+                continue
+            block.references = [
+                x
+                for group in re.findall(ref_patterns, block.source_code)
+                for x in group
+                if x
+            ]
+            for _label in block.references:
+                if _label in label_to_block_id:
+                    annotations.append(
+                        {
+                            "type": "explicit-cite",
+                            "from": block.block_id,
+                            "to": label_to_block_id[_label],
+                        }
+                    )
+
         self.annotations["orders"].extend(annotations)
 
     def generate_float_envs_order(self):
