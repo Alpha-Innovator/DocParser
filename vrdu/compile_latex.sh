@@ -23,7 +23,7 @@ bib_file=$(find . -maxdepth 1 -type f -name "*.bib" | head -n 1)
 if [ -z "$bib_file" ]; then
     # Compile the main LaTeX file using pdflatex only
     pdflatex -interaction=nonstopmode "$main_file.tex" > /dev/null
-    pdflatex -interaction=nonstopmode  "$main_file.tex" > /dev/null
+    pdflatex -interaction=nonstopmode  -synctex=1 "$main_file.tex" > /dev/null
 else
     # Remove the "./" prefix from the bib_file path
     bib_file=${bib_file#./}
