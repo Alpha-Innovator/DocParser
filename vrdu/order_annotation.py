@@ -172,16 +172,13 @@ class OrderAnnotation:
                 category_to_indicdes[category].append(
                     (_match.start(), _match.end(), str(uuid4()))
                 )
-            log.debug(
-                f"find {len(category_to_indicdes[category])} {category} in {self.tex_file}"
-            )
+
         for category_name, indices in category_to_indicdes.items():
             # find labels for those float environments
             for block in self.annotations["annotations"]:
                 if config.category2name[block.category] != category_name:
                     continue
 
-                log.debug(f"processing {block.source_code}")
                 start_index = latex_content.find(block.source_code)
                 if start_index == -1:
                     continue
@@ -191,20 +188,16 @@ class OrderAnnotation:
                     if start_index < index[0] or end_index > index[1]:
                         continue
 
-                    log.debug(f"wrapper: {latex_content[index[0] : index[1]]}")
                     labels = re.findall(
                         label_pattern, latex_content[index[0] : index[1]]
                     )
                     block.labels = labels
                     block.labels.append(index[2])
 
-                log.debug(f"labels: {block.labels}")
-
             # add references for captions to those float environments
             for block in self.annotations["annotations"]:
                 if config.category2name[block.category] != "Caption":
                     continue
-                log.debug(f"processing {block.source_code}")
                 start_index = latex_content.find(block.source_code)
                 if start_index == -1:
                     continue
@@ -213,10 +206,7 @@ class OrderAnnotation:
                     if start_index < index[0] or end_index > index[1]:
                         continue
 
-                    log.debug(f"wrapper: {latex_content[index[0] : index[1]]}")
                     block.references = [index[2]]
-
-                log.debug(f"references: {block.references}")
 
     def generate_sortable_envs_order(self):
         annotations = []
