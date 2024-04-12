@@ -154,7 +154,7 @@ class OrderAnnotation:
                 label_content = latex_content[label_start_index:label_end_index]
                 if latex_content[end_index:label_start_index].isspace():
                     block.labels = re.findall(label_pattern, label_content)
-                    break
+                break
 
         # 1. add labels for equations
         for block in self.annotations["annotations"]:
