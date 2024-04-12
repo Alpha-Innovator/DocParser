@@ -1,6 +1,7 @@
 from collections import defaultdict
 import os
 import glob
+import subprocess
 from typing import Any, DefaultDict, Dict, List, Tuple
 import matplotlib.pyplot as plt
 import numpy as np
@@ -142,6 +143,55 @@ class LayoutAnnotation:
 
         self.layout_metadata = layout_metadata
 
+    def retrive_figure_source_code(
+        self, figure_layout_info: Dict[int, List[Block]]
+    ) -> None:
+        """Retrieves the source code of a figure using synctex.
+
+        Args:
+            figure_layout_info (Dict[int, List[Block]]): A dictionary where the keys are page indices
+                and the values are lists of Block objects representing the bounding boxes of figures on each page.
+
+        Returns:
+            None
+
+        Note:
+            use `synctex help edit` to view usage of synctex
+        """
+        # paper_colored.tex is what we are working for
+        tex_filename = os.path.basename(self.tex_file).replace(
+            "paper_original", "paper_colored"
+        )
+        pdf_filename = tex_filename.replace(".tex", ".pdf")
+        with open(os.path.join(self.main_directory, tex_filename), "r") as file:
+            content_lines = file.readlines()
+
+        for page_index, blocks in figure_layout_info.items():
+            for block in blocks:
+                bbox = block.bbox
+                center_x, center_y = (bbox[0] + bbox[2]) / 2, (bbox[1] + bbox[3]) / 2
+                log.debug(
+                    f"page index: {page_index + 1}, center: ({center_x}, {center_y}), pdf filename: {pdf_filename}"
+                )
+                # use synctex to retrieve the line index corresponding to the center of the bounding box
+                result = subprocess.run(
+                    [
+                        "synctex",
+                        "edit",
+                        "-o",
+                        f"{page_index + 1}:{center_x}:{center_y}:{pdf_filename}",
+                        "-d",
+                        self.main_directory,
+                    ],
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                )
+                # parse the output of synctex to get the source code
+                line_index = result.stdout.split("\nLine:")[1].split("\n")[0]
+                block.source_code = content_lines[int(line_index) - 1]
+                log.debug(f"line index: {line_index}, source code: {block.source_code}")
+
     def generate_figure_bb(self, pdf_layouts: List[LTPage]) -> Dict[int, List[Block]]:
         """Generate bounding boxes for figures in a PDF layout using Pdfminer.
 
@@ -172,6 +222,9 @@ class LayoutAnnotation:
                         source_code="",
                     )
                 )
+
+        # find the corresponding source code to figure bounding box
+        self.retrive_figure_source_code(layout_info)
 
         # convert bounding boxes from PDF coordinate system to image coordinate system
         self.transform(layout_info)
