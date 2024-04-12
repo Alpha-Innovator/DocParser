@@ -5,6 +5,9 @@ from uuid import uuid4
 from vrdu.block import Block
 from vrdu.config import config
 from vrdu import utils
+from vrdu import logger
+
+log = logger.get_logger(__name__)
 
 
 class OrderAnnotation:
@@ -128,76 +131,92 @@ class OrderAnnotation:
 
     def generate_float_envs_order(self):
         # annotations = []
-        pattern = r"\\label\{(.*?)\}"
+        label_pattern = r"\\label\{(.*?)\}"
         # 0, add labels for titles
+        # TODO: add labels for other types of titles
         for block in self.annotations["annotations"]:
             if config.category2name[block.category] != "Title":
                 continue
-            block.labels = re.findall(pattern, block.source_code)
+            block.labels = re.findall(label_pattern, block.source_code)
 
         # 1. add labels for equations
         for block in self.annotations["annotations"]:
             if config.category2name[block.category] != "Equation":
                 continue
-            block.labels = re.findall(pattern, block.source_code)
+            block.labels = re.findall(label_pattern, block.source_code)
 
-        # 2. match caption to tabulars and generate labels
+        # 2. add labels for float envs
+        # colored_tex_file = self.tex_file.replace("paper_original", "paper_colored")
         with open(self.tex_file, "r") as f:
             latex_content = f.read()
         # find the intetval of tables
-        table_pattern = re.compile(
-            r"\\begin\{table\*?\}(.*?)\\end\{table\*?\}", re.DOTALL
-        )
-        table_indices = []
-        for _match in table_pattern.finditer(latex_content):
-            table_indices.append((_match.start(), _match.end(), str(uuid4())))
+        category_to_patterns = {
+            "Table": re.compile(
+                r"\\begin\{table\*?\}(.*?)\\end\{table\*?\}", re.DOTALL
+            ),
+            "Figure": re.compile(
+                r"\\begin\{figure\*?\}(.*?)\\end\{figure\*?\}", re.DOTALL
+            ),
+            "Algorithm": re.compile(
+                r"\\begin\{algorithm\*?\}(.*?)\\end\{algorithm\*?\}", re.DOTALL
+            ),
+        }
 
-        # find the interval of tabulars
-        for block in self.annotations["annotations"]:
-            if config.category2name[block.category] != "Table":
-                continue
-            start_index = latex_content.find(block.source_code)
-            if start_index == -1:
-                continue
-            end_index = start_index + len(block.source_code)
+        category_to_indicdes = {}
+        for category, pattern in category_to_patterns.items():
+            category_to_indicdes[category] = []
+            indices = pattern.finditer(latex_content)
+            # we add a uuid to match for float environments in case
+            # there are no explicit cite
+            for _match in indices:
+                category_to_indicdes[category].append(
+                    (_match.start(), _match.end(), str(uuid4()))
+                )
+            log.debug(
+                f"find {len(category_to_indicdes[category])} {category} in {self.tex_file}"
+            )
+        for category_name, indices in category_to_indicdes.items():
+            # find labels for those float environments
+            for block in self.annotations["annotations"]:
+                if config.category2name[block.category] != category_name:
+                    continue
 
-            for table_index in table_indices:
-                if start_index >= table_index[0] and end_index <= table_index[1]:
+                log.debug(f"processing {block.source_code}")
+                start_index = latex_content.find(block.source_code)
+                if start_index == -1:
+                    continue
+                end_index = start_index + len(block.source_code)
+
+                for index in indices:
+                    if start_index < index[0] or end_index > index[1]:
+                        continue
+
+                    log.debug(f"wrapper: {latex_content[index[0] : index[1]]}")
                     labels = re.findall(
-                        pattern, latex_content[table_index[0] : table_index[1]]
+                        label_pattern, latex_content[index[0] : index[1]]
                     )
                     block.labels = labels
-                    if not block.labels:
-                        block.labels = [table_index[2]]
-        # find the interval of captions
-        for block in self.annotations["annotations"]:
-            if config.category2name[block.category] != "Caption":
-                continue
-            start_index = latex_content.find(block.source_code)
-            if start_index == -1:
-                continue
-            end_index = start_index + len(block.source_code)
-            for table_index in table_indices:
-                if start_index >= table_index[0] and end_index <= table_index[1]:
-                    labels = re.findall(
-                        pattern, latex_content[table_index[0] : table_index[1]]
-                    )
-                    block.references = labels
-                    if not block.references:
-                        block.references = [table_index[2]]
-        # match caption to tables and generate labels
+                    block.labels.append(index[2])
 
-        # 3. match caption to figure and generate labels
-        # TODO: complete this
-        # 4. match caption to algorithms and generate labels
+                log.debug(f"labels: {block.labels}")
 
-        # 5. match caption to codings and generate labels
+            # add references for captions to those float environments
+            for block in self.annotations["annotations"]:
+                if config.category2name[block.category] != "Caption":
+                    continue
+                log.debug(f"processing {block.source_code}")
+                start_index = latex_content.find(block.source_code)
+                if start_index == -1:
+                    continue
+                end_index = start_index + len(block.source_code)
+                for index in indices:
+                    if start_index < index[0] or end_index > index[1]:
+                        continue
 
-        # caption to env
-        # label to env
-        # 1. caption-env attach, implicit cite and add label
-        # 2. equation-label attach, add label
-        # self.annotations["orders"].extend(annotations)
+                    log.debug(f"wrapper: {latex_content[index[0] : index[1]]}")
+                    block.references = [index[2]]
+
+                log.debug(f"references: {block.references}")
 
     def generate_sortable_envs_order(self):
         annotations = []
