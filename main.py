@@ -84,13 +84,18 @@ def process_one_file(file_name: str) -> None:
         log.info(f"[VRDU] file: {file_name}, paper has been processed")
         return
 
+    # make a copy of the original tex file
+    original_tex = os.path.join(main_directory, "paper_original.tex")
+    shutil.copyfile(file_name, original_tex)
+
+    # remove the output folder if it exists
     output_directory = os.path.join(main_directory, "output")
     if os.path.exists(output_directory):
         shutil.rmtree(output_directory)
 
-    # make a copy of the original tex file
-    original_tex = os.path.join(main_directory, "paper_original.tex")
-    shutil.copyfile(file_name, original_tex)
+    # output_directory stores the intermediate results
+    # result_directory stores the final results
+    os.makedirs(os.path.join(main_directory, "output/result"))
 
     cwd = os.getcwd()
 
