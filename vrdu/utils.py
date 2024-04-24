@@ -142,12 +142,26 @@ def compile_latex(file: str):
     Returns:
         None
     """
-    path_name = os.path.dirname(file)
     file_name = os.path.basename(file)
-    script_path = os.path.expanduser("compile_latex.sh")
+
     subprocess.run(
-        ["bash", script_path, path_name, file_name], check=True, timeout=1000
+        ["pdflatex", "-interaction=nonstopmode", file_name],
+        timeout=1000,
+        stdout=subprocess.DEVNULL,
     )
+
+    subprocess.run(
+        ["pdflatex", "-interaction=nonstopmode", file_name],
+        timeout=1000,
+        stdout=subprocess.DEVNULL,
+    )
+
+    if file_name == "paper_colored.tex":
+        subprocess.run(
+            ["pdflatex", "-interaction=nonstopmode", "-synctex=1", file_name],
+            timeout=1000,
+            stdout=subprocess.DEVNULL,
+        )
 
 
 def pdf2jpg(pdf_path: str, output_directory: str) -> None:
@@ -346,11 +360,11 @@ def extract_title_name(title) -> str:
 def colorize(text: str, category_name: str) -> str:
     """
     Given a piece of text and a category name, colorizes the text based on the category.
-    
+
     Args:
         text (str): The text to be colorized.
         category_name (str): The category name to determine the colorization.
-        
+
     Returns:
         str: The colorized text based on the category.
     """
