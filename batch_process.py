@@ -16,13 +16,13 @@ log = logger.setup_app_level_logger(file_name=log_file, level="INFO")
 database = "data/processed_paper_database.csv"
 
 
-def filter_tex_files(tex_files: List[str], main_path: str = None) -> List[str]:
-    """extract all MAIN.tex files for processing, if main_path is not None, then
-    only extract MAIN.tex files in the main_path (not recursive)
+def filter_tex_files(tex_files: List[str], main_path: str) -> List[str]:
+    """extract all MAIN.tex files for processing,
+    only MAIN.tex files in the main_path (not recursive) are extracted
 
     Args:
         tex_files (List[str]): list of tex files
-        main_path (str, optional): path to main directory. Defaults to None.
+        main_path (str): path to main directory.
 
     Returns:
         List[str]: list of tex files that are compiable.
