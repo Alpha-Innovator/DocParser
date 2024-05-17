@@ -33,17 +33,21 @@ def export_to_dataset(processed_papers: List[str], target_path: str) -> None:
         result_path = os.path.join(output_path, "result")
 
         paper_id = os.path.basename(main_path)
-        discpline = os.path.basename(os.path.dirname(main_path))
+        discipline = os.path.basename(os.path.dirname(main_path))
 
-        new_discpline_path = os.path.join(target_path, discpline)
-        if not os.path.exists(new_discpline_path):
-            os.makedirs(new_discpline_path)
+        target_discipline_path = os.path.join(target_path, discipline)
+        if not os.path.exists(target_discipline_path):
+            os.makedirs(target_discipline_path)
 
-        new_paper_path = os.path.join(new_discpline_path, paper_id)
+        new_paper_path = os.path.join(target_discipline_path, paper_id)
         if os.path.exists(new_paper_path):
             continue
-        else:
-            os.makedirs(new_paper_path)
+
+        os.makedirs(new_paper_path)
+
+        # coy quality report file
+        quality_report_file = os.path.join(result_path, "quality_report.json")
+        shutil.copy(quality_report_file, new_paper_path)
 
         # copy annotation files
         for json_file in json_files:
