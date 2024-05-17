@@ -30,7 +30,6 @@ def filter_tex_files(tex_files: List[str], main_path: str = None) -> List[str]:
 
     # TODO: move this to config
     redundant_tex_files = [
-        "paper_block.tex",
         "paper_colored.tex",
         "paper_white.tex",
         "paper_original.tex",
@@ -38,6 +37,9 @@ def filter_tex_files(tex_files: List[str], main_path: str = None) -> List[str]:
 
     result = []
     for tex_file in tex_files:
+        if "paper_block_" in tex_file:
+            continue
+
         if os.path.basename(tex_file) in redundant_tex_files:
             continue
 
