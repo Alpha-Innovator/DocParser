@@ -108,6 +108,8 @@ def process_one_file(file_name: str) -> None:
     try:
         # change the working directory to the main directory of the paper
         os.chdir(main_directory)
+        # create output folder
+        os.makedirs(os.path.join(main_directory, "output/result"))
 
         # step 1: preprocess the paper
         preprocess.run(original_tex)

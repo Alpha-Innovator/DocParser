@@ -188,7 +188,3 @@ def run(original_tex: str) -> None:
 
     # Step 3: delete table of contents
     delete_table_of_contents(original_tex)
-
-    # create output folder
-    main_directory = os.path.dirname(original_tex)
-    os.makedirs(os.path.join(main_directory, "output/result"))
