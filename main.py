@@ -116,12 +116,10 @@ def process_one_file(file_name: str) -> None:
         vrdu_renderer = renderer.Renderer()
         vrdu_renderer.render(original_tex)
 
-        # compile into PDFs, and then convert into images
+        # step 2.2: compling tex into PDFs
         log.info(
             f"[VRDU] file: {original_tex}, start transforming into images, this may take a while..."
         )
-
-        # step 2.2: compling tex into PDFs
         transform_tex_to_images(main_directory)
 
         # Step 3: generate annotations
