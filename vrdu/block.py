@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple
 
 from typing import Any
 
@@ -106,7 +106,7 @@ class Block:
         return f"Block(id={self.id}, category={self.category}, page_index={self.page_index}, bbox={self.bbox}), source_code={self.source_code}"
 
     @property
-    def bbox(self) -> Union[BoundingBox, None]:
+    def bbox(self) -> BoundingBox:
         return self._bounding_box
 
     @bbox.setter
