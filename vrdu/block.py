@@ -75,7 +75,7 @@ class Block:
 
     def __init__(
         self,
-        bounding_box: Optional[BoundingBox] = None,
+        bounding_box: BoundingBox,
         block_id: Optional[int] = None,
         category: Optional[int] = None,
         page_index: Optional[int] = None,
