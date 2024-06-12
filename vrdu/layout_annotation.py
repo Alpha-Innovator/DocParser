@@ -492,7 +492,9 @@ class LayoutAnnotation:
             for element in layout_info[page_index]:
                 category = element.category
                 draw.rectangle(
-                    element.bbox, outline=config.colors_map[str(category)], width=3
+                    element.bbox.to_tuple(),
+                    outline=config.colors_map[str(category)],
+                    width=3,
                 )
                 draw.text(
                     (element.bbox[0], element.bbox[1]),
@@ -609,7 +611,9 @@ def generate_geometry_annotation(
 
     for index, element in enumerate(layout_elements):
         category = element.category
-        draw.rectangle(element.bbox, outline=config.colors_map[str(category)], width=3)
+        draw.rectangle(
+            element.bbox.to_tuple(), outline=config.colors_map[str(category)], width=3
+        )
         draw.text(
             (element.bbox[0], element.bbox[1]),
             config.category2name[category],

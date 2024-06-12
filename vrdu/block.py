@@ -52,6 +52,9 @@ class BoundingBox:
     def to_dict(self) -> Dict[str, Any]:
         return {"bbox": (self.x0, self.y0, self.x1, self.y1)}
 
+    def to_tuple(self) -> Tuple[float, float, float, float]:
+        return (self.x0, self.y0, self.x1, self.y1)
+
     @classmethod
     def from_dict(cls, data: Dict[str, Any]):
         return cls(
