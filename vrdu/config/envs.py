@@ -203,13 +203,7 @@ text_envs = [
 ]
 
 # these envs will not cross columns, they always shows as a whole
-one_column_envs = [
-    "Table",
-    "Caption",
-    "Algorithm",
-    "Footnote",
-    "PaperTitle",
-]
+one_column_envs = ["Table", "Caption", "Algorithm", "PaperTitle", "Title"]
 
 list_of_tables = [
     "tableofcontents",
