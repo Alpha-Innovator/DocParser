@@ -1,10 +1,14 @@
 import glob
 import shutil
-from typing import List
 import re
 import os
-from tqdm import tqdm
 import argparse
+import pandas as pd
+import multiprocessing
+
+from vrdu import logger
+
+log = logger.setup_app_level_logger(file_name="export_to_dataset.log")
 
 
 json_files = [
@@ -14,89 +18,171 @@ json_files = [
 ]
 
 
-def extract_processed_papers(input_path: str) -> List[str]:
-    processed_papers = []
-    contents = os.listdir(input_path)
-    for content in contents:
-        discpline_path = os.path.join(input_path, content)
-        if not os.path.isdir(discpline_path):
-            continue
+def export_one_paper(main_path: str, target_path: str) -> None:
+    """
+    Processes a single paper from the input directory and exports it to the target directory.
 
-        for sub_content in os.listdir(discpline_path):
-            paper_path = os.path.join(discpline_path, sub_content)
-            if not os.path.isdir(paper_path):
-                continue
+    Args:
+    main_path (str): The path to the input directory containing the paper to be processed.
+    target_path (str): The path to the target directory where the processed paper will be exported.
 
-            # this paper is not successfully annotated
-            result_path = os.path.join(paper_path, "output/result")
-            if not os.path.exists(result_path):
-                continue
+    Returns:
+    None
 
-            # this paper is not successfully annotated
-            quality_report_file = os.path.join(result_path, "quality_report.json")
-            if not os.path.exists(quality_report_file):
-                continue
+    Raises:
+    FileNotFoundError: If the target directory does not exist and cannot be created.
 
-            # annotated json file not exist
-            for json_file in json_files:
-                if not os.path.exists(os.path.join(result_path, json_file)):
-                    continue
+    Purpose:
+    This function processes a single paper by copying its quality report, annotation files,
+    and images to a new directory within the target directory.
 
-            # annotated page image not exist
-            if not glob.glob(os.path.join(result_path, "page*.jpg")):
-                continue
+    Steps:
+    1. Logs the processing of the paper.
+    2. Extracts the output directory and result directory from the input directory.
+    3. Checks if the target directory for the discipline exists, if not, it creates it.
+    4. Creates a new directory for the paper within the target directory.
+    5. Copies the quality report file to the new directory.
+    6. Copies the annotation files to the new directory.
+    7. Copies the original images to the new directory,
+       renaming them with a format of "original-page-{page_index}.jpg".
+    8. Copies the annotated images to the new directory.
+    """
+    log.info(f"processing paper: {main_path}")
+    output_path = os.path.join(main_path, "output")
+    result_path = os.path.join(output_path, "result")
 
-            # original page image not exist
-            if not glob.glob(os.path.join(paper_path, "/output/paper_colored/*.jpg")):
-                continue
+    paper_id = os.path.basename(main_path)
+    discipline = os.path.basename(os.path.dirname(main_path))
 
-            processed_papers.append(result_path)
+    target_discipline_path = os.path.join(target_path, discipline)
+    if not os.path.exists(target_discipline_path):
+        os.makedirs(target_discipline_path)
 
-    return processed_papers
+    new_paper_path = os.path.join(target_discipline_path, paper_id)
+    if os.path.exists(new_paper_path):
+        return
+
+    os.makedirs(new_paper_path)
+
+    # coy quality report file
+    quality_report_file = os.path.join(result_path, "quality_report.json")
+    shutil.copy(quality_report_file, new_paper_path)
+
+    # copy annotation files
+    for json_file in json_files:
+        shutil.copy(os.path.join(result_path, json_file), new_paper_path)
+
+    # copy images
+    original_image_path = os.path.join(output_path, "paper_colored")
+
+    original_images = glob.glob(os.path.join(original_image_path, "*.jpg"))
+    for image in original_images:
+        filename = os.path.basename(image)
+        match = re.search(r"page-(\d+)", filename)
+        page_index = int(match.group(1)) - 1
+        new_image_name = "original-page-{}.jpg".format(str(page_index).zfill(4))
+
+        shutil.copy(image, os.path.join(new_paper_path, new_image_name))
+
+    annotated_images = glob.glob(os.path.join(result_path, "*.jpg"))
+    for image in annotated_images:
+        shutil.copy(image, new_paper_path)
+    os.makedirs(new_paper_path)
+
+    # coy quality report file
+    quality_report_file = os.path.join(result_path, "quality_report.json")
+    shutil.copy(quality_report_file, new_paper_path)
+
+    # copy annotation files
+    for json_file in json_files:
+        shutil.copy(os.path.join(result_path, json_file), new_paper_path)
+
+    # copy images
+    original_image_path = os.path.join(output_path, "paper_colored")
+
+    original_images = glob.glob(os.path.join(original_image_path, "*.jpg"))
+    for image in original_images:
+        filename = os.path.basename(image)
+        match = re.search(r"page-(\d+)", filename)
+        page_index = int(match.group(1)) - 1
+        new_image_name = "original-page-{}.jpg".format(str(page_index).zfill(4))
+
+        shutil.copy(image, os.path.join(new_paper_path, new_image_name))
+
+    annotated_images = glob.glob(os.path.join(result_path, "*.jpg"))
+    for image in annotated_images:
+        shutil.copy(image, new_paper_path)
 
 
-def export_to_dataset(processed_papers: List[str], output_path: str) -> None:
-    for result_path in tqdm(processed_papers):
-        main_path = os.path.dirname(os.path.dirname(result_path))
-        paper_id = ".".join(os.path.basename(main_path).split(".", 2)[:2])
+def export_to_dataset(database_file: str, output_path: str) -> None:
+    """
+    Exports processed papers from the provided database file to the specified output path.
 
-        new_paper_path = os.path.join(output_path, paper_id)
-        if os.path.exists(new_paper_path):
-            continue
+    Args:
+    database_file (str): The path to the processed database file containing the list of processed papers.
+    output_path (str): The path to the target directory where the processed papers will be exported.
 
-        # copy annotatopm
-        for json_file in json_files:
-            shutil.copy(os.path.join(result_path, json_file), new_paper_path)
+    Returns:
+    None
 
-        # copy images
-        colored_image_path = os.path.join(main_path, "output/paper_colored")
+    Raises:
+    FileNotFoundError: If the target directory does not exist and cannot be created.
 
-        original_images = glob.glob(os.path.join(colored_image_path, "*.jpg"))
-        for image in original_images:
-            filename = os.path.basename(image)
-            match = re.search(r"page-(\d+)", filename)
-            page_index = int(match.group(1)) - 1
-            new_image_name = "original-page-{}.jpg".format(str(page_index).zfill(4))
+    Purpose:
+    This function exports the processed papers by processing each paper individually
+    and exporting it to the target directory.
 
-            shutil.copy(image, os.path.join(new_paper_path, new_image_name))
+    Steps:
+    1. Reads the processed database file and filters the papers with a status of "success".
+    2. Logs the number of processed papers.
+    3. Creates a list of arguments containing tuples of processed papers and the output path.
+    4. Creates a multiprocessing pool with 28 processes.
+    5. Uses the pool to starmap the export_one_paper function on the list of arguments.
 
-        annotated_images = glob.glob(os.path.join(result_path, "*.jpg"))
-        for image in annotated_images:
-            shutil.copy(image, new_paper_path)
+    Note:
+    The export_one_paper function is responsible for processing a single paper
+    and exporting it to the target directory.
+    """
+    df = pd.read_csv(database_file)
+    processed_papers = df[df["status"] == "success"]["path"].tolist()
+    log.info(f"There are {len(processed_papers)} papers")
+
+    arguments = [(paper, output_path) for paper in processed_papers]
+    with multiprocessing.Pool(processes=28) as pool:
+        pool.starmap(export_one_paper, arguments)
 
 
-def extract_dataset(input_path, output_path):
-    processed_papers = extract_processed_papers(input_path)
-    export_to_dataset(processed_papers, output_path)
+def main() -> None:
+    """
+    The main function that parses command-line arguments and calls the export_to_dataset function.
 
+    Args:
+    None
 
-def main():
+    Returns:
+    None
+
+    Raises:
+    None
+
+    Purpose:
+    This function is the entry point of the script. It parses the command-line arguments
+    using the argparse module and then calls the export_to_dataset function with the provided arguments.
+
+    Steps:
+    1. Create an ArgumentParser object to parse the command-line arguments.
+    2. Add two command-line arguments: "-d" for the processed database file and "-o" for the output path of the dataset.
+    3. Parse the command-line arguments using the parse_args() method of the ArgumentParser object.
+    4. Call the export_to_dataset function with the parsed arguments.
+    """
     parser = argparse.ArgumentParser()
-    parser.add_argument("-i", "--input_path", type=str, help="input dir")
-    parser.add_argument("-o", "--output_path", type=str, help="output dir")
+    parser.add_argument(
+        "-d", "--database_file", type=str, help="processed database file"
+    )
+    parser.add_argument("-o", "--output_path", type=str, help="output path of dataset")
     args = parser.parse_args()
 
-    extract_dataset(args.input_path, args.output_path)
+    export_to_dataset(args.database_file, args.output_path)
 
 
 if __name__ == "__main__":

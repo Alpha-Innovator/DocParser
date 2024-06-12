@@ -16,7 +16,7 @@ from vrdu.config import config
 
 def extract_all_tex_files(path) -> List[str]:
     """
-    Given a path, this function extracts all the MAIN .tex files within the
+    Given a path, this function extracts all the .tex files within the
     specified directory and its subdirectories.
 
     Args:
@@ -27,14 +27,10 @@ def extract_all_tex_files(path) -> List[str]:
     """
     tex_files = []
 
-    for root, dirs, files in os.walk(path):
-        for file in files:
-            # skip non-tex files
-            if not file.endswith(".tex"):
-                continue
-            tex_file = os.path.join(root, file)
-
-            tex_files.append(tex_file)
+    for root, _, files in os.walk(path):
+        tex_files.extend(
+            [os.path.join(root, file) for file in files if file.endswith(".tex")]
+        )
     return tex_files
 
 
@@ -135,36 +131,39 @@ def get_main_content(data):
     return main_content, main_content_index
 
 
-def compile_latex(file: str, tex_engine: str = "pdflatex"):
+def compile_latex(file: str):
     path_name = os.path.dirname(file)
     file_name = os.path.basename(file)
-    if tex_engine == "pdflatex":
-        script_path = os.path.expanduser("compile_latex.sh")
-        subprocess.run(["bash", script_path, path_name, file_name], check=True)
-    elif tex_engine == "xelatex":
-        subprocess.run(["xelatex", file], check=True)
+
+    script_path = os.path.expanduser("compile_latex.sh")
+    subprocess.call(
+        ["bash", script_path, path_name, file_name],
+        timeout=1000,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
 
 
-def pdf2jpg(pdf: str, path: str) -> None:
+def pdf2jpg(pdf_path: str, output_directory: str) -> None:
     """
     Convert a PDF file into a series of jpg images.
 
     Parameters:
-        pdf (str): The path of the PDF file to be converted.
-        path (str): The directory where the converted images will be saved.
+        pdf_path (str): The path of the PDF file to be converted.
+        output_directory (str): The directory where the converted images will be saved.
     Returns:
         None
 
     Reference:
         https://pypi.org/project/pdf2image/
     """
-    os.makedirs(path, exist_ok=True)
+    os.makedirs(output_directory, exist_ok=True)
     # the output images has name of format: thread-000x-yz.png
     # where x is the thread index, yz is the index of pdf page start from 1
     pdf2image.convert_from_path(
-        pdf,
+        pdf_path,
         fmt="jpg",
-        output_folder=path,
+        output_folder=output_directory,
         output_file=generators.counter_generator(prefix="thread-", suffix="-page"),
     )
 

@@ -9,9 +9,10 @@ from vrdu import logger
 from vrdu import utils
 from vrdu import renderer
 from vrdu import preprocess
-from vrdu import annotation
+from vrdu import layout_annotation as layout
+from vrdu import order_annotation as order
 from vrdu.config import config
-
+from vrdu.quality_check import generate_quality_report
 
 log = logger.setup_app_level_logger(file_name="vrdu_debug.log")
 
@@ -71,7 +72,17 @@ def remove_redundant_stuff(main_directory: str) -> None:
             shutil.rmtree(folder)
 
 
-def process_one_file(file_name) -> None:
+def process_one_file(file_name: str) -> None:
+    """
+    Process a file through multiple steps including preprocessing, rendering,
+    transforming into images, generating annotations, and handling exceptions.
+
+    Args:
+        file_name (str): The path to the main .tex file to be processed.
+
+    Returns:
+        None
+    """
     main_directory = os.path.dirname(file_name)
     log.info(f"[VRDU] file: {file_name}, start processing.")
 
@@ -82,38 +93,49 @@ def process_one_file(file_name) -> None:
     if os.path.exists(quality_report_file):
         log.info(f"[VRDU] file: {file_name}, paper has been processed")
         return
-    else:
-        output_directory = os.path.join(main_directory, "output")
-        if os.path.exists(output_directory):
-            shutil.rmtree(output_directory)
 
-    # make a copy of the original tex file
+    # remove redundant files
+    output_directory = os.path.join(main_directory, "output")
+    if os.path.exists(output_directory):
+        shutil.rmtree(output_directory)
+
+    # make a copy of the original tex file to avoid polluting the original tex file
     original_tex = os.path.join(main_directory, "paper_original.tex")
     shutil.copyfile(file_name, original_tex)
 
     cwd = os.getcwd()
 
     try:
-        # change the working directory to the main directory
+        # change the working directory to the main directory of the paper
         os.chdir(main_directory)
+        # create output folder
+        os.makedirs(os.path.join(main_directory, "output/result"))
+
+        # step 1: preprocess the paper
         preprocess.run(original_tex)
 
-        # run rendering
+        # step 2.1: run rendering
         vrdu_renderer = renderer.Renderer()
         vrdu_renderer.render(original_tex)
 
-        # compile into PDFs, and then convert into images
+        # step 2.2: compling tex into PDFs
         log.info(
             f"[VRDU] file: {original_tex}, start transforming into images, this may take a while..."
         )
         transform_tex_to_images(main_directory)
 
-        # generate annotations
+        # Step 3: generate annotations
         log.info(
             f"[VRDU] file: {original_tex}, start generating annotations, this may take a while..."
         )
-        vrdu_annotation = annotation.LayoutAnnotation(main_directory)
-        vrdu_annotation.annotate()
+        vrdu_layout_annotation = layout.LayoutAnnotation(main_directory)
+        vrdu_layout_annotation.annotate()
+
+        vrdu_order_annotation = order.OrderAnnotation(original_tex)
+        vrdu_order_annotation.annotate()
+
+        # generate quality report for simple debugging
+        generate_quality_report(main_directory)
 
         log.info(f"[VRDU] file: {original_tex}, successfully processed.")
 

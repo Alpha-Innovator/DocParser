@@ -181,3 +181,6 @@ TexSoup/tests/
 
 # jupyter notebook
 *.ipynb
+
+data/
+data/discpline_info.csv

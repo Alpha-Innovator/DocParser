@@ -11,7 +11,6 @@ import vrdu.logger as logger
 log = logger.get_logger(__name__)
 
 
-
 def remove_comments(original_tex: str) -> None:
     """
     Removes comments from a TeX file.
@@ -76,6 +75,8 @@ def replace_pdf_ps_figures_with_png(original_tex: str) -> None:
     Raises:
         FileNotFoundError: If a PDF file specified in the TeX file is not found.
     """
+
+    # FIXME: use more robust way, since the path to images may not exists.
     main_directory = os.path.dirname(original_tex)
     with open(original_tex) as f:
         content = f.read()
@@ -122,17 +123,17 @@ def replace_pdf_ps_figures_with_png(original_tex: str) -> None:
             if not os.path.exists(eps_image):
                 log.error(f"File not found: {eps_image}")
                 continue
-            pdf_image = os.path.splitext(eps_image) + ".pdf"
+            pdf_image = os.path.splitext(eps_image)[0] + ".pdf"
             utils.convert_eps_image_to_pdf_image(eps_image, pdf_image)
             image_name = os.path.basename(pdf_image)
 
         # convert pdf to png
         if image_name.endswith(".pdf"):
             pdf_image = os.path.join(main_directory, graphic_path, image_name)
-            if not os.path.exists(eps_image):
-                log.error(f"File not found: {eps_image}")
+            if not os.path.exists(pdf_image):
+                log.error(f"File not found: {pdf_image}")
                 continue
-            png_image = os.path.splitext(pdf_image) + ".png"
+            png_image = os.path.splitext(pdf_image)[0] + ".png"
             utils.convert_pdf_figure_to_png_image(pdf_image, png_image)
             image_name = os.path.splitext(image_name)[0] + ".png"
 
@@ -187,7 +188,3 @@ def run(original_tex: str) -> None:
 
     # Step 3: delete table of contents
     delete_table_of_contents(original_tex)
-
-    # create output folder
-    main_directory = os.path.dirname(original_tex)
-    os.makedirs(os.path.join(main_directory, "output/result"))
