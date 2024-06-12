@@ -38,9 +38,9 @@ def load_json(file_path: str) -> Union[Dict, List]:
     return data
 
 
-def compile_latex(file: str):
+def compile_latex(file: str) -> None:
     """
-    Compile a LaTeX file using either pdflatex or xelatex as the tex engine.
+    Compile a LaTeX file using  pdflatex engine.
 
     Parameters:
         file (str): The path to the LaTeX file to be compiled.
