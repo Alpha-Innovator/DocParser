@@ -179,7 +179,7 @@ class LayoutAnnotation:
                         "synctex",
                         "edit",
                         "-o",
-                        f"{page_index + 1}:{center_x}:{center_y}:{pdf_filename}",
+                        f"{page_index + 1}:{center_x:.2f}:{center_y:.2f}:{pdf_filename}",
                         "-d",
                         self.main_directory,
                     ],
