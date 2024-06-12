@@ -221,24 +221,6 @@ def convert_eps_image_to_pdf_image(eps_image_path: str, pdf_image_path: str):
     subprocess.run(["epspdf", eps_image_path, pdf_image_path])
 
 
-def get_all_categories():
-    """
-    Retrieves all categories from the "category_count.csv" file.
-
-    Returns:
-        categories (list): A list of all categories.
-
-    Reference:
-        https://arxiv.org/category_taxonomy
-    """
-    categories = []
-    with open("scripts/category_count.csv", "r") as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            categories.append(row["categories"])
-
-    return categories
-
 
 def extract_macro_definitions(tex_file) -> List[str]:
     """
