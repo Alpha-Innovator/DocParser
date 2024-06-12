@@ -331,4 +331,14 @@ class OrderAnnotation:
                 stack.append(element)
                 continue
 
+            if element.category == config.name2category["Footnote"]:
+                annotations.append(
+                    {
+                        "type": "explicit-cite",
+                        "from": element.block_id,
+                        "to": stack[-1].block_id,
+                    }
+                )
+                continue
+
         self.annotations["orders"].extend(annotations)
