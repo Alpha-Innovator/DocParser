@@ -531,7 +531,7 @@ class LayoutAnnotation:
             self.result_directory, "layout_annotation.json"
         )
         utils.export_to_coco(
-            layout_info, image_annotation, filename=layout_annotation_file
+            layout_info, image_annotation, file_path=layout_annotation_file
         )
 
         # step3: generate reading annotation

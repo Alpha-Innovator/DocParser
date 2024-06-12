@@ -134,15 +134,17 @@ def convert_eps_image_to_pdf_image(eps_image_path: str, pdf_image_path: str):
 def export_to_coco(
     layout_info: Dict[int, List[Block]],
     image_infos: Dict[int, Dict[str, Any]],
-    filename: str,
+    file_path: str,
 ) -> None:
     """
     Export the given layout information and image information to a COCO format JSON file.
 
     Args:
-        layout_info (Dict[int, List[Block]]): A dictionary mapping page indices to lists of Block objects.
-        image_infos (Dict[int, Dict[str, Any]]): A dictionary mapping page indices to dictionaries containing image information.
-        filename (str): The name of the output JSON file.
+        layout_info (Dict[int, List[Block]]):
+            A dictionary mapping page indices to lists of Block objects.
+        image_infos (Dict[int, Dict[str, Any]]):
+            A dictionary mapping page indices to dictionaries containing image information.
+        file_path (str): The name of the output JSON file.
 
     Returns:
         None
