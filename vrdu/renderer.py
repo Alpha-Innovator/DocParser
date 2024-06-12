@@ -718,7 +718,7 @@ class Renderer:
                 result += content[indexes[i - 1][1] : indexes[i][0]]
             float_env = content[indexes[i][0] : indexes[i][1]]
 
-            # filter tablle of figures
+            # filter table of figures
             if category == "Table" and float_env.find("\\includegraphics") != -1:
                 continue
 

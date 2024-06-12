@@ -163,7 +163,7 @@ class OrderAnnotation:
             block.labels = re.findall(label_pattern, block.source_code)
 
         # 2. add labels for float envs
-        # find the intetval of tables
+        # find the interval of tables
         category_to_patterns = {
             "Table": re.compile(
                 r"\\begin\{table\*?\}(.*?)\\end\{table\*?\}", re.DOTALL
@@ -176,18 +176,18 @@ class OrderAnnotation:
             ),
         }
 
-        category_to_indicdes = {}
+        category_to_indices = {}
         for category, pattern in category_to_patterns.items():
-            category_to_indicdes[category] = []
+            category_to_indices[category] = []
             indices = pattern.finditer(latex_content)
             # we add a uuid to match for float environments in case
             # there are no explicit cite
             for _match in indices:
-                category_to_indicdes[category].append(
+                category_to_indices[category].append(
                     (_match.start(), _match.end(), str(uuid4()))
                 )
 
-        for category_name, indices in category_to_indicdes.items():
+        for category_name, indices in category_to_indices.items():
             # find labels for those float environments
             for block in self.annotations["annotations"]:
                 if config.category2name[block.category] != category_name:
