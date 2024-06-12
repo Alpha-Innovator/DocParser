@@ -103,7 +103,11 @@ class Block:
         self._references = references
 
     def __repr__(self) -> str:
-        return f"Block(id={self.id}, category={self.category}, page_index={self.page_index}, bbox={self.bbox}), source_code={self.source_code}"
+        return (
+            f"Block(id={self.id}, category={self.category}, "
+            f"page_index={self.page_index}, bbox={self.bbox}), "
+            f"source_code={self.source_code}"
+        )
 
     @property
     def bbox(self) -> BoundingBox:
