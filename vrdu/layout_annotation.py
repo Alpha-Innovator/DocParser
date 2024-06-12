@@ -304,7 +304,7 @@ class LayoutAnnotation:
 
                 # We do not consider the cross column case for these envs.
                 if category in envs.one_column_envs:
-                    bboxes = [bb for bb in bounding_boxes if bb[0] >= top_margin]
+                    bboxes = [bb for bb in bounding_boxes]
                     if len(bboxes) == 0:
                         continue
                     element = Block(
@@ -326,7 +326,6 @@ class LayoutAnnotation:
                         for bb in bounding_boxes
                         if bb[1] >= separations[column]
                         and bb[1] <= separations[column + 1]
-                        and bb[0] >= top_margin
                     ]
                     if not column_boxes:
                         continue
