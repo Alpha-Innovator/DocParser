@@ -1,7 +1,7 @@
 from dataclasses import dataclass
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple, Union
 
-from pyparsing import Any
+from typing import Any
 
 
 @dataclass
@@ -34,17 +34,17 @@ class BoundingBox:
     def __getitem__(self, index: int) -> float:
         return (self.x0, self.y0, self.x1, self.y1)[index]
 
-    def area(self):
+    def area(self) -> float:
         return abs((self.x1 - self.x0) * (self.y1 - self.y0))
 
-    def overlap(self, other):
+    def overlap(self, other) -> float:
         if (
             self.x0 > other.x1
             or self.x1 < other.x0
             or self.y0 > other.y1
             or self.y1 < other.y0
         ):
-            return 0
+            return 0.0
         x_overlap = max(0, min(self.x1, other.x1) - max(self.x0, other.x0))
         y_overlap = max(0, min(self.y1, other.y1) - max(self.y0, other.y0))
         return x_overlap * y_overlap
@@ -75,16 +75,16 @@ class Block:
 
     def __init__(
         self,
-        block_id: int = None,
-        bounding_box: BoundingBox = None,
-        category: int = None,
-        page_index: int = None,
-        previous_block: int = None,
-        parent_block: int = None,
-        next_block: int = None,
-        source_code: str = None,
-        labels: List[str] = None,
-        references: List[str] = None,
+        bounding_box: Optional[BoundingBox] = None,
+        block_id: Optional[int] = None,
+        category: Optional[int] = None,
+        page_index: Optional[int] = None,
+        previous_block: Optional[int] = None,
+        parent_block: Optional[int] = None,
+        next_block: Optional[int] = None,
+        source_code: Optional[str] = None,
+        labels: Optional[List[str]] = None,
+        references: Optional[List[str]] = None,
     ) -> None:
         if not block_id:
             self.id = Block.current_id
@@ -106,7 +106,7 @@ class Block:
         return f"Block(id={self.id}, category={self.category}, page_index={self.page_index}, bbox={self.bbox}), source_code={self.source_code}"
 
     @property
-    def bbox(self):
+    def bbox(self) -> Union[BoundingBox, None]:
         return self._bounding_box
 
     @bbox.setter
@@ -152,7 +152,7 @@ class Block:
     @property
     def source_code(self) -> str:
         return self._source_code
-    
+
     @source_code.setter
     def source_code(self, value: str) -> None:
         self._source_code = value
