@@ -4,7 +4,7 @@ import os
 import re
 import subprocess
 import json
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Union
 import uuid
 
 
@@ -15,27 +15,27 @@ from vrdu.block import Block
 from vrdu.config import config
 
 
-def export_to_json(data, file_path) -> None:
+def export_to_json(data: Union[Dict, List], file_path: str) -> None:
     """
-    Write the contents of a dictionary to a JSON file.
+    Write the contents of a dictionary or a list to a JSON file.
 
     Parameters:
-        data (dict): The dictionary to be written to the file.
+        data (Union[Dict, List]): The dictionary to be written to the file.
         file_path (str): The path to the JSON file.
     """
     with open(file_path, "w") as json_file:
         json.dump(data, json_file, indent=4)
 
 
-def load_json(file_path) -> Any:
+def load_json(file_path: str) -> Union[Dict, List]:
     """
-    Load a JSON file into a dictionary.
+    Load a JSON file into a dictionary or a list.
 
     Parameters:
         file_path (str): The path to the JSON file.
 
     Returns:
-        dict: The loaded JSON data as a dictionary.
+        Union[Dict, List]: The loaded JSON data as a dictionary or a list.
     """
     with open(file_path, "r") as json_file:
         data = json.load(json_file)
