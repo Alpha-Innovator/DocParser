@@ -3,8 +3,12 @@ import os
 from typing import List, Dict
 from tqdm import tqdm
 import tarfile
-import csv
-import random
+
+
+from vrdu import utils
+from vrdu import logger
+
+log = logger.setup_app_level_logger(file_name="arxiv_download.log")
 
 
 def arxiv_download(data: List[Dict], path: str) -> None:
@@ -26,54 +30,56 @@ def arxiv_download(data: List[Dict], path: str) -> None:
     Returns:
         None
     """
+    client = arxiv.Client()
     for row in tqdm(data):
-        category, count = row["categories"], int(row["count"])
-        print(f"category: {category}, count: {count}")
-        sub_directory = os.path.join(path, category)
-        os.makedirs(sub_directory, exist_ok=True)
+        if row["auto_annotated_paper_path"]:
+            continue
+        discipline = row["discipline"]
+        discipline_path = os.path.join(path, discipline)
+        os.makedirs(discipline_path, exist_ok=True)
 
-        search = arxiv.Search(
-            query=category,
-            max_results=count,
-            sort_by=arxiv.SortCriterion.SubmittedDate,
-        )
+        if os.path.exists(os.path.join(discipline_path, row["paper_id"])):
+            log.debug(f'{os.path.join(discipline_path, row["paper_id"])} exists')
+            continue
 
-        for result in search.results():
-            file_name = result._get_default_filename()
-            if os.path.exists(os.path.join(sub_directory, file_name)):
+        if os.path.exists(os.path.join(discipline_path, row["paper_id"], ".tar.gz")):
+            log.debug(
+                f'{os.path.join(discipline_path, row["paper_id"], ".tar.gz")} exists'
+            )
+            continue
+
+        search_results = client.results(arxiv.Search(id_list=[row["paper_id"]]))
+
+        for result in search_results:
+            tar_file_path = result.download_source(dirpath=discipline_path)
+            log.debug(f"Downloading tar file {tar_file_path}")
+            paper_path = os.path.join(discipline_path, row["paper_id"])
+            try:
+                with tarfile.open(tar_file_path, "r:gz") as tar:
+                    tar.extractall(paper_path)
+            except tarfile.ReadError:
+                log.error(f"{tar_file_path} is not a tar.gz file")
                 continue
 
-            result.download_source(dirpath=sub_directory)
 
+def main():
+    import argparse
 
-def extract_all_tar_gz(directory):
-    for root, dirs, files in os.walk(directory):
-        for file in files:
-            if not file.endswith(".tar.gz"):
-                continue
-            file_path = os.path.join(root, file)
-            extract_path = os.path.splitext(file_path)[0]
-            extract_path = os.path.splitext(extract_path)[0]
-            if os.path.exists(extract_path):
-                continue
-            extract_tar_gz(file_path, extract_path)
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "-p", "--path", type=str, required=True, help="Path to save result"
+    )
+    parser.add_argument(
+        "-f", "--file", type=str, required=True, help="json file for saving result"
+    )
 
+    args = parser.parse_args()
+    output_path, json_file = args.path, args.file
 
-def extract_tar_gz(file_path, extract_path):
-    with tarfile.open(file_path, "r:gz") as tar:
-        tar.extractall(extract_path)
+    json_data = utils.load_json(json_file)
+
+    arxiv_download(json_data, output_path)
 
 
 if __name__ == "__main__":
-    path = os.path.expanduser("/cpfs01/shared/ADLab/datasets/vrdu_arxiv")
-    data = []
-    with open("scripts/category_count.csv", "r") as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            data.append(row)
-
-    random.shuffle(data)
-    arxiv_download(data=data, path=path)
-    for root, dirs, files in os.walk(path):
-        for dir_ in dirs:
-            extract_all_tar_gz(os.path.join(root, dir_))
+    main()

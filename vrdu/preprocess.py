@@ -75,6 +75,8 @@ def replace_pdf_ps_figures_with_png(original_tex: str) -> None:
     Raises:
         FileNotFoundError: If a PDF file specified in the TeX file is not found.
     """
+
+    # FIXME: use more robust way, since the path to images may not exists.
     main_directory = os.path.dirname(original_tex)
     with open(original_tex) as f:
         content = f.read()

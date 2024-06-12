@@ -1,7 +1,6 @@
 import glob
 import os
 import pandas as pd
-from datetime import datetime
 import argparse
 from datetime import datetime
 
@@ -111,7 +110,8 @@ def update_processed_database(input_path: str):
                 or line.find("paper has been processed") != -1
             ):
                 if uuid in df["uuid"].values:
-                    if df[df["uuid"] == uuid]["status"] == "success":
+                    index = df[df["uuid"] == uuid].index[0]
+                    if df.loc[index, "status"] == "success":
                         continue
                 df.loc[df["uuid"] == uuid, "status"] = "success"
                 df.loc[df["uuid"] == uuid, "end_time"] = current_time
@@ -120,7 +120,8 @@ def update_processed_database(input_path: str):
             # failed to process file, update status and eror information
             if line.find("message: ") != -1:
                 if uuid in df["uuid"].values:
-                    if df[df["uuid"] == uuid]["status"] == "failure":
+                    index = df[df["uuid"] == uuid].index[0]
+                    if df.loc[index, "status"] == "failure":
                         continue
                 error_type = line.split("type: ")[1].split(", ")[0]
                 error_info = line.split("message: ")[1].strip()
@@ -154,6 +155,9 @@ def update_processed_database(input_path: str):
         ]
         df.loc[index, "overlap"] = quality_report["page_quality"][-1]["ratio"]
 
+        for category_item in quality_report["category_quality"]:
+            df.loc[index, category_item["category"]] = category_item["geometry_count"]
+
     # remove processing files
     df = df[~(df["status"] == "processing")]
     df.to_csv(database_file, index=False)
@@ -169,13 +173,6 @@ def update_discpline_info():
         with open(log_file) as f:
             lines = f.readlines()
         for line in lines:
-            if line.find("[VRDU] Before filtering") != -1:
-                processable_files = int(line.split("found ")[1].split(" ")[0])
-                log.debug(
-                    f"discpline: {discpline}, processable files: {processable_files}"
-                )
-                df.loc[df["discpline"] == discpline, "num_papers"] = processable_files
-
             if line.find("finished processing.") != -1:
                 df.loc[df["discpline"] == discpline, "status"] = "complete"
             else:
@@ -238,7 +235,7 @@ def update_daily_overview() -> None:
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--input_path", type=str, default="data/")
+    parser.add_argument("--input_path", type=str, default="output/")
     args = parser.parse_args()
 
     update_processed_database(args.input_path)

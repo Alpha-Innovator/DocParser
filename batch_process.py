@@ -24,7 +24,7 @@ def filter_tex_files(
 
     Args:
         tex_files (List[str]): list of tex files
-        main_path (str, optional): path to main directory. Defaults to None.
+        main_path (str): path to main directory.
 
     Returns:
         List[str]: list of tex files that are compilable.
