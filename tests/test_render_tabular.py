@@ -11,6 +11,9 @@ class TestTabular(unittest.TestCase):
             """\\documentclass{article}\\begin{document}\\end{document}"""
         )
         self.mock_file_content2 = """\\documentclass{article}\\begin{document}Table \\ref{demo-table} has a caption:\\begin{table}[!h]\\begin{center}\\begin{tabular}{||c c c c||}  \\hline Col1 & Col2 & Col2 & Col3 \\ [0.5ex]  \\hline\\hline 1 & 6 & 87837 & 787 \\  \\hline 2 & 7 & 78 & 5415 \\ \\hline 3 & 545 & 778 & 7507 \\ \\hline 4 & 545 & 18744 & 7560 \\ \\hline 5 & 88 & 788 & 6344 \\ [1ex]  \\hline\\end{tabular}\\caption{\\label{demo-table}Your caption.}\\end{center}\\end{table}\\end{document}"""
+        self.mock_file_content3 = """\\documentclass{article}\\begin{document}Table \\ref{demo-table} has a caption:\\begin{table}[!h]\\begin{center}\\begin{tabularx}{||c c c c||}  \\hline Col1 & Col2 & Col2 & Col3 \\ [0.5ex]  \\hline\\hline 1 & 6 & 87837 & 787 \\  \\hline 2 & 7 & 78 & 5415 \\ \\hline 3 & 545 & 778 & 7507 \\ \\hline 4 & 545 & 18744 & 7560 \\ \\hline 5 & 88 & 788 & 6344 \\ [1ex]  \\hline\\end{tabularx}\\caption{\\label{demo-table}Your caption.}\\end{center}\\end{table}\\end{document}"""
+        self.mock_file_content4 = """\\documentclass{article}\\begin{document}Table \\ref{demo-table} has a caption:\\begin{table}[!h]\\begin{center}\\begin{tabular}{||c c c c||}  \\hline Col1 & Col2 & Col2 & Col3 \\ [0.5ex]  \\hline\\hline 1 & 6 & 87837 & 787 \\  \\hline 2 & 7 & 78 & 5415 \\ \\hline 3 & 545 & 778 & 7507 \\ \\hline 4 & 545 & 18744 & 7560 \\ \\hline 5 & 88 & 788 & 6344 \\ [1ex]  \\hline\\end{tabular}\\caption{\\label{demo-table}Your caption.}\\end{center}\\end{table} \\begin{table}[!h]\\begin{center}\\begin{tabularx}{||c c c c||}  \\hline Col1 & Col2 & Col2 & Col3 \\ [0.5ex]  \\hline\\hline 1 & 6 & 87837 & 787 \\  \\hline 2 & 7 & 78 & 5415 \\ \\hline 3 & 545 & 778 & 7507 \\ \\hline 4 & 545 & 18744 & 7560 \\ \\hline 5 & 88 & 788 & 6344 \\ [1ex]  \\hline\\end{tabularx}\\caption{\\label{demo-table}Your caption.}\\end{center}\\end{table}\\end{document}"""
+        
         self.renderer = Renderer()
 
     def test_no_tabular(self):
@@ -35,4 +38,28 @@ class TestTabular(unittest.TestCase):
             file_mock.assert_called_with(file_mock, "w")
             file_mock().write.assert_called_with(
                 """\\documentclass{article}\\begin{document}Table \\ref{demo-table} has a caption:\\begin{table}[!h]\\begin{center}{\\color{Table_color}\\begin{tabular}{||c c c c||}  \\hline Col1 & Col2 & Col2 & Col3 \\ [0.5ex]  \\hline\\hline 1 & 6 & 87837 & 787 \\  \\hline 2 & 7 & 78 & 5415 \\ \\hline 3 & 545 & 778 & 7507 \\ \\hline 4 & 545 & 18744 & 7560 \\ \\hline 5 & 88 & 788 & 6344 \\ [1ex]  \\hline\\end{tabular}}\\caption{\\label{demo-table}Your caption.}\\end{center}\\end{table}\\end{document}"""
+            )
+
+    def test_one_tabularx(self):
+        with unittest.mock.patch(
+            "builtins.open",
+            new=unittest.mock.mock_open(read_data=self.mock_file_content3),
+            create=True,
+        ) as file_mock:
+            self.renderer.render_tabular(file_mock)
+            file_mock.assert_called_with(file_mock, "w")
+            file_mock().write.assert_called_with(
+                """\\documentclass{article}\\begin{document}Table \\ref{demo-table} has a caption:\\begin{table}[!h]\\begin{center}{\\color{Table_color}\\begin{tabularx}{||c c c c||}  \\hline Col1 & Col2 & Col2 & Col3 \\ [0.5ex]  \\hline\\hline 1 & 6 & 87837 & 787 \\  \\hline 2 & 7 & 78 & 5415 \\ \\hline 3 & 545 & 778 & 7507 \\ \\hline 4 & 545 & 18744 & 7560 \\ \\hline 5 & 88 & 788 & 6344 \\ [1ex]  \\hline\\end{tabularx}}\\caption{\\label{demo-table}Your caption.}\\end{center}\\end{table}\\end{document}"""
+            )
+
+    def test_mix_tabulars(self):
+        with unittest.mock.patch(
+            "builtins.open",
+            new=unittest.mock.mock_open(read_data=self.mock_file_content4),
+            create=True,
+        ) as file_mock:
+            self.renderer.render_tabular(file_mock)
+            file_mock.assert_called_with(file_mock, "w")
+            file_mock().write.assert_called_with(
+                """\\documentclass{article}\\begin{document}Table \\ref{demo-table} has a caption:\\begin{table}[!h]\\begin{center}{\\color{Table_color}\\begin{tabular}{||c c c c||}  \\hline Col1 & Col2 & Col2 & Col3 \\ [0.5ex]  \\hline\\hline 1 & 6 & 87837 & 787 \\  \\hline 2 & 7 & 78 & 5415 \\ \\hline 3 & 545 & 778 & 7507 \\ \\hline 4 & 545 & 18744 & 7560 \\ \\hline 5 & 88 & 788 & 6344 \\ [1ex]  \\hline\\end{tabular}}\\caption{\\label{demo-table}Your caption.}\\end{center}\\end{table} \\begin{table}[!h]\\begin{center}{\\color{Table_color}\\begin{tabularx}{||c c c c||}  \\hline Col1 & Col2 & Col2 & Col3 \\ [0.5ex]  \\hline\\hline 1 & 6 & 87837 & 787 \\  \\hline 2 & 7 & 78 & 5415 \\ \\hline 3 & 545 & 778 & 7507 \\ \\hline 4 & 545 & 18744 & 7560 \\ \\hline 5 & 88 & 788 & 6344 \\ [1ex]  \\hline\\end{tabularx}}\\caption{\\label{demo-table}Your caption.}\\end{center}\\end{table}\\end{document}"""
             )
