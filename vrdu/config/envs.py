@@ -85,6 +85,7 @@ algorithm_envs = [
     "algorithmic",
     "algorithmic*",
     "program",
+    "pseudocode",
 ]
 
 code_envs = [
@@ -171,6 +172,7 @@ nonexpand_envs = [
 
 text_envs = [
     "theorem",
+    "observation",
     "thm",
     "definition",
     "lemma",
@@ -193,6 +195,11 @@ text_envs = [
     "acknowledgements",
     "flushleft",
     "flushright",
+    "appendices",
+    "IEEEproof",
+    "widetext",
+    "center",
+    "quote",
 ]
 
 # these envs will not cross columns, they always shows as a whole
