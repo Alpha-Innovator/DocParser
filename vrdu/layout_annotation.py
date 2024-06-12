@@ -2,7 +2,7 @@ from collections import defaultdict
 import os
 import glob
 import subprocess
-from typing import Any, DefaultDict, Dict, List, Tuple
+from typing import Any, DefaultDict, Dict, List
 import matplotlib.pyplot as plt
 import numpy as np
 from skimage.measure import label, regionprops
@@ -143,7 +143,7 @@ class LayoutAnnotation:
 
         self.layout_metadata = layout_metadata
 
-    def retrive_figure_source_code(
+    def retrieve_figure_source_code(
         self, figure_layout_info: Dict[int, List[Block]]
     ) -> None:
         """Retrieves the source code of a figure using synctex.
@@ -209,7 +209,7 @@ class LayoutAnnotation:
                 if not isinstance(element, LTFigure):
                     continue
                 # the coordinate system of Pdfminer is in contrast to the coordinate system of the image
-                # by fliping the y axis
+                # by flipping the y axis
                 y0 = height - element.bbox[3]
                 y1 = height - element.bbox[1]
                 x0 = element.bbox[0]
@@ -224,7 +224,7 @@ class LayoutAnnotation:
                 )
 
         # find the corresponding source code to figure bounding box
-        self.retrive_figure_source_code(layout_info)
+        self.retrieve_figure_source_code(layout_info)
 
         # convert bounding boxes from PDF coordinate system to image coordinate system
         self.transform(layout_info)
@@ -304,11 +304,11 @@ class LayoutAnnotation:
 
                 # We do not consider the cross column case for these envs.
                 if category in envs.one_column_envs:
-                    bboxes = [bb for bb in bounding_boxes]
-                    if len(bboxes) == 0:
+                    bounding_boxes = [bb for bb in bounding_boxes]
+                    if len(bounding_boxes) == 0:
                         continue
                     element = Block(
-                        bounding_box=BoundingBox.from_list(bboxes),
+                        bounding_box=BoundingBox.from_list(bounding_boxes),
                         source_code=self.text_info[category][index],
                         category=config.name2category[category],
                         page_index=page_index,
