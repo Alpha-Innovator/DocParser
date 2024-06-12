@@ -42,76 +42,6 @@ def load_json(file_path: str) -> Union[Dict, List]:
     return data
 
 
-def compile_check(source_code: str) -> bool:
-    """
-    check if the source code can be compiled,
-    used to check if there are macros in the source code.
-    """
-    prefix = r"""
-    \documentclass{article}
-    \usepackage{amsmath}
-    \usepackage{amssymb}
-    \usepackage{amsfonts, bm}
-    \usepackage{amsthm}
-    \usepackage{array}
-    \usepackage{tabularx}
-    \usepackage{multirow}
-    \usepackage{booktabs}
-    \begin{document}
-    """
-
-    suffix = r"""
-    \end{document}
-    """
-    temp_filename = str(uuid.uuid4())
-    content = prefix + source_code + suffix
-    with open(f"{temp_filename}.tex", "w") as f:
-        f.write(content)
-
-    result = True
-    try:
-        subprocess.run(
-            ["pdflatex", "-halt-on-error", f"{temp_filename}.tex"], check=True
-        )
-    except subprocess.CalledProcessError:
-        result = False
-    finally:
-        # remove files
-        files = glob.glob(f"{os.getcwd()}/{temp_filename}.*")
-        for file in files:
-            os.remove(file)
-
-    return result
-
-
-def get_main_content(data):
-    """
-    Generate the main content of a document.
-
-    Parameters:
-    - data (list): A list of dictionaries representing the document.
-
-    Returns:
-    - main_content (str): The main content of the document.
-
-    Raises:
-    - Exception: If the document is not found in the data.
-
-    """
-    main_content = None
-    main_content_index = None
-    for index, item in enumerate(data):
-        if isinstance(item, dict) and "document" in item:
-            main_content = item["document"][1]
-            main_content_index = index
-            break
-
-    if main_content is None:
-        raise Exception("document not found")
-
-    return main_content, main_content_index
-
-
 def compile_latex(file: str):
     """
     Compile a LaTeX file using either pdflatex or xelatex as the tex engine.
@@ -201,35 +131,6 @@ def convert_eps_image_to_pdf_image(eps_image_path: str, pdf_image_path: str):
     subprocess.run(["epspdf", eps_image_path, pdf_image_path])
 
 
-def extract_macro_definitions(tex_file) -> List[str]:
-    """
-    Extracts macro definitions from a given tex file.
-
-    Args:
-        tex_file (str): The path to the tex file.
-
-    Returns:
-        List[str]: A list of macro definitions extracted from the tex file.
-    """
-    macro_patterns = [
-        r"\\newcommand{[^}]+}",
-        r"\\renewcommand{[^}]+}",
-        r"\\newenvironment{[^}]+}",
-        r"\\renewenvironment{[^}]+}",
-    ]
-
-    macros = []
-    with open(tex_file, "r") as file:
-        text_lines = file.readlines()
-        macros = [
-            line.strip()
-            for line in text_lines
-            if any(re.findall(pattern, line) for pattern in macro_patterns)
-        ]
-
-    return macros
-
-
 def export_to_coco(
     layout_info: Dict[int, List[Block]],
     image_infos: Dict[int, Dict[str, Any]],
@@ -290,32 +191,7 @@ def export_to_coco(
             }
             result["annotations"].append(annotation)
 
-    export_to_json(result, filename)
-
-
-def extract_title_name(title) -> str:
-    """
-    Extracts the name of a title from its format.
-
-    Args:
-        title (str): The title string to extract the name from.
-
-    Returns:
-        str: The extracted title environment name from the title.
-
-    Example:
-        >>> extract_title_name("\\section{Name}")
-        'section'
-        >>> extract_title_name("\\subsection*{AnotherName}")
-        'subsection'
-        >>> extract_title_name("No match")
-        ''
-    """
-    match = re.search(r"\\(\w+)(\*?){(.*)}", title)
-    if match:
-        return match.group(1)
-
-    return ""
+    export_to_json(result, file_path)
 
 
 def colorize(text: str, category_name: str) -> str:
