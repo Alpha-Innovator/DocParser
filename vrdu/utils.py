@@ -11,6 +11,7 @@ import uuid
 from pdf2image import pdf2image
 from pdf2image import generators
 
+from vrdu.block import Block
 from vrdu.config import config
 
 
@@ -132,16 +133,35 @@ def get_main_content(data):
 
 
 def compile_latex(file: str):
-    path_name = os.path.dirname(file)
+    """
+    Compile a LaTeX file using either pdflatex or xelatex as the tex engine.
+
+    Parameters:
+        file (str): The path to the LaTeX file to be compiled.
+
+    Returns:
+        None
+    """
     file_name = os.path.basename(file)
 
-    script_path = os.path.expanduser("compile_latex.sh")
-    subprocess.call(
-        ["bash", script_path, path_name, file_name],
+    subprocess.run(
+        ["pdflatex", "-interaction=nonstopmode", file_name],
         timeout=1000,
         stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
     )
+
+    subprocess.run(
+        ["pdflatex", "-interaction=nonstopmode", file_name],
+        timeout=1000,
+        stdout=subprocess.DEVNULL,
+    )
+
+    if file_name == "paper_colored.tex":
+        subprocess.run(
+            ["pdflatex", "-interaction=nonstopmode", "-synctex=1", file_name],
+            timeout=1000,
+            stdout=subprocess.DEVNULL,
+        )
 
 
 def pdf2jpg(pdf_path: str, output_directory: str) -> None:
@@ -169,6 +189,17 @@ def pdf2jpg(pdf_path: str, output_directory: str) -> None:
 
 
 def convert_pdf_figure_to_png_image(pdf_image: str, png_image: str, dpi: int = 72):
+    """
+    Convert a PDF to a PNG image.
+
+    Parameters:
+        pdf_image (str): The filepath of the PDF image to convert.
+        png_image (str): The filepath where the PNG image will be saved.
+        dpi (int): The resolution for the conversion (default is 72).
+
+    Returns:
+        None
+    """
     # crop the pdf image
     subprocess.run(
         ["pdfcrop", pdf_image, pdf_image],
@@ -180,26 +211,15 @@ def convert_pdf_figure_to_png_image(pdf_image: str, png_image: str, dpi: int = 7
 
 
 def convert_eps_image_to_pdf_image(eps_image_path: str, pdf_image_path: str):
+    """
+    A function that converts an EPS image to a PDF image.
+
+    Args:
+        eps_image_path (str): The file path of the EPS image to convert.
+        pdf_image_path (str): The file path where the PDF image will be saved.
+    """
     subprocess.run(["epspdf", eps_image_path, pdf_image_path])
 
-
-def get_all_categories():
-    """
-    Retrieves all categories from the "category_count.csv" file.
-
-    Returns:
-        categories (list): A list of all categories.
-
-    Reference:
-        https://arxiv.org/category_taxonomy
-    """
-    categories = []
-    with open("scripts/category_count.csv", "r") as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            categories.append(row["categories"])
-
-    return categories
 
 
 def extract_macro_definitions(tex_file) -> List[str]:
@@ -232,12 +252,30 @@ def extract_macro_definitions(tex_file) -> List[str]:
 
 
 def export_to_coco(
-    layout_info: Dict,
+    layout_info: Dict[int, List[Block]],
     image_infos: Dict[int, Dict[str, Any]],
     filename: str,
 ) -> None:
+    """
+    Export the given layout information and image information to a COCO format JSON file.
+
+    Args:
+        layout_info (Dict[int, List[Block]]): A dictionary mapping page indices to lists of Block objects.
+        image_infos (Dict[int, Dict[str, Any]]): A dictionary mapping page indices to dictionaries containing image information.
+        filename (str): The name of the output JSON file.
+
+    Returns:
+        None
+
+    Reference:
+        https://cocodataset.org/#format-data
+    """
     category_info = [
-        {"id": index, "name": category, "supercategory": supercategory}
+        {
+            "id": index,
+            "name": category,
+            "supercategory": supercategory,
+        }
         for index, category, supercategory in config.config["category_name"]
     ]
     result = {
@@ -302,6 +340,16 @@ def extract_title_name(title) -> str:
 
 
 def colorize(text: str, category_name: str) -> str:
+    """
+    Given a piece of text and a category name, colorizes the text based on the category.
+
+    Args:
+        text (str): The text to be colorized.
+        category_name (str): The category name to determine the colorization.
+
+    Returns:
+        str: The colorized text based on the category.
+    """
     color = config.name2color[category_name]
     if category_name == "Caption":
         index = text.find("{")

@@ -1,8 +1,8 @@
 import os
-import shutil
 import argparse
 import multiprocessing
-from typing import List
+import shutil
+from typing import List, Optional
 from uuid import uuid4
 import pandas as pd
 
@@ -16,16 +16,18 @@ log = logger.setup_app_level_logger(file_name=log_file, level="INFO")
 database = "data/processed_paper_database.csv"
 
 
-def filter_tex_files(tex_files: List[str], main_path: str) -> List[str]:
-    """extract all MAIN.tex files for processing,
-    only MAIN.tex files in the main_path (not recursive) are extracted
+def filter_tex_files(
+    tex_files: List[str], main_path: Optional[str] = None
+) -> List[str]:
+    """extract all MAIN.tex files for processing, if main_path is not None, then
+    only extract MAIN.tex files in the main_path (not recursive)
 
     Args:
         tex_files (List[str]): list of tex files
         main_path (str): path to main directory.
 
     Returns:
-        List[str]: list of tex files that are compiable.
+        List[str]: list of tex files that are compilable.
     """
 
     # TODO: move this to config
@@ -48,7 +50,7 @@ def filter_tex_files(tex_files: List[str], main_path: str) -> List[str]:
         if main_path and os.path.dirname(os.path.dirname(tex_file)) != main_path:
             continue
 
-        # make sure the tex file is compiable (main document)
+        # make sure the tex file is compilable (main document)
         try:
             with open(tex_file) as f:
                 content = f.read()
@@ -70,13 +72,13 @@ def filter_tex_files(tex_files: List[str], main_path: str) -> List[str]:
     return result
 
 
-def process_one_discpline(path: str, cpu_count: int, discpline: str) -> None:
-    """Process the data in a specific discpline.
+def process_one_discipline(path: str, cpu_count: int, discipline: str) -> None:
+    """Process the data in a specific discipline.
 
     Args:
         path (str): The path to the raw data.
         cpu_count (int): The number of CPUs to use for multiprocessing.
-        discpline (str): The discpline to process.
+        discipline (str): The discipline to process.
 
     Raises:
         Exception: If the processing fails.
@@ -84,21 +86,21 @@ def process_one_discpline(path: str, cpu_count: int, discpline: str) -> None:
     Returns:
         None
     """
-    discpline_path = os.path.join(path, discpline)
-    log.info(f"[VRDU] Path to raw data: {discpline_path}")
+    discipline_path = os.path.join(path, discipline)
+    log.info(f"[VRDU] Path to raw data: {discipline_path}")
     log.info(f"[VRDU] Using cpu counts: {cpu_count}")
-    tex_files = utils.extract_all_tex_files(discpline_path)
-    tex_files = filter_tex_files(tex_files, discpline_path)
+    tex_files = utils.extract_all_tex_files(discipline_path)
+    tex_files = filter_tex_files(tex_files, discipline_path)
 
     try:
         with multiprocessing.Pool(cpu_count) as pool:
             pool.map(process_one_file, tex_files)
     except Exception:
-        log.exception(f"[VRDU] discpline: {discpline}, failed to process.")
+        log.exception(f"[VRDU] discipline: {discipline}, failed to process.")
     finally:
         # save the process log
-        log.info(f"[VRDU] discpline: {discpline}, finished processing.")
-        shutil.move(log_file, f"data/batch_process_{discpline}.log")
+        log.info(f"[VRDU] discipline: {discipline}, finished processing.")
+        shutil.move(log_file, f"data/batch_process_{discipline}.log")
 
 
 def main():
@@ -107,7 +109,7 @@ def main():
     Args:
         path (str): The path to the raw data.
         cpu_count (int): The number of CPUs to use for multiprocessing.
-        discpline (str): The discpline to process.
+        discipline (str): The discipline to process.
 
     Raises:
         Exception: If the processing fails.
@@ -131,13 +133,13 @@ def main():
         help="cpu count for multiprocessing",
     )
     parser.add_argument(
-        "-t", "--discpline", type=str, required=True, help="discpline to process"
+        "-t", "--discipline", type=str, required=True, help="discipline to process"
     )
     args = parser.parse_args()
-    path, cpu_count, discpline = args.path, args.cpu_count, args.discpline
+    path, cpu_count, discipline = args.path, args.cpu_count, args.discipline
 
-    log.info(f"[VRDU] discpline: {discpline}, start to process.")
-    process_one_discpline(path, cpu_count, discpline)
+    log.info(f"[VRDU] discipline: {discipline}, start to process.")
+    process_one_discipline(path, cpu_count, discipline)
 
 
 if __name__ == "__main__":

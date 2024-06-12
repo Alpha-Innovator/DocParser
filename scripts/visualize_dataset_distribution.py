@@ -4,7 +4,24 @@ import matplotlib.pyplot as plt
 import numpy as np
 import csv
 
-from vrdu import utils
+
+def get_all_categories():
+    """
+    Retrieves all categories from the "category_count.csv" file.
+
+    Returns:
+        categories (list): A list of all categories.
+
+    Reference:
+        https://arxiv.org/category_taxonomy
+    """
+    categories = []
+    with open("scripts/category_count.csv", "r") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            categories.append(row["categories"])
+
+    return categories
 
 
 def visualize_distribution(dict1, dict2):
@@ -50,7 +67,7 @@ def visualize_distribution(dict1, dict2):
 
 
 def analyze_raw_data(path):
-    all_categories = utils.get_all_categories()
+    all_categories = get_all_categories()
 
     data = defaultdict(int)
     for category in all_categories:

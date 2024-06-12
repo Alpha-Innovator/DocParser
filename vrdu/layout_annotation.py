@@ -1,6 +1,7 @@
 from collections import defaultdict
 import os
 import glob
+import subprocess
 from typing import Any, DefaultDict, Dict, List, Tuple
 import matplotlib.pyplot as plt
 import numpy as np
@@ -25,9 +26,10 @@ class LayoutAnnotation:
     # https://www.overleaf.com/learn/latex/Lengths_in_LaTeX
     ONE_INCH = 72.27
 
-    def __init__(self, main_directory: str) -> None:
-        self.main_directory = main_directory
-        self.output_directory = os.path.join(main_directory, "output")
+    def __init__(self, tex_file: str) -> None:
+        self.tex_file = tex_file
+        self.main_directory = os.path.dirname(tex_file)
+        self.output_directory = os.path.join(self.main_directory, "output")
         self.result_directory = os.path.join(self.output_directory, "result")
         self.layout_metadata: Dict = {}
         self.text_info = utils.load_json(
@@ -141,6 +143,55 @@ class LayoutAnnotation:
 
         self.layout_metadata = layout_metadata
 
+    def retrive_figure_source_code(
+        self, figure_layout_info: Dict[int, List[Block]]
+    ) -> None:
+        """Retrieves the source code of a figure using synctex.
+
+        Args:
+            figure_layout_info (Dict[int, List[Block]]): A dictionary where the keys are page indices
+                and the values are lists of Block objects representing the bounding boxes of figures on each page.
+
+        Returns:
+            None
+
+        Note:
+            use `synctex help edit` to view usage of synctex
+        """
+        # paper_colored.tex is what we are working for
+        tex_filename = os.path.basename(self.tex_file).replace(
+            "paper_original", "paper_colored"
+        )
+        pdf_filename = tex_filename.replace(".tex", ".pdf")
+        with open(os.path.join(self.main_directory, tex_filename), "r") as file:
+            content_lines = file.readlines()
+
+        for page_index, blocks in figure_layout_info.items():
+            for block in blocks:
+                bbox = block.bbox
+                center_x, center_y = (bbox[0] + bbox[2]) / 2, (bbox[1] + bbox[3]) / 2
+                log.debug(
+                    f"page index: {page_index + 1}, center: ({center_x}, {center_y}), pdf filename: {pdf_filename}"
+                )
+                # use synctex to retrieve the line index corresponding to the center of the bounding box
+                result = subprocess.run(
+                    [
+                        "synctex",
+                        "edit",
+                        "-o",
+                        f"{page_index + 1}:{center_x:.2f}:{center_y:.2f}:{pdf_filename}",
+                        "-d",
+                        self.main_directory,
+                    ],
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                )
+                # parse the output of synctex to get the source code
+                line_index = result.stdout.split("\nLine:")[1].split("\n")[0]
+                block.source_code = content_lines[int(line_index) - 1]
+                log.debug(f"line index: {line_index}, source code: {block.source_code}")
+
     def generate_figure_bb(self, pdf_layouts: List[LTPage]) -> Dict[int, List[Block]]:
         """Generate bounding boxes for figures in a PDF layout using Pdfminer.
 
@@ -153,18 +204,27 @@ class LayoutAnnotation:
         """
         layout_info = defaultdict(list)
         for page_index, page_layout in enumerate(pdf_layouts):
-            layout_info[page_index].extend(
-                [
+            height = page_layout.height
+            for element in page_layout:
+                if not isinstance(element, LTFigure):
+                    continue
+                # the coordinate system of Pdfminer is in contrast to the coordinate system of the image
+                # by fliping the y axis
+                y0 = height - element.bbox[3]
+                y1 = height - element.bbox[1]
+                x0 = element.bbox[0]
+                x1 = element.bbox[2]
+                layout_info[page_index].append(
                     Block(
-                        bounding_box=BoundingBox(*element.bbox),
+                        bounding_box=BoundingBox(x0, y0, x1, y1),
                         page_index=page_index,
                         category=config.name2category["Figure"],
-                        source_code="",  # currently, figure block will have no source code match
+                        source_code="",
                     )
-                    for element in page_layout
-                    if isinstance(element, LTFigure)
-                ]
-            )
+                )
+
+        # find the corresponding source code to figure bounding box
+        self.retrive_figure_source_code(layout_info)
 
         # convert bounding boxes from PDF coordinate system to image coordinate system
         self.transform(layout_info)
@@ -183,12 +243,9 @@ class LayoutAnnotation:
             None
         """
         for page_index in layout_info.keys():
-            pdf_height = self.layout_metadata[page_index]["pdf_height"]
             px2img = self.layout_metadata[page_index]["px2img"]
             for index, element in enumerate(layout_info[page_index]):
                 x0, y0, x1, y1 = element.bbox
-                # flip the y-axis
-                y0, y1 = pdf_height - y1, pdf_height - y0
                 # scale
                 width, height = element.width, element.height
                 x0, y0 = x0 * px2img, y0 * px2img
@@ -247,7 +304,7 @@ class LayoutAnnotation:
 
                 # We do not consider the cross column case for these envs.
                 if category in envs.one_column_envs:
-                    bboxes = [bb for bb in bounding_boxes if bb[0] >= top_margin]
+                    bboxes = [bb for bb in bounding_boxes]
                     if len(bboxes) == 0:
                         continue
                     element = Block(
@@ -269,7 +326,6 @@ class LayoutAnnotation:
                         for bb in bounding_boxes
                         if bb[1] >= separations[column]
                         and bb[1] <= separations[column + 1]
-                        and bb[0] >= top_margin
                     ]
                     if not column_boxes:
                         continue

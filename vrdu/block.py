@@ -152,6 +152,10 @@ class Block:
     @property
     def source_code(self) -> str:
         return self._source_code
+    
+    @source_code.setter
+    def source_code(self, value: str) -> None:
+        self._source_code = value
 
     @property
     def parent_block(self) -> int:
