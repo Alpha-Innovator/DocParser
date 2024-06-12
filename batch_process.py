@@ -2,12 +2,11 @@ import os
 import argparse
 import multiprocessing
 import shutil
-from typing import List, Optional
+from typing import List
 from uuid import uuid4
 import pandas as pd
 
 from vrdu import logger
-from vrdu import utils
 from main import process_one_file
 
 log_file = str(uuid4()) + ".log"
@@ -16,19 +15,22 @@ log = logger.setup_app_level_logger(file_name=log_file, level="INFO")
 database = "data/processed_paper_database.csv"
 
 
-def filter_tex_files(
-    tex_files: List[str], main_path: Optional[str] = None
-) -> List[str]:
-    """extract all MAIN.tex files for processing, if main_path is not None, then
-    only extract MAIN.tex files in the main_path (not recursive)
+def filter_tex_files(discipline_path: str) -> List[str]:
+    """extract all MAIN.tex files for processing, if discipline_path is not None, then
+    only extract MAIN.tex files in the discipline_path (not recursive)
 
     Args:
-        tex_files (List[str]): list of tex files
-        main_path (str): path to main directory.
+        discipline_path (str): path to main directory.
 
     Returns:
         List[str]: list of tex files that are compilable.
     """
+    tex_files = []
+
+    for root, _, files in os.walk(discipline_path):
+        tex_files.extend(
+            [os.path.join(root, file) for file in files if file.endswith(".tex")]
+        )
 
     # TODO: move this to config
     redundant_tex_files = [
@@ -47,7 +49,7 @@ def filter_tex_files(
 
         # ensure the tex files inside a subfolder is not included
         # ex: cs.AI/1234.4567/figs/draw.tex will be excluded
-        if main_path and os.path.dirname(os.path.dirname(tex_file)) != main_path:
+        if os.path.dirname(os.path.dirname(tex_file)) != discipline_path:
             continue
 
         # make sure the tex file is compilable (main document)
@@ -89,8 +91,7 @@ def process_one_discipline(path: str, cpu_count: int, discipline: str) -> None:
     discipline_path = os.path.join(path, discipline)
     log.info(f"[VRDU] Path to raw data: {discipline_path}")
     log.info(f"[VRDU] Using cpu counts: {cpu_count}")
-    tex_files = utils.extract_all_tex_files(discipline_path)
-    tex_files = filter_tex_files(tex_files, discipline_path)
+    tex_files = filter_tex_files(discipline_path)
 
     try:
         with multiprocessing.Pool(cpu_count) as pool:

@@ -15,26 +15,6 @@ from vrdu.block import Block
 from vrdu.config import config
 
 
-def extract_all_tex_files(path) -> List[str]:
-    """
-    Given a path, this function extracts all the .tex files within the
-    specified directory and its subdirectories.
-
-    Args:
-        path (str): The path to the directory where the .tex files are located.
-
-    Returns:
-        List[str]: A list of paths to the .tex files found.
-    """
-    tex_files = []
-
-    for root, _, files in os.walk(path):
-        tex_files.extend(
-            [os.path.join(root, file) for file in files if file.endswith(".tex")]
-        )
-    return tex_files
-
-
 def export_to_json(data, file_path) -> None:
     """
     Write the contents of a dictionary to a JSON file.
@@ -219,7 +199,6 @@ def convert_eps_image_to_pdf_image(eps_image_path: str, pdf_image_path: str):
         pdf_image_path (str): The file path where the PDF image will be saved.
     """
     subprocess.run(["epspdf", eps_image_path, pdf_image_path])
-
 
 
 def extract_macro_definitions(tex_file) -> List[str]:
