@@ -4,10 +4,10 @@ import pandas as pd
 import argparse
 from datetime import datetime
 
-from vrdu import utils
-from vrdu.config import config
+from DocParser.vrdu import utils
+from DocParser.vrdu.config import config
 
-from vrdu import logger
+from DocParser.vrdu import logger
 
 log = logger.setup_app_level_logger(file_name="statistics.log")
 

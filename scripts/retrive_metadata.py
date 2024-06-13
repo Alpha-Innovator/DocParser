@@ -7,8 +7,8 @@ import argparse
 import pandas as pd
 
 
-from vrdu import utils
-from vrdu import logger
+from DocParser.vrdu import utils
+from DocParser.vrdu import logger
 
 log = logger.setup_app_level_logger(file_name="retrieve_metadata.log")
 

@@ -5,8 +5,8 @@ from tqdm import tqdm
 import tarfile
 
 
-from vrdu import utils
-from vrdu import logger
+from DocParser.vrdu import utils
+from DocParser.vrdu import logger
 
 log = logger.setup_app_level_logger(file_name="arxiv_download.log")
 

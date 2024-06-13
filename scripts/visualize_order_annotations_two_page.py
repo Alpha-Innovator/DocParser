@@ -6,7 +6,7 @@ from typing import Tuple
 from PIL import Image, ImageDraw
 from matplotlib import pyplot as plt
 
-from vrdu import utils
+from DocParser.vrdu import utils
 
 
 def arrowedLine(
