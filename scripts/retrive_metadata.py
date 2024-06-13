@@ -1,10 +1,9 @@
 import glob
 import os
+from pathlib import Path
 from typing import Any, Dict, List
 import arxiv
 import argparse
-
-import pandas as pd
 
 
 from DocParser.vrdu import utils
@@ -13,15 +12,31 @@ from DocParser.vrdu import logger
 log = logger.setup_app_level_logger(file_name="retrieve_metadata.log")
 
 
-def retrieve_metadata(data: Dict) -> List[Dict[str, Any]]:
+def retrieve_metadata(data: Dict[str, Path], slice_length=100) -> List[Dict[str, Any]]:
+    """
+    Retrieves metadata for the given list of paper IDs.
+
+    Args:
+    data (Dict[str, Path]): A dictionary where keys are paper IDs and values are the paths to the corresponding papers.
+    slice_length (int, optional): The number of paper IDs to retrieve metadata for in each iteration. Defaults to 100.
+
+    Returns:
+    List[Dict[str, Any]]: A list of dictionaries containing metadata for each paper.
+
+    Raises:
+    None
+
+    References:
+    https://info.arxiv.org/help/api/user-manual.html#_details_of_atom_results_returned
+
+    """
     paper_ids = list(data.keys())
 
     client = arxiv.Client()
 
-    slice_length = 100
     paper_metadata = []
 
-    for i in range(0, len(paper_ids), slice_length):
+    for i in range(len(paper_ids), slice_length):
         slices = paper_ids[i : i + slice_length]
         search_results = client.results(arxiv.Search(id_list=slices))
 
@@ -49,38 +64,30 @@ def retrieve_metadata(data: Dict) -> List[Dict[str, Any]]:
     return paper_metadata
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "-i", "--input_path", type=str, default="data/discipline_info.csv"
-    )
+    parser.add_argument("-i", "--input_path", type=str, required=True)
     args = parser.parse_args()
     path = args.input_path
 
-    discipline_info = pd.read_csv("data/discipline_info.csv")
-    disciplines = set(discipline_info["discipline"])
+    paper_paths = glob.glob(os.path.join(path, "*/"))
+    # paper_id to paper path
+    data = {os.path.basename(paper_path[:-1]): paper_path for paper_path in paper_paths}
 
-    for discipline in disciplines:
-        target_discipline_path = os.path.join(path, discipline)
-        paper_paths = glob.glob(os.path.join(target_discipline_path, "*/"))
+    paper_metadata = retrieve_metadata(data)
 
-        data = {
-            os.path.basename(paper_path[:-1]): paper_path for paper_path in paper_paths
-        }
+    # use append mode
+    existed_json_file = os.path.join(path, "paper_metadata.json")
+    existed_json_data = []
+    if os.path.exists(existed_json_file):
+        existed_json_data = utils.load_json(existed_json_file)
 
-        paper_metadata = retrieve_metadata(data)
+    existed_paper_ids = [x["paper_id"] for x in existed_json_data]
+    existed_json_data.extend(
+        [x for x in paper_metadata if x["paper_id"] not in existed_paper_ids]
+    )
 
-        existed_json_file = os.path.join(target_discipline_path, "paper_metadata.json")
-        existed_json_data = []
-        if os.path.exists(existed_json_file):
-            existed_json_data = utils.load_json(existed_json_file)
-
-        existed_paper_ids = [x["paper_id"] for x in existed_json_data]
-        existed_json_data.extend(
-            [x for x in paper_metadata if x["paper_id"] not in existed_paper_ids]
-        )
-
-        utils.export_to_json(existed_json_data, existed_json_file)
+    utils.export_to_json(existed_json_data, existed_json_file)
 
 
 if __name__ == "__main__":
