@@ -7,7 +7,7 @@ from uuid import uuid4
 import pandas as pd
 
 from vrdu import logger
-from main import process_one_file
+from DocParser.main import process_one_file
 
 log_file = str(uuid4()) + ".log"
 log = logger.setup_app_level_logger(file_name=log_file, level="INFO")
