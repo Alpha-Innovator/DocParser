@@ -2,7 +2,7 @@ import unittest
 import unittest.mock
 
 
-from vrdu.renderer import Renderer
+from DocParser.vrdu.renderer import Renderer
 
 
 class TestGraphics(unittest.TestCase):
