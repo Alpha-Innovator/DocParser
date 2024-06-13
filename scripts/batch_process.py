@@ -3,27 +3,31 @@ import argparse
 import multiprocessing
 import shutil
 from typing import List
-from uuid import uuid4
 import pandas as pd
 
 from DocParser.vrdu import logger
 from DocParser.main import process_one_file
 
-log_file = str(uuid4()) + ".log"
-log = logger.setup_app_level_logger(file_name=log_file, level="INFO")
-
-database = "data/processed_paper_database.csv"
+log = logger.setup_app_level_logger(file_name="batch_process.log", level="INFO")
 
 
 def filter_tex_files(discipline_path: str) -> List[str]:
-    """extract all MAIN.tex files for processing, if discipline_path is not None, then
-    only extract MAIN.tex files in the discipline_path (not recursive)
+    """
+    Filters the list of tex files in the given discipline path.
 
     Args:
-        discipline_path (str): path to main directory.
+        discipline_path (str): The path to the discipline directory containing tex files.
 
     Returns:
-        List[str]: list of tex files that are compilable.
+        List[str]: A list of filtered tex files that meet the specified criteria.
+
+    Raises:
+        Exception: If the processing fails.
+
+    1. Exclude tex files with names "paper_colored.tex", "paper_white.tex", and "paper_original.tex".
+    2. Exclude tex files that are inside a subfolder.
+    3. Ensure that the tex file is a main document by checking if it contains "\\begin{document}".
+
     """
     tex_files = []
 
@@ -32,7 +36,6 @@ def filter_tex_files(discipline_path: str) -> List[str]:
             [os.path.join(root, file) for file in files if file.endswith(".tex")]
         )
 
-    # TODO: move this to config
     redundant_tex_files = [
         "paper_colored.tex",
         "paper_white.tex",
@@ -63,14 +66,6 @@ def filter_tex_files(discipline_path: str) -> List[str]:
             log.debug(f"failed to read tex file: {tex_file} due to UnicodeDecodeError")
             continue
 
-    # skip processed papers
-    log.info(f"[VRDU] Before filtering, found {len(result)} tex files")
-    if os.path.exists(database):
-        df = pd.read_csv(database)
-        processed_papers = set(df["path"])
-        result = [x for x in result if os.path.dirname(x) not in processed_papers]
-
-    log.info(f"[VRDU] After filtering, found {len(result)} tex files")
     return result
 
 
@@ -101,7 +96,6 @@ def process_one_discipline(path: str, cpu_count: int, discipline: str) -> None:
     finally:
         # save the process log
         log.info(f"[VRDU] discipline: {discipline}, finished processing.")
-        shutil.move(log_file, f"data/batch_process_{discipline}.log")
 
 
 def main():
