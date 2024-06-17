@@ -367,30 +367,13 @@ class Renderer:
         if re.search(pattern, content[:preamble_loc]):
             content = content[:preamble_loc] + hyper_setup + content[preamble_loc:]
 
+        # delete the lstlisting color definitions
+        pattern = r"\\lstset\{.*?\}"
+        content = re.sub(pattern, "", content)
+
         # Write the modified content back to the input file
         with open(color_tex, "w") as file:
             file.write(content)
-
-    def remove_lstlisting_color(self, color_tex: str) -> None:
-        """Remove color definitions from a LaTeX file.
-
-        Args:
-            color_tex (str): The path to the LaTeX file.
-
-        Returns:
-            None
-        """
-        # Read the content of the input file
-        with open(color_tex, "r") as file:
-            content = file.read()
-
-        # delete the color definitions
-        pattern = r"\\lstset\{.*?\}"
-        modified_content = re.sub(pattern, "", content)
-
-        # Write the modified content to the output file
-        with open(color_tex, "w") as file:
-            file.write(modified_content)
 
     def modify_color_definitions(self, input_file: str, output_file: str) -> None:
         """Modify the pre-defined color definitions in the input file and write the modified content to the output file.
