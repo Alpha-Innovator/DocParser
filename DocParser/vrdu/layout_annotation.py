@@ -409,66 +409,6 @@ class LayoutAnnotation:
             layout_info[page_index].extend(figure_layout_info[page_index])
         return layout_info
 
-    def generate_reading_annotation(
-        self, layout_info: Dict[int, List[Block]]
-    ) -> DefaultDict[str, List]:
-        """Generate a reading annotation based on the layout information.
-
-        Args:
-            layout_info (Dict[int, List[Block]]): A dictionary containing the layout information
-                for each page index. The keys are the page indices and the values are lists of
-                `Block` objects representing the blocks on each page.
-
-        Returns:
-            DefaultDict[str, List]: A defaultdict containing the reading annotation. The keys
-            of the defaultdict are the page indices and the values are lists of dictionaries
-            representing the reading annotation for each block on the page. Each dictionary
-            contains the following keys:
-                - "source_code": The source code of the block.
-                - "image_path": The path to the saved image of the block.
-                - "category": The category of the block.
-
-            The defaultdict also contains the following keys:
-                - "categories": A list of dictionaries representing the categories. Each
-                  dictionary contains the following keys:
-                      - "id": The ID of the category.
-                      - "name": The name of the category.
-                - "macros": A dictionary containing the macro definitions extracted from
-                  the original tex file.
-        """
-        reading_annotation = defaultdict(list)
-
-        # sort all images by page index, see utils.pdf2jpg for details
-        image_files = sorted(
-            glob.glob(os.path.join(self.pdf_images_path, "*.jpg")),
-            key=lambda x: x[-6:-4],
-        )
-        count = 0
-        for page_index in layout_info.keys():
-            page_image = Image.open(image_files[page_index])
-            for block in layout_info[page_index]:
-                cropped_image = page_image.crop(block.bbox)
-
-                image_name = config.folder_prefix + str(count).zfill(4) + ".jpg"
-                count += 1
-                image_path = os.path.join(self.result_directory, image_name)
-                cropped_image.save(image_path)
-                reading_annotation[page_index].append(
-                    {
-                        "source_code": block.source_code,
-                        "image_path": image_name,
-                        "category": block.category,
-                    }
-                )
-            page_image.close()
-
-        reading_annotation["categories"] = [
-            {"id": index, "name": category}
-            for index, category, _ in config.config["category_name"]
-        ]
-
-        return reading_annotation
-
     def generate_image_annotation(
         self, layout_info: Dict[int, List[Block]]
     ) -> Dict[int, Dict[str, Any]]:
@@ -545,13 +485,6 @@ class LayoutAnnotation:
         utils.export_to_coco(
             layout_info, image_annotation, file_path=layout_annotation_file
         )
-
-        # step3: generate reading annotation
-        reading_annotation = self.generate_reading_annotation(layout_info)
-        reading_annotation_file = os.path.join(
-            self.result_directory, "reading_annotation.json"
-        )
-        utils.export_to_json(reading_annotation, reading_annotation_file)
 
 
 def get_image_pairs(dir1: str, dir2: str):
