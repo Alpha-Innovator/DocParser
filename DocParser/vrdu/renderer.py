@@ -51,8 +51,7 @@ class Renderer:
         self.add_layout_definition(color_tex)
 
         # remove color definitions to prevent conflict
-        self.remove_hyperref_color(color_tex)
-        self.remove_lstlisting_color(color_tex)
+        self.remove_predefined_color(color_tex)
 
         self.render_all_env(color_tex)
 
@@ -330,8 +329,8 @@ class Renderer:
         with open(color_tex, "w") as f:
             f.write(content)
 
-    def remove_hyperref_color(self, color_tex: str) -> None:
-        """Removes hyperref color settings from a LaTeX file.
+    def remove_predefined_color(self, color_tex: str) -> None:
+        """Removes hyperref and lstlisting color settings from a LaTeX file.
 
         Args:
             color_tex (str): The path to the LaTeX file to modify.
