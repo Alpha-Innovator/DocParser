@@ -103,10 +103,6 @@ def process_one_file(file_name: str) -> None:
     if os.path.exists(output_directory):
         shutil.rmtree(output_directory)
 
-    # output_directory stores the intermediate results
-    # result_directory stores the final results
-    os.makedirs(os.path.join(main_directory, "output/result"))
-
     cwd = os.getcwd()
 
     try:
