@@ -115,6 +115,41 @@ def replace_figures_extension_with_png(original_tex: str) -> None:
         f.write(content)
 
 
+
+def generate_png_figure(original_tex: str) -> None:
+    """
+    Generate PNG figures for PDF, ps, eps figures.
+
+    Args:
+        original_tex (str): The path to the original TeX file.
+
+    Returns:
+        None: This function does not return anything.
+    """
+    main_directory = os.path.dirname(original_tex)
+    image_extensions = [".eps", ".ps", ".jpg", ".jpeg", ".png", ".pdf"]
+    image_files = {}
+    for root, _, files in os.walk(main_directory):
+        for file in files:
+            if any(file.endswith(ext) for ext in image_extensions):
+                image_name, ext = os.path.splitext(file)
+                image_files[image_name] = os.path.join(root, file)
+
+    for image_name, file_path in image_files.items():
+        if file_path.endswith(".eps") or file_path.endswith(".ps"):
+            output_png = os.path.join(os.path.dirname(file_path), image_name + ".png")
+            temp_pdf = os.path.join(os.path.dirname(file_path), image_name + ".pdf")
+            # convert eps to pdf
+            utils.convert_eps_image_to_pdf_image(file_path, temp_pdf)
+            # convert pdf to png
+            utils.convert_pdf_figure_to_png_image(temp_pdf, output_png)
+        elif file_path.endswith(".pdf"):
+            output_png = os.path.join(os.path.dirname(file_path), image_name + ".png")
+            # convert pdf to png
+            utils.convert_pdf_figure_to_png_image(file_path, output_png)
+
+
+
 def delete_table_of_contents(original_tex: str) -> None:
     """
     Deletes the table of contents from the given original_tex file.
@@ -156,6 +191,9 @@ def run(original_tex: str) -> None:
 
     # Step 1: process images
     replace_figures_extension_with_png(original_tex)
+
+    # Step 2: generate png figures
+    generate_png_figure(original_tex)
 
     # Step 3: delete table of contents
     delete_table_of_contents(original_tex)
