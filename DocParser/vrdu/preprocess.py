@@ -188,8 +188,5 @@ def run(original_tex: str) -> None:
     # Step 1: process images
     replace_non_png_jpg_figures(original_tex)
 
-    # Step 2: generate png figures
-    generate_png_figure(original_tex)
-
-    # Step 3: delete table of contents
+    # Step 2: delete table of contents
     delete_table_of_contents(original_tex)
