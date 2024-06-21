@@ -80,14 +80,21 @@ def replace_figures_extension_with_png(original_tex: str) -> None:
             if any(file.endswith(ext) for ext in image_extensions):
                 image_name, ext = os.path.splitext(file)
                 # Store the relative path of the image as the value
-                image_files[image_name] = os.path.relpath(os.path.join(root, file), main_directory)
+                image_files[image_name] = os.path.relpath(
+                    os.path.join(root, file), main_directory
+                )
 
-    with open(original_tex, 'r') as f:
+    replace_figures_in_tex_files(original_tex, image_files)
+
+def replace_figures_in_tex_files(
+    original_tex: str, image_files: Dict[str, str]
+) -> None:
+    with open(original_tex, "r") as f:
         content = f.read()
 
     # Replace \psfig and \epsfig commands with \includegraphics command
     def custom_replace(match):
-        options = match.group(1) or ''
+        options = match.group(1) or ""
         filepath = match.group(2)
         if options:
             return f"\\includegraphics[{options}]{{{filepath}}}"
@@ -102,16 +109,20 @@ def replace_figures_extension_with_png(original_tex: str) -> None:
         base_name, current_extension = os.path.splitext(image_name)
         correct_extension = os.path.splitext(file_path)[1]
 
-        if correct_extension not in ['.jpg', '.jpeg']:
-            correct_extension = '.png'
+        if correct_extension not in [".jpg", ".jpeg"]:
+            correct_extension = ".png"
 
         # Build a regular expression to match image files including optional extensions
-        pattern = re.compile(r'(\\includegraphics(?:\[[^\]]*\])?\{.*?' + re.escape(base_name) + r')(\.\w+)?\}')
-        replacement = rf'\1{correct_extension}}}'
+        pattern = re.compile(
+            r"(\\includegraphics(?:\[[^\]]*\])?\{.*?"
+            + re.escape(base_name)
+            + r")(\.\w+)?\}"
+        )
+        replacement = rf"\1{correct_extension}}}"
         content = pattern.sub(replacement, content)
 
     # Write the updated content back to the file
-    with open(original_tex, 'w') as f:
+    with open(original_tex, "w") as f:
         f.write(content)
 
 
