@@ -115,26 +115,7 @@ def replace_figures_extension_with_png(original_tex: str) -> None:
         f.write(content)
 
 
-
-def generate_png_figure(original_tex: str) -> None:
-    """
-    Generate PNG figures for PDF, ps, eps figures.
-
-    Args:
-        original_tex (str): The path to the original TeX file.
-
-    Returns:
-        None: This function does not return anything.
-    """
-    main_directory = os.path.dirname(original_tex)
-    image_extensions = [".eps", ".ps", ".jpg", ".jpeg", ".png", ".pdf"]
-    image_files = {}
-    for root, _, files in os.walk(main_directory):
-        for file in files:
-            if any(file.endswith(ext) for ext in image_extensions):
-                image_name, ext = os.path.splitext(file)
-                image_files[image_name] = os.path.join(root, file)
-
+def replace_figures_in_folders(image_files: Dict[str, str]) -> None:
     for image_name, file_path in image_files.items():
         if file_path.endswith(".eps") or file_path.endswith(".ps"):
             output_png = os.path.join(os.path.dirname(file_path), image_name + ".png")
