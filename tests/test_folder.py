@@ -1,27 +1,30 @@
 import unittest
 import os
 from unittest.mock import patch, MagicMock
-
-
-from DocParser.vrdu.preprocess import generate_png_figure
-
+from DocParser.vrdu.preprocess import replace_figures_in_folders
 
 class TestGeneratePngFigure(unittest.TestCase):
-    @patch("os.path.dirname", return_value="/mocked/dir/")
-    @patch("os.walk")
-    @patch("DocParser.vrdu.utils.convert_pdf_figure_to_png_image")
-    def test_single_pdf_generation(self, mock_save, mock_walk, mock_dirname):
-        mocked_file = "/mocked/dir/original.tex"
-        mock_walk.return_value = [
-            ("/mocked/dir/", ["dir1", "dir2"], ["file1.txt", "file2.csv"]),
-            ("/mocked/dir/dir1", [], ["file3.json"]),
-            ("/mocked/dir/dir2", [], ["file4.pdf"]),
-        ]
-        generate_png_figure(mocked_file)
-        # mock_dirname.assert_called_once_with(mocked_file)
+    def setUp(self):
+        # Simulate image files
+        self.image_files = {
+            "file1": "dir1/file1.eps",
+            "file2": "dir/dir2/file2.png",
+            "file3": "dir1/file3.jpg",
+            "file4": "file4.jpeg",
+            "file5": "dir/dir2/dir5/file5.ps",
+            "file6": "dir/dir2/dir5/file6.pdf"
+        }
 
-        mock_walk.assert_called_once_with("/mocked/dir/")
+    @patch('vrdu.utils.convert_eps_image_to_pdf_image')
+    @patch('vrdu.utils.convert_pdf_figure_to_png_image')
+    @patch('os.remove')
+    def test_png_generation(self, mock_os_remove, mock_convert_pdf_to_png, mock_convert_eps_to_pdf):
 
-        mock_save.assert_called_once_with(
-            "/mocked/dir/dir2/file4.pdf", "/mocked/dir/dir2/file4.png"
-        )
+        # Mock os.remove to do nothing
+        mock_os_remove.side_effect = lambda x: None
+
+        replace_figures_in_folders(self.image_files)
+
+        # Test the number of times the file conversion function is called
+        self.assertEqual(mock_convert_eps_to_pdf.call_count, 2)
+        self.assertEqual(mock_convert_pdf_to_png.call_count, 3)
