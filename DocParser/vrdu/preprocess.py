@@ -62,7 +62,7 @@ def clean_tex(original_tex: str) -> None:
     remove_comments(original_tex)
 
 
-def replace_figures_extension_with_png(original_tex: str) -> None:
+def replace_non_png_jpg_figures(original_tex: str) -> None:
     """
     Replaces PDF, ps, eps figures' extension with PNG in a TeX file
     to support pdfminer detecting bounding box.
@@ -186,7 +186,7 @@ def run(original_tex: str) -> None:
     clean_tex(original_tex)
 
     # Step 1: process images
-    replace_figures_extension_with_png(original_tex)
+    replace_non_png_jpg_figures(original_tex)
 
     # Step 2: generate png figures
     generate_png_figure(original_tex)
