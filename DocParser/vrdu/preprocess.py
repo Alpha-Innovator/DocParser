@@ -1,5 +1,6 @@
 import os
 import re
+from typing import Dict
 
 from arxiv_cleaner.cleaner import Cleaner
 
@@ -85,6 +86,8 @@ def replace_figures_extension_with_png(original_tex: str) -> None:
                 )
 
     replace_figures_in_tex_files(original_tex, image_files)
+    replace_figures_in_folders(image_files)
+
 
 def replace_figures_in_tex_files(
     original_tex: str, image_files: Dict[str, str]
@@ -135,11 +138,12 @@ def replace_figures_in_folders(image_files: Dict[str, str]) -> None:
             utils.convert_eps_image_to_pdf_image(file_path, temp_pdf)
             # convert pdf to png
             utils.convert_pdf_figure_to_png_image(temp_pdf, output_png)
+            # remove redundant files
+            os.remove(temp_pdf)
         elif file_path.endswith(".pdf"):
             output_png = os.path.join(os.path.dirname(file_path), image_name + ".png")
             # convert pdf to png
             utils.convert_pdf_figure_to_png_image(file_path, output_png)
-
 
 
 def delete_table_of_contents(original_tex: str) -> None:
