@@ -27,4 +27,5 @@ class TestGeneratePngFigure(unittest.TestCase):
 
         # Test the number of times the file conversion function is called
         self.assertEqual(mock_convert_eps_to_pdf.call_count, 2)
+        self.assertEqual(mock_os_remove.call_count, 2)
         self.assertEqual(mock_convert_pdf_to_png.call_count, 3)
