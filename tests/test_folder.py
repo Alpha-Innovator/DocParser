@@ -1,7 +1,7 @@
 import unittest
-import os
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 from DocParser.vrdu.preprocess import replace_figures_in_folders
+
 
 class TestGeneratePngFigure(unittest.TestCase):
     def setUp(self):
@@ -12,13 +12,15 @@ class TestGeneratePngFigure(unittest.TestCase):
             "file3": "dir1/file3.jpg",
             "file4": "file4.jpeg",
             "file5": "dir/dir2/dir5/file5.ps",
-            "file6": "dir/dir2/dir5/file6.pdf"
+            "file6": "dir/dir2/dir5/file6.pdf",
         }
 
-    @patch('vrdu.utils.convert_eps_image_to_pdf_image')
-    @patch('vrdu.utils.convert_pdf_figure_to_png_image')
-    @patch('os.remove')
-    def test_png_generation(self, mock_os_remove, mock_convert_pdf_to_png, mock_convert_eps_to_pdf):
+    @patch("vrdu.utils.convert_eps_image_to_pdf_image")
+    @patch("vrdu.utils.convert_pdf_figure_to_png_image")
+    @patch("os.remove")
+    def test_png_generation(
+        self, mock_os_remove, mock_convert_pdf_to_png, mock_convert_eps_to_pdf
+    ):
 
         # Mock os.remove to do nothing
         mock_os_remove.side_effect = lambda x: None

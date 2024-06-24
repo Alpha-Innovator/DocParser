@@ -1,8 +1,10 @@
 import unittest
 import unittest.mock
 from DocParser.vrdu.preprocess import replace_figures_in_tex_files
+
+
 class TestAbstract(unittest.TestCase):
-    def setUp(self) -> None:
+    def setUp(self):
         self.initial_content = """
             \\begin{figure}[ht]
             \\centerline{\\includegraphics[width=\\columnwidth]{dir1/time_vs_dimension.pdf}}
@@ -17,13 +19,13 @@ class TestAbstract(unittest.TestCase):
 
         # Simulate image files with correct extensions
         self.image_files = {
-            'time_vs_dimension': 'dir1/time_vs_dimension.pdf',
-            'iterate_constraint': 'dir2/iterate_constraint.jpg',
-            'iterate_error': 'dir2/iterate_error.eps',
-            'time_constraint': 'time_constraint.es',
-            'iterate_correct': 'dir3/dir4/iterate_correct.png',
-            'time_error': 'dir3/time_error.pdf',
-            'time_error_1': 'dir3/time_error_1.jpeg'
+            "time_vs_dimension": "dir1/time_vs_dimension.pdf",
+            "iterate_constraint": "dir2/iterate_constraint.jpg",
+            "iterate_error": "dir2/iterate_error.eps",
+            "time_constraint": "time_constraint.es",
+            "iterate_correct": "dir3/dir4/iterate_correct.png",
+            "time_error": "dir3/time_error.pdf",
+            "time_error_1": "dir3/time_error_1.jpeg",
         }
 
     def test_replace_figures(self):
@@ -44,8 +46,6 @@ class TestAbstract(unittest.TestCase):
             new=unittest.mock.mock_open(read_data=self.initial_content),
             create=True,
         ) as file_mock:
-            replace_figures_in_tex_files(file_mock,self.image_files)
+            replace_figures_in_tex_files(file_mock, self.image_files)
             file_mock.assert_called_with(file_mock, "w")
-            file_mock().write.assert_called_with(
-                expected_content
-            )
+            file_mock().write.assert_called_with(expected_content)
