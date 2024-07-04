@@ -79,6 +79,7 @@ sortable_categories = [
     "Equation",
     "Footnote",
     "List",
+    "Reference"
 ]
 
 
