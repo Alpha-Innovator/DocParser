@@ -58,6 +58,10 @@ def remove_redundant_stuff(main_directory: str) -> None:
     for file in redundant_files:
         os.remove(file)
 
+    redundant_bib_files = glob.glob(f"{main_directory}/bib_*")
+    for file in redundant_bib_files:
+        os.remove(file)
+
     # remove useless pdf and image files
     # TODO: move this name pattern into config
     redundant_folders = glob.glob(
@@ -110,10 +114,23 @@ def process_one_file(file_name: str) -> None:
     cwd = os.getcwd()
 
     try:
-        # change the working directory to the main directory of the paper
+        # # change the working directory to the main directory of the paper
+        # os.chdir(main_directory)
+        # # create output folder
+        # os.makedirs(os.path.join(main_directory, "output/result"))
+
+        # Save current working directory
+        cwd = os.getcwd()
+
+        # Change the working directory to the main directory of the paper
         os.chdir(main_directory)
-        # create output folder
-        os.makedirs(os.path.join(main_directory, "output/result"))
+
+        # Create output folder if it doesn't exist
+        output_folder = os.path.join(main_directory, "output/result")
+        if not os.path.exists(output_folder):
+            os.makedirs(output_folder)
+        else:
+            print(f"Output folder '{output_folder}' already exists.")
 
         # step 1: preprocess the paper
         preprocess.run(original_tex)
