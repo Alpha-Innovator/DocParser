@@ -12,6 +12,10 @@ from DocParser.vrdu.config import config, envs
 from DocParser.TexSoup.TexSoup import TexSoup
 import DocParser.TexSoup.app.conversion as conversion
 
+import bibtexparser
+from bibtexparser.bparser import BibTexParser
+from bibtexparser.customization import convert_to_unicode
+
 log = logger.get_logger(__name__)
 
 
@@ -74,6 +78,7 @@ class Renderer:
         """
         self.render_simple_envs(color_tex)
         self.render_float_envs(color_tex)
+        self.render_reference(color_tex)
 
     def render_simple_envs(self, color_tex: str) -> None:
         """Renders simple environments in a LaTeX file.
@@ -445,8 +450,14 @@ class Renderer:
         Returns:
             None: This function does not return anything.
         """
+
+        # handle latex file
         color_tex_file = os.path.join(main_directory, "paper_colored.tex")
         white_tex_file = os.path.join(main_directory, "paper_white.tex")
+        
+        paper_bib_white = os.path.join(main_directory, "paper_bib_white.tex")
+        shutil.copyfile(color_tex_file, paper_bib_white)
+
         self.modify_color_definitions(color_tex_file, white_tex_file)
         ordered_env_colors = self.get_env_orders(white_tex_file)
         suffix = "_color"
@@ -469,6 +480,50 @@ class Renderer:
             index_map[env] += 1
             with open(output_file, "w") as f:
                 f.write(new_content)
+
+        # handle bib file
+        color_bib_file = os.path.join(main_directory, "bib_colored.bib")
+        white_bib_file = os.path.join(main_directory, "bib_white.bib")
+        self.modify_color_definitions(color_bib_file, white_bib_file)
+        ordered_env_colors = self.get_env_orders(white_bib_file)
+        index_map = defaultdict(int)
+
+        with open(white_bib_file, "r") as f:
+            bib_content = f.read()
+        
+        for index, env_color in enumerate(ordered_env_colors):
+            env = env_color[: -len(suffix)]
+            # the first one is the color definition, skip it
+            bib_new_content = replace_nth(
+                bib_content, "{" + env_color + "}", r"{black}", index_map[env] + 2
+            )
+
+            bib_output_file = os.path.join(
+                main_directory,
+                f"bib_{config.folder_prefix}_{str(index).zfill(5)}_{env}_{str(index_map[env]).zfill(5)}.bib",
+            )
+
+            # change the bib file name in paper_bib_white.tex
+            # \bibliographystyle{bib file name}
+            with open(paper_bib_white, "r") as f:
+                tex_content = f.read()
+
+            bib_file_name = os.path.basename(bib_output_file).split(".")[0]
+            # tex_new_content = re.sub(r"\\bibliography\s*{\s*([^}]+)\s*}", f"\\bibliography{{{bib_file_name}}}", tex_content)
+            tex_new_content = re.sub(r"\\bibliography\s*{\s*([^}]+)\s*}", "\\\\bibliography{{{}}}".format(bib_file_name), tex_content)
+
+            tex_output_file = os.path.join(
+                main_directory,
+                f"paper_{config.folder_prefix}_{str(index).zfill(5)}_{env}_{str(index_map[env]).zfill(5)}.tex",
+            )
+            
+            index_map[env] += 1
+            with open(bib_output_file, "w") as f:
+                f.write(bib_new_content)
+
+            with open(tex_output_file, "w", encoding='utf-8') as f:
+                f.write(tex_new_content)
+        
 
     def render_caption(self, tex_file: str) -> None:
         """Renders captions in a LaTeX file.
@@ -615,6 +670,108 @@ class Renderer:
 
         with open(tex_file, "w") as f:
             f.write(result)
+
+    def render_reference(self, tex_file: str) -> None:
+        """
+        Renders the reference section based on a BibTeX (.bib) file.
+
+        Args:
+            tex_file (str): The path to the LaTex file.
+
+        Returns:
+            None
+        """
+        bib_pattern = r'\\bibliography\s*{\s*([^}]+)\s*}'
+        # Extract directory and filename from LaTeX file path
+        tex_dir, tex_filename = os.path.split(tex_file)
+
+        # Extract BibTeX file path from LaTeX file
+        bib_file = None
+        with open(tex_file, 'r', encoding='utf-8') as tex_f:
+            tex_content = tex_f.read()
+
+            # Search for bibliography command
+            match = re.search(bib_pattern, tex_content)
+            if match:
+                bib_filename = match.group(1) + '.bib'
+                bib_file = os.path.join(tex_dir, bib_filename)
+
+        if not bib_file:
+            print("BibTeX file not found in the LaTeX file.")
+            return
+        main_directory = os.path.dirname(tex_file)
+
+        # copy the original tex file
+        color_bib = os.path.join(main_directory, "bib_colored.bib")
+        white_bib = os.path.join(main_directory, "bib_white.bib")
+        shutil.copyfile(bib_file, color_bib)
+        shutil.copyfile(bib_file, white_bib)
+        
+        # Define colorize function inline
+        def colorize(text: str, category_name: str) -> str:
+            if category_name == "Reference":
+                # Define regex patterns
+                author_pattern = re.compile(r"\bauthor\s*=\s*[\{\"]")
+                note_pattern = re.compile(r"\bnote\s*=\s*[\{\"]")
+
+                # Find the position of the author and year
+                author_match = author_pattern.search(text)
+                if author_match:
+                    # Find the start of the author field
+                    author_start = author_match.end() - 1
+                    author_end = text.find("}", author_start)
+                    if author_end == -1:
+                        author_end = text.find("\"", author_start)
+                        if author_end == -1:
+                            author_end = text.find("\"", author_start) + 1
+                    # Replace author field with colorized version
+                    if author_end != -1:
+                        text = text[:author_start + 1] + "\\color{Reference_color}" + text[author_start + 1:]
+
+                note_match = note_pattern.search(text)
+                if note_match:
+                    # Find the start of the year field
+                    year_start = note_match.end() - 1
+                    year_end_1 = text.find("\"", year_start + 1)
+                    year_end_2 = text.find("}", year_start + 1)
+                    # find the before year_end
+                    if year_end_1 != -1 and year_end_2 != -1:
+                        year_end = min(year_end_1, year_end_2)
+                    else:
+                        year_end = max(year_end_1, year_end_2)
+                    # Replace year field with black color
+                    if year_end != -1:
+                        text = text[:year_end] + "\\color{black}" + text[year_end:]
+                
+                else:
+                    # Check if text ends with "}"
+                    if text.endswith("}"):
+                        # Check if the character before the last "}" is ","
+                        if text[-2] == ",":
+                            text = text[:-2] + ",note={\\color{black}}}"
+                        else:
+                            text = text[:-1] + ",note={\\color{black}}}"
+
+            return text
+
+        # Read BibTeX file
+        with open(color_bib, 'r', encoding='utf-8') as bib_f:
+            bibtex_entries = bib_f.readlines()
+
+        # Colorize and format references in LaTeX format
+        colored_references = []
+        for entry in bibtex_entries:
+            if entry.strip().startswith('@'):
+                formatted_entry = f"{entry.strip()}"
+            else:
+                formatted_entry = f"  {entry.strip()}"
+            self.texts["Reference"].append(formatted_entry)
+            colored_ref = colorize(formatted_entry, "Reference")
+            colored_references.append(colored_ref)
+        # Write back to the BibTeX file
+        with open(color_bib, 'w', encoding='utf-8') as bib_f:
+            for ref in colored_references:
+                bib_f.write(ref + "\n")
 
     def render_tabular(self, tex_file: str) -> None:
         """Renders tabular environments in a LaTeX file.
