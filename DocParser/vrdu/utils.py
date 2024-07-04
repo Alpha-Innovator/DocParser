@@ -40,7 +40,7 @@ def load_json(file_path: str) -> Union[Dict, List]:
 
 def compile_latex(file: str) -> None:
     """
-    Compile a LaTeX file using  pdflatex engine.
+    Compile a LaTeX file using pdflatex and bibtex engines.
 
     Parameters:
         file (str): The path to the LaTeX file to be compiled.
@@ -49,26 +49,44 @@ def compile_latex(file: str) -> None:
         None
     """
     file_name = os.path.basename(file)
+    base_name, _ = os.path.splitext(file_name)
 
+    # First compilation with SyncTeX
     subprocess.run(
         ["pdflatex", "-interaction=nonstopmode", file_name],
         timeout=1000,
         stdout=subprocess.DEVNULL,
     )
 
+    # Compile BibTeX if .aux file exists
+    if os.path.exists(base_name + ".aux"):
+        subprocess.run(
+            ["bibtex", base_name],
+            timeout=1000,
+            stdout=subprocess.DEVNULL,
+        )
+
+    # Second compilation to include bibliography
     subprocess.run(
         ["pdflatex", "-interaction=nonstopmode", file_name],
         timeout=1000,
         stdout=subprocess.DEVNULL,
     )
 
+    # Third compilation to finalize references and SyncTeX
+    subprocess.run(
+        ["pdflatex", "-interaction=nonstopmode",  file_name],
+        timeout=1000,
+        stdout=subprocess.DEVNULL,
+    )
+
+    # Additional compilation for specific file
     if file_name == "paper_colored.tex":
         subprocess.run(
             ["pdflatex", "-interaction=nonstopmode", "-synctex=1", file_name],
             timeout=1000,
             stdout=subprocess.DEVNULL,
         )
-
 
 def pdf2jpg(pdf_path: str, output_directory: str) -> None:
     """
@@ -250,5 +268,6 @@ def colorize(text: str, category_name: str) -> str:
         return "{" + text[:prefix] + "\\color{" + color + "}" + text[prefix:] + "}"
     if category_name == "Code":
         return "{\\color{" + color + "}" + text + "}"
+
 
     raise NotImplementedError(f"Invalid category name: {category_name}")
