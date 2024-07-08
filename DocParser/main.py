@@ -3,6 +3,7 @@ import glob
 import os
 import shutil
 from tqdm import tqdm
+import re
 
 
 from vrdu import logger
@@ -89,6 +90,13 @@ def process_one_file(file_name: str) -> None:
     """
     main_directory = os.path.dirname(file_name)
     log.info(f"[VRDU] file: {file_name}, start processing.")
+
+    # use unsrt as the default bibliography style
+    with open(file_name, "r") as file:
+            content = file.read()
+    content = re.sub(r"\\bibliographystyle\s*{\s*([^}]+)\s*}", "\\\\bibliographystyle{unsrt}", content)
+    with open(file_name, "w") as file:
+        file.write(content)
 
     # check if this paper has been processed
     quality_report_file = os.path.join(
