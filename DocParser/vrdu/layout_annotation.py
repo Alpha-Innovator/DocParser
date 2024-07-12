@@ -278,97 +278,107 @@ class LayoutAnnotation:
             log.debug(f"category: {category}, index: {index}")
 
             elements = []
-            for image_pair in image_pairs:
-                page_index = image_pair[0]
+            try:
+                for image_pair in image_pairs:
+                    page_index = image_pair[0]
 
-                image1_array = np.array(plt.imread(image_pair[1]), dtype=np.uint8)
-                image2_array = np.array(plt.imread(image_pair[2]), dtype=np.uint8)
+                    image1_array = np.array(plt.imread(image_pair[1]), dtype=np.uint8)
+                    image2_array = np.array(plt.imread(image_pair[2]), dtype=np.uint8)
 
-                diff_image = np.abs(image2_array - image1_array, dtype=np.uint8)
-                if np.all(diff_image == 0):
-                    continue
-                labeled_image, num = label(
-                    diff_image > config.threshold, return_num=True
-                )
-                if num == 0:
-                    continue
+                    diff_image = np.abs(image2_array - image1_array, dtype=np.uint8)
+                    if np.all(diff_image == 0):
+                        continue
+                    labeled_image, num = label(
+                        diff_image > config.threshold, return_num=True
+                    )
+                    if num == 0:
+                        continue
 
-                regions = regionprops(labeled_image)
-                bounding_boxes = [region.bbox for region in regions]
+                    regions = regionprops(labeled_image)
+                    bounding_boxes = [region.bbox for region in regions]
 
-                if len(bounding_boxes) == 0:
-                    continue
-
-                separations = self.layout_metadata[page_index]["separations"]
-                top_margin = self.layout_metadata[page_index]["top_margin"]
-
-                # We do not consider the cross column case for these envs.
-                if category in envs.one_column_envs:
-                    bounding_boxes = [bb for bb in bounding_boxes]
                     if len(bounding_boxes) == 0:
                         continue
-                    element = Block(
-                        bounding_box=BoundingBox.from_list(bounding_boxes),
-                        source_code=self.text_info[category][index],
-                        category=config.name2category[category],
-                        page_index=page_index,
-                    )
-                    if elements:
-                        element.parent_block = elements[-1].block_id
-                    elements.append(element)
-                    continue
 
-                # consider possible cross column case
-                for column in range(self.layout_metadata["num_columns"]):
-                    # min_x: bb[1], min_y: bb[0], max_x: bb[4], max_y: bb[3]
-                    column_boxes = [
-                        bb
-                        for bb in bounding_boxes
-                        if bb[1] >= separations[column]
-                        and bb[1] <= separations[column + 1]
-                    ]
-                    if not column_boxes:
-                        continue
+                    separations = self.layout_metadata[page_index]["separations"]
+                    top_margin = self.layout_metadata[page_index]["top_margin"]
 
-                    element = Block(
-                        bounding_box=BoundingBox.from_list(column_boxes),
-                        source_code=self.text_info[category][index],
-                        category=config.name2category[category],
-                        page_index=page_index,
-                    )
-                    if elements:
-                        element.parent_block = elements[-1].block_id
-
-                    if (
-                        len(elements) > 0
-                        and elements[-1].category == element.category
-                        and elements[-1].page_index == element.page_index
-                        and elements[-1].source_code == element.source_code
-                        and elements[-1].bbox.overlap(element.bbox)
-                    ):
-                        elements[-1].bbox = BoundingBox(
-                            min(
-                                elements[-1].bbox.x0,
-                                element.bbox.x0,
-                            ),
-                            min(
-                                elements[-1].bbox.y0,
-                                element.bbox.y0,
-                            ),
-                            max(
-                                elements[-1].bbox.x1,
-                                element.bbox.x1,
-                            ),
-                            max(
-                                elements[-1].bbox.y1,
-                                element.bbox.y1,
-                            ),
+                    # We do not consider the cross column case for these envs.
+                    if category in envs.one_column_envs:
+                        bounding_boxes = [bb for bb in bounding_boxes]
+                        if len(bounding_boxes) == 0:
+                            continue
+                        element = Block(
+                            bounding_box=BoundingBox.from_list(bounding_boxes),
+                            source_code=self.text_info[category][index],
+                            category=config.name2category[category],
+                            page_index=page_index,
                         )
+                        if elements:
+                            element.parent_block = elements[-1].block_id
+                        elements.append(element)
                         continue
-                    elements.append(element)
 
-            for element in elements:
-                layout_info[element.page_index].append(element)
+                    # consider possible cross column case
+                    for column in range(self.layout_metadata["num_columns"]):
+                        try:
+                            column_boxes = [
+                                bb
+                                for bb in bounding_boxes
+                                if bb[1] >= separations[column]
+                                and bb[1] <= separations[column + 1]
+                            ]
+                            if not column_boxes:
+                                continue
+
+                            element = Block(
+                                bounding_box=BoundingBox.from_list(column_boxes),
+                                source_code=self.text_info[category][index],
+                                category=config.name2category[category],
+                                page_index=page_index,
+                            )
+                            if elements:
+                                element.parent_block = elements[-1].block_id
+
+                            if (
+                                len(elements) > 0
+                                and elements[-1].category == element.category
+                                and elements[-1].page_index == element.page_index
+                                and elements[-1].source_code == element.source_code
+                                and elements[-1].bbox.overlap(element.bbox)
+                            ):
+                                elements[-1].bbox = BoundingBox(
+                                    min(
+                                        elements[-1].bbox.x0,
+                                        element.bbox.x0,
+                                    ),
+                                    min(
+                                        elements[-1].bbox.y0,
+                                        element.bbox.y0,
+                                    ),
+                                    max(
+                                        elements[-1].bbox.x1,
+                                        element.bbox.x1,
+                                    ),
+                                    max(
+                                        elements[-1].bbox.y1,
+                                        element.bbox.y1,
+                                    ),
+                                )
+                                continue
+                            elements.append(element)
+                        except IndexError:
+                            log.error(f"IndexError: {column}")
+                            continue  # Skip processing for this column if index is out of range
+
+                for element in elements:
+                    layout_info[element.page_index].append(element)
+
+            except Exception as e:
+                # Handle the exception as per your application's requirements
+                log.error(f"Error processing block directory {block_directory}: {str(e)}")
+                # Optionally, you can raise the exception to stop further processing
+                # raise
 
         return layout_info
 
