@@ -94,7 +94,11 @@ def process_one_file(file_name: str) -> None:
     # use unsrt as the default bibliography style
     with open(file_name, "r") as file:
             content = file.read()
-    content = re.sub(r"\\bibliographystyle\s*{\s*([^}]+)\s*}", "\\\\bibliographystyle{unsrt}", content)
+    # if cant find bibliographystyle, add it
+    if not re.search(r"\\bibliographystyle", content):
+        content = re.sub(r"\\end{document}", "\\\\bibliographystyle{unsrt}\n\\\\end{document}", content)
+    else:
+        content = re.sub(r"\\bibliographystyle\s*{\s*([^}]+)\s*}", "\\\\bibliographystyle{unsrt}", content)
     with open(file_name, "w") as file:
         file.write(content)
 
@@ -169,11 +173,12 @@ def process_one_file(file_name: str) -> None:
         log.info(f"[VRDU] file: {original_tex}, successfully processed.")
 
     except Exception as e:
-        error_type = e.__class__.__name__
-        error_info = str(e)
-        log.error(
-            f"[VRDU] file: {file_name}, type: {error_type}, message: {error_info}"
-        )
+        # error_type = e.__class__.__name__
+        # error_info = str(e)
+        # log.error(
+        #     f"[VRDU] file: {file_name}, type: {error_type}, message: {error_info}"
+        # )
+        raise e
 
     finally:
         # remove redundant files
