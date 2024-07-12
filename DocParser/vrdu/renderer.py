@@ -441,6 +441,27 @@ class Renderer:
 
         # the definitions are discarded
         return matches[len(colors) :]
+    
+    def get_bib_env_orders(self, tex_file: str) -> List[str]:
+        """Returns a list of environment orders based on the contents of the given `tex_file`.
+
+        Args:
+            tex_file (str): The path to the .tex file.
+
+        Returns:
+            List[str]: A list of environment orders.
+        """
+        with open(tex_file) as f:
+            contents = f.read()
+        colors = list(config.name2color.values())
+        matches = []
+
+        pattern = "|".join(rf"\b{re.escape(term)}\b" for term in colors)
+        for m in re.finditer(pattern, contents):
+            matches.append(m.group(0))
+
+        # the definitions are discarded
+        return matches
 
     def render_one_env(self, main_directory: str) -> None:
         """Render one environment by modifying the corresponding rendering color to black.
@@ -483,10 +504,10 @@ class Renderer:
         color_bib_file = os.path.join(main_directory, "bib_colored.bib")
         white_bib_file = os.path.join(main_directory, "bib_white.bib")
         self.modify_color_definitions(color_bib_file, white_bib_file)
-        ordered_env_colors = self.get_env_orders(white_bib_file)
+        ordered_env_colors = self.get_bib_env_orders(white_bib_file)
 
         with open(white_bib_file, "r") as f:
-                bib_content = f.read()
+            bib_content = f.read()
 
         index_map = defaultdict(int)
         
