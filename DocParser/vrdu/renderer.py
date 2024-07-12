@@ -738,13 +738,17 @@ class Renderer:
                     # Find the start of the author field
                     author_start = author_match.end() - 1
                     author_end = text.find("}", author_start)
+                    author_mid = text.find(",", author_start)
                     if author_end == -1:
                         author_end = text.find("\"", author_start)
                         if author_end == -1:
                             author_end = text.find("\"", author_start) + 1
                     # Replace author field with colorized version
                     if author_end != -1:
-                        text = text[:author_start + 1] + "\\color{Reference_color}" + text[author_start + 1:]
+                        if author_mid != -1 and author_mid < author_end:
+                            text = text[:author_mid] + ",\\color{Reference_color}" + text[author_mid + 1:]
+                        else:
+                            text = text[:author_start + 1] + "\\color{Reference_color}" + text[author_start + 1:]
 
                 year_match = year_pattern.search(text)
                 if year_match:
