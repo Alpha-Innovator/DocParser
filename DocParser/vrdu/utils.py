@@ -7,8 +7,8 @@ from typing import Any, Dict, List, Union
 from pdf2image import pdf2image
 from pdf2image import generators
 
-from DocParser.vrdu.block import Block
-from DocParser.vrdu.config import config
+from vrdu.block import Block
+from vrdu.config import config
 
 
 def export_to_json(data: Union[Dict, List], file_path: str) -> None:

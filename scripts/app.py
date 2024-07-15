@@ -3,8 +3,8 @@ import os
 import glob
 from PIL import Image, ImageDraw
 
-from DocParser.vrdu import utils
-from DocParser.vrdu.config import config
+from vrdu import utils
+from vrdu.config import config
 
 pn.extension()
 
