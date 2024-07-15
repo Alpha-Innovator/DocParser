@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(
-    name="vrdu_data_process",
+    name="DocParser",
     version="1.0.0",
     description="process the academic papers with .tex source files",
     author="Mao Song",

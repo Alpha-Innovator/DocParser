@@ -1,6 +1,6 @@
 import unittest
 
-from DocParser.vrdu.renderer import is_text_eq
+from vrdu.renderer import is_text_eq
 
 
 class TestTextEq(unittest.TestCase):

@@ -6,7 +6,7 @@ import argparse
 import pandas as pd
 import multiprocessing
 
-from DocParser.vrdu import logger
+from vrdu import logger
 
 log = logger.setup_app_level_logger(file_name="export_to_dataset.log")
 

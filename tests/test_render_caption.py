@@ -2,7 +2,7 @@ import unittest
 import unittest.mock
 
 
-from DocParser.vrdu.renderer import Renderer
+from vrdu.renderer import Renderer
 
 
 class TestCaption(unittest.TestCase):

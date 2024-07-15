@@ -1,11 +1,11 @@
 import re
 
-from DocParser.TexSoup.TexSoup import TexSoup
-from DocParser.TexSoup.TexSoup.data import TexEnv, TexText, TexCmd, TexGroup
+from TexSoup.TexSoup import TexSoup
+from TexSoup.TexSoup.data import TexEnv, TexText, TexCmd, TexGroup
 
 
-from DocParser.vrdu import logger
-from DocParser.vrdu.config import envs
+from vrdu import logger
+from vrdu.config import envs
 
 log = logger.get_logger(__name__)
 

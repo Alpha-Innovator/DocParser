@@ -1,7 +1,7 @@
 import unittest
 import unittest.mock
 
-from DocParser.vrdu.renderer import Renderer
+from vrdu.renderer import Renderer
 
 
 def test_add_color_definition1():
