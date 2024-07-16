@@ -32,6 +32,25 @@ def remove_comments(original_tex: str) -> None:
     with open(original_tex, "w") as file:
         file.write(removed_comments)
 
+def remove_skip(original_tex: str) -> None:
+    """
+    Removes skip from a TeX file.
+
+    Args:
+        original_tex (str): The path to the original TeX file.
+
+    Returns:
+        None
+    """
+    with open(original_tex, "r") as file:
+        content = file.read()
+
+    pattern = r"\\vskip .*|\\vspace{.*}|\\vglue .*"
+    removed_skip = re.sub(pattern, '', content)
+
+    with open(original_tex, "w") as file:
+        file.write(removed_skip)
+    
 
 def clean_tex(original_tex: str) -> None:
     """
@@ -60,6 +79,9 @@ def clean_tex(original_tex: str) -> None:
 
     # remove comments
     remove_comments(original_tex)
+
+    # remove skip
+    remove_skip(original_tex)
 
 
 def replace_non_png_jpg_figures(original_tex: str) -> None:
