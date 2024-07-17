@@ -1,9 +1,9 @@
 from typing import Dict, List
 import os
 
-from vrdu.block import Block
-from vrdu import utils
-from vrdu.config import config
+from DocParser.vrdu.block import Block
+from DocParser.vrdu import utils
+from DocParser.vrdu.config import config
 
 
 def generate_quality_report(main_directory: str) -> None:

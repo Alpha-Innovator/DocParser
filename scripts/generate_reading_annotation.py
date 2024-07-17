@@ -4,8 +4,8 @@ import multiprocessing
 import os
 from pathlib import Path
 
-from vrdu import utils
-from vrdu import logger
+from DocParser.vrdu import utils
+from DocParser.vrdu import logger
 
 log = logger.setup_app_level_logger(file_name="generate_reading_annotation.log")
 

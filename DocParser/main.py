@@ -5,14 +5,14 @@ import shutil
 from tqdm import tqdm
 
 
-from vrdu import logger
-from vrdu import utils
-from vrdu import renderer
-from vrdu import preprocess
-from vrdu import layout_annotation as layout
-from vrdu import order_annotation as order
-from vrdu.config import config
-from vrdu.quality_check import generate_quality_report
+from DocParser.vrdu import logger
+from DocParser.vrdu import utils
+from DocParser.vrdu import renderer
+from DocParser.vrdu import preprocess
+from DocParser.vrdu import layout_annotation as layout
+from DocParser.vrdu import order_annotation as order
+from DocParser.vrdu.config import config
+from DocParser.vrdu.quality_check import generate_quality_report
 
 log = logger.setup_app_level_logger(file_name="vrdu_debug.log")
 
@@ -140,11 +140,12 @@ def process_one_file(file_name: str) -> None:
         log.info(f"[VRDU] file: {original_tex}, successfully processed.")
 
     except Exception as e:
-        error_type = e.__class__.__name__
-        error_info = str(e)
-        log.error(
-            f"[VRDU] file: {file_name}, type: {error_type}, message: {error_info}"
-        )
+        # error_type = e.__class__.__name__
+        # error_info = str(e)
+        # log.error(
+        #     f"[VRDU] file: {file_name}, type: {error_type}, message: {error_info}"
+        # )
+        raise e
 
     finally:
         # remove redundant files

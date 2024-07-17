@@ -5,7 +5,7 @@ from typing import List
 import tarfile
 
 
-from vrdu import logger
+from DocParser.vrdu import logger
 
 
 log = logger.setup_app_level_logger(logger_name="arxiv_download.log")

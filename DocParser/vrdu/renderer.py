@@ -5,12 +5,12 @@ from typing import List, Tuple, Union
 import re
 
 
-import vrdu.utils as utils
-import vrdu.logger as logger
-from vrdu.config import config, envs
+from DocParser.vrdu import utils
+from DocParser.vrdu import logger
+from DocParser.vrdu.config import config, envs
 
-from TexSoup.TexSoup import TexSoup
-import TexSoup.app.conversion as conversion
+from DocParser.TexSoup.TexSoup import TexSoup
+import DocParser.TexSoup.app.conversion as conversion
 
 log = logger.get_logger(__name__)
 

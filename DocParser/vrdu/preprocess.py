@@ -1,11 +1,10 @@
 import os
 import re
 
-from arxiv_cleaner.cleaner import Cleaner
-
-from vrdu.config import envs, config
-from vrdu import utils
-import vrdu.logger as logger
+from DocParser.arxiv_cleaner.cleaner import Cleaner
+from DocParser.vrdu.config import envs, config
+from DocParser.vrdu import utils
+from DocParser.vrdu import logger
 
 
 log = logger.get_logger(__name__)

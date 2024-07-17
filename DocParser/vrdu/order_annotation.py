@@ -2,10 +2,10 @@ import re
 import os
 from uuid import uuid4
 
-from vrdu.block import Block
-from vrdu.config import config
-from vrdu import utils
-from vrdu import logger
+from DocParser.vrdu.block import Block
+from DocParser.vrdu.config import config
+from DocParser.vrdu import utils
+from DocParser.vrdu import logger
 
 log = logger.get_logger(__name__)
 

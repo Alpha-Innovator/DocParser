@@ -12,12 +12,12 @@ from tqdm import tqdm
 
 from pdfminer.high_level import extract_pages
 from pdfminer.layout import LTFigure, LTPage
-from vrdu import utils
 
 
-from vrdu.block import Block, BoundingBox
-from vrdu.config import config, envs
-from vrdu import logger
+from DocParser.vrdu import utils
+from DocParser.vrdu.block import Block, BoundingBox
+from DocParser.vrdu.config import config, envs
+from DocParser.vrdu import logger
 
 log = logger.get_logger(__name__)
 

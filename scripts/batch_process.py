@@ -5,8 +5,8 @@ import shutil
 from typing import List
 import pandas as pd
 
-from vrdu import logger
-from main import process_one_file
+from DocParser.vrdu import logger
+from DocParser.main import process_one_file
 
 log = logger.setup_app_level_logger(file_name="batch_process.log", level="INFO")
 
