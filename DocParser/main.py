@@ -5,7 +5,7 @@ import shutil
 from tqdm import tqdm
 
 
-from DocParser.vrdu import logger
+from DocParser.logger import logger
 from DocParser.vrdu import utils
 from DocParser.vrdu import renderer
 from DocParser.vrdu import preprocess

@@ -6,7 +6,7 @@ import re
 
 
 from DocParser.vrdu import utils
-from DocParser.vrdu import logger
+from DocParser.logger import logger
 from DocParser.vrdu.config import config, envs
 
 from DocParser.TexSoup.TexSoup import TexSoup

@@ -5,7 +5,7 @@ import os
 from pathlib import Path
 
 from DocParser.vrdu import utils
-from DocParser.vrdu import logger
+from DocParser.logger import logger
 
 log = logger.setup_app_level_logger(file_name="generate_reading_annotation.log")
 

@@ -4,7 +4,7 @@ from DocParser.TexSoup.TexSoup import TexSoup
 from DocParser.TexSoup.TexSoup.data import TexEnv, TexText, TexCmd, TexGroup
 
 
-from DocParser.vrdu import logger
+from DocParser.logger import logger
 from DocParser.vrdu.config import envs
 
 log = logger.get_logger(__name__)

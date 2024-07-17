@@ -17,7 +17,7 @@ from pdfminer.layout import LTFigure, LTPage
 from DocParser.vrdu import utils
 from DocParser.vrdu.block import Block, BoundingBox
 from DocParser.vrdu.config import config, envs
-from DocParser.vrdu import logger
+from DocParser.logger import logger
 
 log = logger.get_logger(__name__)
 

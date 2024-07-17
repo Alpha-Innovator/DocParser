@@ -5,7 +5,7 @@ from uuid import uuid4
 from DocParser.vrdu.block import Block
 from DocParser.vrdu.config import config
 from DocParser.vrdu import utils
-from DocParser.vrdu import logger
+from DocParser.logger import logger
 
 log = logger.get_logger(__name__)
 

@@ -4,7 +4,7 @@ import re
 from DocParser.arxiv_cleaner.cleaner import Cleaner
 from DocParser.vrdu.config import envs, config
 from DocParser.vrdu import utils
-from DocParser.vrdu import logger
+from DocParser.logger import logger
 
 
 log = logger.get_logger(__name__)

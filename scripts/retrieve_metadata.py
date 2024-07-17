@@ -7,7 +7,7 @@ import argparse
 
 
 from DocParser.vrdu import utils
-from DocParser.vrdu import logger
+from DocParser.logger import logger
 
 log = logger.setup_app_level_logger(file_name="retrieve_metadata.log")
 
