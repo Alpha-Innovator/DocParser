@@ -1,5 +1,5 @@
-from arxiv_cleaner.arguments import parse_args
-from arxiv_cleaner.cleaner import Cleaner
+from arguments import parse_args
+from cleaner import Cleaner
 
 
 def main():

@@ -1,8 +1,8 @@
 import re
 import subprocess
 
-from arxiv_cleaner.cli import run_command, check_command_results
-from arxiv_cleaner.file_utils import (
+from .cli import run_command, check_command_results
+from .file_utils import (
     build_relative_path,
     change_extension,
     combine_paths,
