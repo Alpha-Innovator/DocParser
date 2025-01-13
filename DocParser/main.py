@@ -2,77 +2,89 @@ import argparse
 import glob
 import os
 import shutil
+from pathlib import Path
+from typing import List
 from tqdm import tqdm
+from loguru import logger
+
+from DocParser.vrdu import utils
+from DocParser.vrdu import renderer
+from DocParser.vrdu import preprocess
+from DocParser.vrdu import layout_annotation as layout
+from DocParser.vrdu import order_annotation as order
+from DocParser.vrdu.config import config
+from DocParser.vrdu.quality_check import generate_quality_report
+
+logger.add("vrdu_debug.log", mode="w")
 
 
-from vrdu import logger
-from vrdu import utils
-from vrdu import renderer
-from vrdu import preprocess
-from vrdu import layout_annotation as layout
-from vrdu import order_annotation as order
-from vrdu.config import config
-from vrdu.quality_check import generate_quality_report
-
-log = logger.setup_app_level_logger(file_name="vrdu_debug.log")
-
-
-def transform_tex_to_images(main_directory: str) -> None:
+def transform_tex_to_images(main_directory: Path) -> None:
     """
     Transforms TeX files with pattern paper_*.tex in the specified directory into jpg images.
 
     Args:
-        main_directory (str): The main directory where the TeX files are located.
+        main_directory (Path): The main directory where the TeX files are located.
 
     Returns:
         None
     """
     tex_files = glob.glob(f"{main_directory}/paper_*.tex")
-    output_directory = os.path.join(main_directory, "output")
-    for tex_file in tqdm(tex_files):
-        log.debug(f"[VRDU] file: {tex_file}, start transforming into images.")
-        utils.compile_latex(tex_file)
+    output_directory = Path(main_directory) / "output"
+    for tex_file in tqdm(tex_files, desc="Converting TeX files to images"):
+        logger.debug(f"[VRDU] file: {tex_file}, start transforming into images.")
+        # Set colored flag based on filename
+        colored = "paper_colored.tex" in tex_file
+        utils.compile_latex(tex_file, colored=colored)
 
         # get the pdf file name
-        filename_without_extension = os.path.splitext(os.path.basename(tex_file))[0]
-        pdf_file = os.path.join(main_directory, f"{filename_without_extension}.pdf")
+        filename_without_extension = Path(tex_file).stem
+        pdf_file = Path(main_directory) / f"{filename_without_extension}.pdf"
 
         # convert into images
-        image_directory = os.path.join(output_directory, filename_without_extension)
-        os.makedirs(image_directory)
-        utils.pdf2jpg(pdf_file, image_directory)
+        image_directory = output_directory / filename_without_extension
+        image_directory.mkdir(parents=True, exist_ok=True)
+        utils.pdf2jpg(str(pdf_file), str(image_directory))
 
 
-def remove_redundant_stuff(main_directory: str) -> None:
+def get_redundant_folders(main_directory: Path) -> List[str]:
+    """Get list of redundant folders to remove."""
+    pattern = f"{main_directory}/output/paper_{config.folder_prefix}*"
+    redundant_folders = glob.glob(pattern)
+    redundant_folders.extend(
+        [
+            f"{main_directory}/output/paper_white",
+            f"{main_directory}/output/paper_original",
+        ]
+    )
+    return redundant_folders
+
+
+def remove_redundant_stuff(main_directory: Path) -> None:
     """
     Remove redundant files and folders from the main directory.
 
     Args:
-        main_directory (str): The path of the main directory.
+        main_directory (Path): The path of the main directory.
 
     Returns:
         None
     """
     # remove generated tex related files
-    redundant_files = glob.glob(f"{main_directory}/paper_*")
-    for file in redundant_files:
+    for file in glob.glob(f"{main_directory}/paper_*"):
         os.remove(file)
 
     # remove useless pdf and image files
-    # TODO: move this name pattern into config
-    redundant_folders = glob.glob(
-        f"{main_directory}/output/paper_{config.folder_prefix}*"
-    )
-    redundant_folders += [
-        f"{main_directory}/output/paper_white",
-        f"{main_directory}/output/paper_original",
-    ]
-    for folder in redundant_folders:
+    for folder in get_redundant_folders(main_directory):
         if os.path.exists(folder):
             shutil.rmtree(folder)
 
 
-def process_one_file(file_name: str) -> None:
+def check_if_already_processed(main_directory: Path) -> bool:
+    quality_report_file = main_directory / "output/result/quality_report.json"
+    return quality_report_file.exists()
+
+
+def process_one_file(file_name: Path) -> None:
     """
     Process a file through multiple steps including preprocessing, rendering,
     transforming into images, generating annotations, and handling exceptions.
@@ -83,37 +95,32 @@ def process_one_file(file_name: str) -> None:
     Returns:
         None
     """
-    main_directory = os.path.dirname(file_name)
-    log.info(f"[VRDU] file: {file_name}, start processing.")
+    main_directory = Path(file_name).parent
+    logger.info(f"[VRDU] file: {file_name}, start processing.")
 
     # check if this paper has been processed
-    quality_report_file = os.path.join(
-        main_directory, "output/result/quality_report.json"
-    )
-    if os.path.exists(quality_report_file):
-        log.info(f"[VRDU] file: {file_name}, paper has been processed")
+    if check_if_already_processed(main_directory):
+        logger.info(f"[VRDU] file: {file_name}, paper has been processed")
         return
 
     # make a copy of the original tex file
-    original_tex = os.path.join(main_directory, "paper_original.tex")
+    original_tex = main_directory / "paper_original.tex"
     shutil.copyfile(file_name, original_tex)
 
     # remove the output folder if it exists
-    output_directory = os.path.join(main_directory, "output")
-    if os.path.exists(output_directory):
+    output_directory = main_directory / "output"
+    if output_directory.exists():
         shutil.rmtree(output_directory)
 
-    # output_directory stores the intermediate results
-    # result_directory stores the final results
-    os.makedirs(os.path.join(main_directory, "output/result"))
-
+    # change the working directory to the main directory of the paper
     cwd = os.getcwd()
 
     try:
         # change the working directory to the main directory of the paper
         os.chdir(main_directory)
-        # create output folder
-        os.makedirs(os.path.join(main_directory, "output/result"))
+        # create output folder and output/result folder
+        result_dir = output_directory / "result"
+        result_dir.mkdir(parents=True)
 
         # step 1: preprocess the paper
         preprocess.run(original_tex)
@@ -122,14 +129,14 @@ def process_one_file(file_name: str) -> None:
         vrdu_renderer = renderer.Renderer()
         vrdu_renderer.render(original_tex)
 
-        # step 2.2: compling tex into PDFs
-        log.info(
+        # step 2.2: compiling tex into PDFs
+        logger.info(
             f"[VRDU] file: {original_tex}, start transforming into images, this may take a while..."
         )
         transform_tex_to_images(main_directory)
 
         # Step 3: generate annotations
-        log.info(
+        logger.info(
             f"[VRDU] file: {original_tex}, start generating annotations, this may take a while..."
         )
         vrdu_layout_annotation = layout.LayoutAnnotation(original_tex)
@@ -141,14 +148,15 @@ def process_one_file(file_name: str) -> None:
         # generate quality report for simple debugging
         generate_quality_report(main_directory)
 
-        log.info(f"[VRDU] file: {original_tex}, successfully processed.")
+        logger.info(f"[VRDU] file: {original_tex}, successfully processed.")
 
     except Exception as e:
-        error_type = e.__class__.__name__
-        error_info = str(e)
-        log.error(
-            f"[VRDU] file: {file_name}, type: {error_type}, message: {error_info}"
-        )
+        # error_type = e.__class__.__name__
+        # error_info = str(e)
+        # logger.error(
+        #     f"[VRDU] file: {file_name}, type: {error_type}, message: {error_info}"
+        # )
+        raise e
 
     finally:
         # remove redundant files
@@ -183,18 +191,18 @@ def main() -> None:
     Returns:
         None
     """
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        description="Process TeX files to generate annotations and images"
+    )
     parser.add_argument(
         "-f",
         "--file_name",
-        type=str,
+        type=Path,
         required=True,
-        help="The name of the tex file will full path",
+        help="The path to the TeX file to process",
     )
     args = parser.parse_args()
-    file_name = args.file_name
-
-    process_one_file(file_name)
+    process_one_file(Path(args.file_name))
 
 
 if __name__ == "__main__":

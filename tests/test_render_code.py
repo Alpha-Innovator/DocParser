@@ -2,7 +2,7 @@ import unittest
 import unittest.mock
 
 
-from vrdu.renderer import Renderer
+from DocParser.vrdu.renderer import Renderer
 
 
 class TestCode(unittest.TestCase):
@@ -71,7 +71,7 @@ class TestCode(unittest.TestCase):
             new=unittest.mock.mock_open(read_data=self.mock_file_content1),
             create=True,
         ) as file_mock:
-            self.renderer.remove_lstlisting_color(file_mock)
+            self.renderer.remove_predefined_color(file_mock)
             file_mock.assert_called_with(file_mock, "w")
             file_mock().write.assert_called_with(
                 """\\documentclass{article}\\begin{document}\\end{document}"""
@@ -83,7 +83,7 @@ class TestCode(unittest.TestCase):
             new=unittest.mock.mock_open(read_data=self.mock_file_content5),
             create=True,
         ) as file_mock:
-            self.renderer.remove_lstlisting_color(file_mock)
+            self.renderer.remove_predefined_color(file_mock)
             file_mock.assert_called_with(file_mock, "w")
             file_mock().write.assert_called_with(
                 r"""\documentclass{article}\n\usepackage{listings}\n\usepackage{xcolor}\n\n\definecolor{codegreen}{rgb}{0,0.6,0}\n\definecolor{codegray}{rgb}{0.5,0.5,0.5}\n\definecolor{codepurple}{rgb}{0.58,0,0.82}\n\definecolor{backcolour}{rgb}{0.95,0.95,0.92}\n\n\lstdefinestyle{mystyle}{\n    backgroundcolor=\color{backcolour},   \n    commentstyle=\color{codegreen},\n    keywordstyle=\color{magenta},\n    numberstyle=\tiny\color{codegray},\n    stringstyle=\color{codepurple},\n    basicstyle=\ttfamily\footnotesize,\n    breakatwhitespace=false,         \n    breaklines=true,                 \n    captionpos=b,                    \n    keepspaces=true,                 \n    numbers=left,                    \n    numbersep=5pt,                  \n    showspaces=false,                \n    showstringspaces=false,\n    showtabs=false,                  \n    tabsize=2\n}\n\n\n\n\begin{document}\nThe next code will be directly imported from a file\n\n\lstinputlisting[language=Octave]{BitXorMatrix.m}\n\end{document}"""

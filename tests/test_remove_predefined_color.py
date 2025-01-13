@@ -2,7 +2,7 @@ import unittest
 import unittest.mock
 
 
-from vrdu.renderer import Renderer
+from DocParser.vrdu.renderer import Renderer
 
 
 class TestHyperref(unittest.TestCase):
@@ -21,7 +21,7 @@ class TestHyperref(unittest.TestCase):
             new=unittest.mock.mock_open(read_data=self.mock_file_content1),
             create=True,
         ) as file_mock:
-            self.renderer.remove_hyperref_color(file_mock)
+            self.renderer.remove_predefined_color(file_mock)
             file_mock.assert_called_with(file_mock, "w")
             file_mock().write.assert_called_with(
                 """\\documentclass{article}\\begin{document}\\end{document}"""
@@ -33,7 +33,7 @@ class TestHyperref(unittest.TestCase):
             new=unittest.mock.mock_open(read_data=self.mock_file_content2),
             create=True,
         ) as file_mock:
-            self.renderer.remove_hyperref_color(file_mock)
+            self.renderer.remove_predefined_color(file_mock)
             file_mock.assert_called_with(file_mock, "w")
             file_mock().write.assert_called_with(
                 """\\documentclass{article}\\usepackage{hyperref}\\hypersetup{colorlinks=false}\n\\begin{document}\\end{document}"""
@@ -45,7 +45,7 @@ class TestHyperref(unittest.TestCase):
             new=unittest.mock.mock_open(read_data=self.mock_file_content3),
             create=True,
         ) as file_mock:
-            self.renderer.remove_hyperref_color(file_mock)
+            self.renderer.remove_predefined_color(file_mock)
             file_mock.assert_called_with(file_mock, "w")
             file_mock().write.assert_called_with(
                 """\\documentclass{article}\\usepackage[color_links=true]{hyperref}\\hypersetup{colorlinks=false}\n\\begin{document}\\end{document}"""
@@ -57,7 +57,7 @@ class TestHyperref(unittest.TestCase):
             new=unittest.mock.mock_open(read_data=self.mock_file_content4),
             create=True,
         ) as file_mock:
-            self.renderer.remove_hyperref_color(file_mock)
+            self.renderer.remove_predefined_color(file_mock)
             file_mock.assert_called_with(file_mock, "w")
             file_mock().write.assert_called_with(
                 """\\documentclass{article}\\usepackage[color_links=true]{hyperref}\\usepackage{amsmath}\\hypersetup{colorlinks=false}\n\\begin{document}\\end{document}"""

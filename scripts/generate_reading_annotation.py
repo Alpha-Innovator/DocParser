@@ -2,14 +2,33 @@ import argparse
 import glob
 import multiprocessing
 import os
+from pathlib import Path
 
-from vrdu import utils
-from vrdu import logger
+from DocParser.vrdu import utils
+from DocParser.logger import logger
 
 log = logger.setup_app_level_logger(file_name="generate_reading_annotation.log")
 
 
-def generate_annotation(paper_path) -> None:
+def process_one_paper(paper_path: Path) -> None:
+    """
+    Process a single paper by generating reading annotations from order annotation.
+
+    Args:
+    paper_path (Path): The path to the paper directory.
+
+    Returns:
+    None
+
+    Raises:
+    None
+
+    Usage:
+    ```python
+    process_one_paper("/path/to/paper")
+    ```
+
+    """
     log.debug(f"processing paper {paper_path}")
     order_json_file = os.path.join(paper_path, "order_annotation.json")
 
@@ -44,7 +63,25 @@ def generate_annotation(paper_path) -> None:
     utils.export_to_json(result, reading_json_file)
 
 
-def generate_reading_annotation(input_path) -> None:
+def process_dataset(input_path: Path) -> None:
+    """
+    Process a dataset by iterating over each discipline and paper within it.
+
+    Args:
+    input_path (Path): The path to the dataset source.
+
+    Returns:
+    None: This function does not return any value.
+
+    Raises:
+    None: This function does not raise any exceptions.
+
+    Usage:
+    ```python
+    process_dataset("/path/to/dataset")
+    ```
+
+    """
     discipline_paths = glob.glob(os.path.join(input_path, "*/"))
 
     for discipline_path in discipline_paths:
@@ -52,10 +89,10 @@ def generate_reading_annotation(input_path) -> None:
         paper_paths = glob.glob(os.path.join(discipline_path, "*/"))
 
         with multiprocessing.Pool(34) as pool:
-            pool.map(generate_annotation, paper_paths)
+            pool.map(process_one_paper, paper_paths)
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "-i", "--input_path", type=str, required=True, help="Path of dataset source"
@@ -63,7 +100,7 @@ def main():
     args = parser.parse_args()
     input_path = args.input_path
 
-    generate_reading_annotation(input_path)
+    process_dataset(input_path)
 
 
 if __name__ == "__main__":
