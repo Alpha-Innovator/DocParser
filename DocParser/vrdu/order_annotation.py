@@ -1,65 +1,70 @@
 import re
-import os
 from uuid import uuid4
+from pathlib import Path
+from typing import Dict, List, Any
 
 from DocParser.vrdu.block import Block
 from DocParser.vrdu.config import config
 from DocParser.vrdu import utils
-from DocParser.logger import logger
-
-log = logger.get_logger(__name__)
 
 
 class OrderAnnotation:
-    def __init__(self, tex_file: str) -> None:
+    """Handles annotation of reading order relationships between document elements."""
+
+    def __init__(self, tex_file: Path) -> None:
+        """Initialize order annotation for a LaTeX file.
+
+        Args:
+            tex_file: Path to the LaTeX file
+        """
         self.tex_file = tex_file
-        self.main_directory = os.path.dirname(tex_file)
-        self.result_directory = os.path.join(self.main_directory, "output/result")
-        layout_info_file = os.path.join(self.result_directory, "layout_info.json")
+        self.main_directory = tex_file.parent
+        self.result_directory = self.main_directory / "output/result"
+
+        # Load layout info
+        layout_info_file = self.result_directory / "layout_info.json"
         layout_info_data = utils.load_json(layout_info_file)
         layout_info = {
             int(key): [Block.from_dict(item) for item in values]
             for key, values in layout_info_data.items()
         }
 
-        # result
-        self.annotations = {}
-        self.annotations["annotations"] = [
-            _block
-            for page_index in layout_info.keys()
-            for _block in layout_info[page_index]
-        ]
+        # Initialize annotations
+        self.annotations: Dict[str, Any] = {
+            "annotations": [
+                block for page_blocks in layout_info.values() for block in page_blocks
+            ],
+            "orders": [],
+        }
 
-    def annotate(self):
-        self.annotations["orders"] = []
+    def annotate(self) -> None:
+        """Generate and save all order annotations."""
+        # Generate different types of order relationships
         self.generate_sortable_envs_order()
-
         self.generate_float_envs_order()
-
         self.generate_cross_reference_order()
 
-        order_annotation_file = os.path.join(
-            self.result_directory, "order_annotation.json"
-        )
-
+        # Save annotations
+        order_annotation_file = self.result_directory / "order_annotation.json"
         transformed_annotations = {
             "annotations": [x.to_dict() for x in self.annotations["annotations"]],
             "orders": self.annotations["orders"],
         }
-
         utils.export_to_json(transformed_annotations, order_annotation_file)
 
-    def generate_cross_reference_order(self):
-        annotations = []
+    def generate_cross_reference_order(self) -> None:
+        """Generate order annotations for cross-references."""
+        annotations: List[Dict[str, str]] = []
 
-        # map from label to block_id
-        label_to_block_id = {}
-        for block in self.annotations["annotations"]:
-            if not block.labels:
-                continue
-            for _label in block.labels:
-                label_to_block_id[_label] = block.block_id
+        # Build label to block ID mapping
+        label_to_block_id = {
+            label: block.block_id
+            for block in self.annotations["annotations"]
+            if block.labels
+            for label in block.labels
+        }
 
+        # Reference patterns to match
         ref_patterns = "|".join(
             [
                 r"\\ref\{(.*?)\}",
@@ -71,274 +76,241 @@ class OrderAnnotation:
                 r"\\labelcref\{(.*?)\}",
             ]
         )
-        # generate reference according to label
-        for block in self.annotations["annotations"]:
-            if config.category2name[block.category] not in ["Text", "Text-EQ"]:
-                continue
-            block.references = [
-                x
-                for group in re.findall(ref_patterns, block.source_code)
-                for x in group
-                if x
-            ]
-            for _label in block.references:
-                if _label in label_to_block_id:
-                    annotations.append(
-                        {
-                            "type": "explicit-cite",
-                            "from": block.block_id,
-                            "to": label_to_block_id[_label],
-                        }
-                    )
 
+        # Process text blocks
         for block in self.annotations["annotations"]:
-            if config.category2name[block.category] != "Caption":
-                continue
-            if not block.references:
-                continue
-            for _label in block.references:
-                if _label not in label_to_block_id:
-                    continue
-                annotations.append(
-                    {
-                        "type": "implicit-cite",
-                        "from": block.block_id,
-                        "to": label_to_block_id[_label],
-                    }
+            category = config.category2name[block.category]
+
+            # Handle text and equation references
+            if category in ["Text", "Text-EQ"]:
+                block.references = self._extract_references(
+                    block.source_code, ref_patterns
+                )
+                self._add_reference_annotations(
+                    block, label_to_block_id, annotations, "explicit-cite"
                 )
 
-        # generate reference for float environments
-        for block in self.annotations["annotations"]:
-            if config.category2name[block.category] not in ["Table", "Algorithm"]:
-                continue
-            block.references = [
-                x
-                for group in re.findall(ref_patterns, block.source_code)
-                for x in group
-                if x
-            ]
-            for _label in block.references:
-                if _label in label_to_block_id:
-                    annotations.append(
-                        {
-                            "type": "explicit-cite",
-                            "from": block.block_id,
-                            "to": label_to_block_id[_label],
-                        }
-                    )
+            # Handle caption references
+            elif category == "Caption" and block.references:
+                self._add_reference_annotations(
+                    block, label_to_block_id, annotations, "implicit-cite"
+                )
+
+            # Handle table and algorithm references
+            elif category in ["Table", "Algorithm"]:
+                block.references = self._extract_references(
+                    block.source_code, ref_patterns
+                )
+                self._add_reference_annotations(
+                    block, label_to_block_id, annotations, "explicit-cite"
+                )
 
         self.annotations["orders"].extend(annotations)
 
-    def generate_float_envs_order(self):
-        label_pattern = r"\\label\{(.*?)\}"
+    def _extract_references(self, text: str, pattern: str) -> List[str]:
+        """Extract reference labels from text using pattern."""
+        return [x for group in re.findall(pattern, text) for x in group if x]
 
+    def _add_reference_annotations(
+        self,
+        block: Block,
+        label_map: Dict[str, str],
+        annotations: List[Dict[str, str]],
+        ref_type: str,
+    ) -> None:
+        """Add reference annotations for a block."""
+        for label in block.references:
+            if label in label_map:
+                annotations.append(
+                    {"type": ref_type, "from": block.block_id, "to": label_map[label]}
+                )
+
+    def generate_float_envs_order(self) -> None:
+        """Generate order annotations for floating environments."""
         with open(self.tex_file, "r") as f:
             latex_content = f.read()
-        # 0, add labels for titles
-        # TODO: add labels for other types of titles
+
+        # Process title labels
+        self._process_title_labels(latex_content)
+
+        # Process equation labels
+        self._process_equation_labels()
+
+        # Process float environment labels
+        category_patterns = {
+            "Table": r"\\begin\{table\*?\}(.*?)\\end\{table\*?\}",
+            "Figure": r"\\begin\{figure\*?\}(.*?)\\end\{figure\*?\}",
+            "Algorithm": r"\\begin\{algorithm\*?\}(.*?)\\end\{algorithm\*?\}",
+        }
+
+        category_indices = {
+            category: [
+                (match.start(), match.end(), str(uuid4()))
+                for match in re.finditer(pattern, latex_content, re.DOTALL)
+            ]
+            for category, pattern in category_patterns.items()
+        }
+
+        label_pattern = r"\\label\{(.*?)\}"
+
+        # Process each category
+        for category, indices in category_indices.items():
+            self._process_float_env_labels(
+                category, indices, latex_content, label_pattern
+            )
+
+    def _process_title_labels(self, latex_content: str) -> None:
+        """Process and add labels for title blocks."""
+        label_pattern = r"\\label\{(.*?)\}"
+
         for block in self.annotations["annotations"]:
             if config.category2name[block.category] != "Title":
                 continue
+
             block.labels = re.findall(label_pattern, block.source_code)
 
-            start_index = latex_content.find(block.source_code)
-            if start_index == -1:
+            # Find additional labels after the title
+            start_idx = latex_content.find(block.source_code)
+            if start_idx == -1:
                 continue
-            end_index = start_index + len(block.source_code)
-            _matches = re.finditer(label_pattern, latex_content[end_index:], re.DOTALL)
-            for _match in _matches:
-                label_start_index, label_end_index = (
-                    _match.start() + end_index,
-                    _match.end() + end_index,
-                )
-                label_content = latex_content[label_start_index:label_end_index]
-                if latex_content[end_index:label_start_index].isspace():
+
+            end_idx = start_idx + len(block.source_code)
+            matches = re.finditer(label_pattern, latex_content[end_idx:], re.DOTALL)
+
+            for match in matches:
+                label_start = match.start() + end_idx
+                label_end = match.end() + end_idx
+                label_content = latex_content[label_start:label_end]
+
+                if latex_content[end_idx:label_start].isspace():
                     block.labels.extend(re.findall(label_pattern, label_content))
                 break
 
-        # 1. add labels for equations
+    def _process_equation_labels(self) -> None:
+        """Process and add labels for equation blocks."""
+        label_pattern = r"\\label\{(.*?)\}"
+
         for block in self.annotations["annotations"]:
-            if config.category2name[block.category] != "Equation":
+            if config.category2name[block.category] == "Equation":
+                block.labels = re.findall(label_pattern, block.source_code)
+
+    def _process_float_env_labels(
+        self,
+        category: str,
+        indices: List[tuple],
+        latex_content: str,
+        label_pattern: str,
+    ) -> None:
+        """Process and add labels for floating environment blocks."""
+        for block in self.annotations["annotations"]:
+            if config.category2name[block.category] != category:
                 continue
-            block.labels = re.findall(label_pattern, block.source_code)
 
-        # 2. add labels for float envs
-        # find the interval of tables
-        category_to_patterns = {
-            "Table": re.compile(
-                r"\\begin\{table\*?\}(.*?)\\end\{table\*?\}", re.DOTALL
-            ),
-            "Figure": re.compile(
-                r"\\begin\{figure\*?\}(.*?)\\end\{figure\*?\}", re.DOTALL
-            ),
-            "Algorithm": re.compile(
-                r"\\begin\{algorithm\*?\}(.*?)\\end\{algorithm\*?\}", re.DOTALL
-            ),
-        }
+            start_idx = latex_content.find(block.source_code)
+            if start_idx == -1:
+                continue
 
-        category_to_indices = {}
-        for category, pattern in category_to_patterns.items():
-            category_to_indices[category] = []
-            indices = pattern.finditer(latex_content)
-            # we add a uuid to match for float environments in case
-            # there are no explicit cite
-            for _match in indices:
-                category_to_indices[category].append(
-                    (_match.start(), _match.end(), str(uuid4()))
-                )
+            end_idx = start_idx + len(block.source_code)
 
-        for category_name, indices in category_to_indices.items():
-            # find labels for those float environments
-            for block in self.annotations["annotations"]:
-                if config.category2name[block.category] != category_name:
+            for idx_start, idx_end, uuid in indices:
+                if not (start_idx >= idx_start and end_idx <= idx_end):
                     continue
 
-                start_index = latex_content.find(block.source_code)
-                if start_index == -1:
-                    continue
-                end_index = start_index + len(block.source_code)
+                labels = re.findall(label_pattern, latex_content[idx_start:idx_end])
+                block.labels = labels
+                block.labels.append(uuid)
 
-                for index in indices:
-                    if start_index < index[0] or end_index > index[1]:
-                        continue
+        # Process caption references
+        for block in self.annotations["annotations"]:
+            if config.category2name[block.category] != "Caption":
+                continue
 
-                    labels = re.findall(
-                        label_pattern, latex_content[index[0] : index[1]]
-                    )
-                    block.labels = labels
-                    block.labels.append(index[2])
+            start_idx = latex_content.find(block.source_code)
+            if start_idx == -1:
+                continue
 
-            # add references for captions to those float environments
-            for block in self.annotations["annotations"]:
-                if config.category2name[block.category] != "Caption":
-                    continue
-                start_index = latex_content.find(block.source_code)
-                if start_index == -1:
-                    continue
-                end_index = start_index + len(block.source_code)
-                for index in indices:
-                    if start_index < index[0] or end_index > index[1]:
-                        continue
+            end_idx = start_idx + len(block.source_code)
 
-                    block.references = [index[2]]
+            for idx_start, idx_end, uuid in indices:
+                if start_idx >= idx_start and end_idx <= idx_end:
+                    block.references = [uuid]
 
-    def generate_sortable_envs_order(self):
-        annotations = []
-        sortable_categories = [
+    def generate_sortable_envs_order(self) -> None:
+        """Generate order annotations for sortable environments."""
+        annotations: List[Dict[str, str]] = []
+
+        # Get relevant category IDs
+        sortable_cats = [
             config.name2category[name] for name in config.sortable_categories
         ]
+        title_cats = [
+            config.name2category[name] for name in ["Title", "PaperTitle", "Abstract"]
+        ]
+        text_cats = [
+            config.name2category[name]
+            for name in ["Text", "Text-EQ", "Equation", "List"]
+        ]
 
+        # Get sortable elements
         sortable_elements = [
-            _block
-            for _block in self.annotations["annotations"]
-            if _block.category in sortable_categories
+            block
+            for block in self.annotations["annotations"]
+            if block.category in sortable_cats
         ]
 
-        title_categories = [
-            config.name2category[x] for x in ["Title", "PaperTitle", "Abstract"]
-        ]
-
-        text_categories = [
-            config.name2category[x] for x in ["Text", "Text-EQ", "Equation", "List"]
-        ]
-
-        stack = []
-        for index, element in enumerate(sortable_elements):
-            if index == 0 or not stack:
+        stack: List[Block] = []
+        for idx, element in enumerate(sortable_elements):
+            if idx == 0 or not stack:
                 stack.append(element)
                 continue
 
-            # case 0: both corresponding to the same text, mark as identical
+            # Handle different cases
             if element.parent_block == stack[-1].block_id:
-                annotations.append(
-                    {
-                        "type": "identical",
-                        "from": element.block_id,
-                        "to": stack[-1].block_id,
-                    }
-                )
+                self._add_order_annotation(annotations, element, stack[-1], "identical")
                 stack.pop()
                 stack.append(element)
-                continue
 
-            # case 1: both in the text category, mark as adj
-            if (
-                element.category in text_categories
-                and stack[-1].category in text_categories
-            ):
-                annotations.append(
-                    {
-                        "type": "adj",
-                        "from": element.block_id,
-                        "to": stack[-1].block_id,
-                    }
-                )
+            elif element.category in text_cats and stack[-1].category in text_cats:
+                self._add_order_annotation(annotations, element, stack[-1], "adj")
                 stack.pop()
                 stack.append(element)
-                continue
 
-            # case 2: current in text, prev in title, mark as sub
-            if (
-                element.category in text_categories
-                and stack[-1].category in title_categories
+            elif (
+                element.category in text_cats
+                and stack[-1].category in title_cats
+                and element.category != stack[-1].category
             ):
-                if element.category != stack[-1].category:
-                    annotations.append(
-                        {
-                            "type": "sub",
-                            "from": element.block_id,
-                            "to": stack[-1].block_id,
-                        }
-                    )
-                    stack.append(element)
-                    continue
+                self._add_order_annotation(annotations, element, stack[-1], "sub")
+                stack.append(element)
 
-            # case 3: current in title, prev in text, find the most recent title
-            if (
-                element.category in title_categories
-                and stack[-1].category in text_categories
-            ):
-                while stack and stack[-1].category not in title_categories:
+            elif element.category in title_cats and stack[-1].category in text_cats:
+                while stack and stack[-1].category not in title_cats:
                     stack.pop()
 
-                if not stack:
-                    stack.append(element)
-                    continue
-
-                annotations.append(
-                    {
-                        "type": "peer",
-                        "from": element.block_id,
-                        "to": stack[-1].block_id,
-                    }
-                )
+                if stack:
+                    self._add_order_annotation(annotations, element, stack[-1], "peer")
                 stack.append(element)
-                continue
 
-            # case 4: both in titles, mark as peer
-            if (
-                element.category in title_categories
-                and stack[-1].category in title_categories
-            ):
-                annotations.append(
-                    {
-                        "type": "peer",
-                        "from": element.block_id,
-                        "to": stack[-1].block_id,
-                    }
-                )
+            elif element.category in title_cats and stack[-1].category in title_cats:
+                self._add_order_annotation(annotations, element, stack[-1], "peer")
                 stack.pop()
                 stack.append(element)
-                continue
 
-            if element.category == config.name2category["Footnote"]:
-                annotations.append(
-                    {
-                        "type": "explicit-cite",
-                        "from": element.block_id,
-                        "to": stack[-1].block_id,
-                    }
+            elif element.category == config.name2category["Footnote"]:
+                self._add_order_annotation(
+                    annotations, element, stack[-1], "explicit-cite"
                 )
-                continue
 
         self.annotations["orders"].extend(annotations)
+
+    def _add_order_annotation(
+        self,
+        annotations: List[Dict[str, str]],
+        from_block: Block,
+        to_block: Block,
+        rel_type: str,
+    ) -> None:
+        """Add an order annotation between two blocks."""
+        annotations.append(
+            {"type": rel_type, "from": from_block.block_id, "to": to_block.block_id}
+        )

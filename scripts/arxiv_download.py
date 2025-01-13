@@ -11,7 +11,7 @@ from DocParser.logger import logger
 log = logger.setup_app_level_logger(logger_name="arxiv_download.log")
 
 
-def download_papers_with_paper_id(
+def download_papers_source_with_paper_id(
     path: str, discipline: str, paper_ids: List[str]
 ) -> None:
     """
@@ -59,6 +59,22 @@ def download_papers_with_paper_id(
             continue
 
 
+def download_papers_pdf_with_paper_id(path: str, discipline: str, paper_ids: List[str]):
+    client = arxiv.Client()
+    discipline_path = os.path.join(path, discipline)
+    os.makedirs(discipline_path, exist_ok=True)
+
+    search_results = client.results(arxiv.Search(id_list=paper_ids))
+
+    for result in search_results:
+        # extract {id} without version from http://arxiv.org/abs/{id}
+        paper_id = result.entry_id.split("/")[1].split("v")[0]
+        log.info(f"Downloading paper {paper_id}")
+
+        pdf_path = result.download_pdf(dirpath=discipline_path)
+        log.info(f"Downloading pdf file {pdf_path}")
+
+
 def download_batch_papers(path: str, discipline: str, num_papers: int) -> None:
     """
     Downloads a batch of papers from the Arxiv repository
@@ -81,6 +97,7 @@ def download_batch_papers(path: str, discipline: str, num_papers: int) -> None:
     ```
 
     """
+    log.debug(f"path: {path}, discipline: {discipline}, num_papers: {num_papers}")
     client = arxiv.Client()
 
     paper_ids = []
@@ -96,7 +113,7 @@ def download_batch_papers(path: str, discipline: str, num_papers: int) -> None:
                 paper_ids.append(paper_id)
                 num_papers -= 1
 
-    download_papers_with_paper_id(path, discipline, paper_ids)
+    download_papers_pdf_with_paper_id(path, discipline, paper_ids)
 
 
 def main() -> None:
@@ -114,7 +131,16 @@ def main() -> None:
     args = parser.parse_args()
     output_path, discipline, num_papers = args.path, args.discipline, args.num_papers
 
-    download_batch_papers(output_path, discipline, num_papers)
+    import json
+
+    with open("/cpfs01/user/maosong/vrdu_data_process/data/discipline_map.json") as f:
+        discipline_map = json.load(f)
+
+    disciplines = [x for value in discipline_map.values() for x in value]
+
+    for discipline in disciplines:
+        log.debug("Downloading discipline %s", discipline)
+        download_batch_papers(output_path, discipline, num_papers)
 
 
 if __name__ == "__main__":

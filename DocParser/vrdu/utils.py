@@ -1,170 +1,155 @@
-import os
-import subprocess
+"""Utility functions for LaTeX document processing and file operations."""
+
+import re
 import json
-from typing import Any, Dict, List, Union
+import subprocess
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple, Union
 
-
-from pdf2image import pdf2image
-from pdf2image import generators
-
+from pdf2image import pdf2image, generators
+from DocParser.TexSoup.TexSoup import TexSoup
+import DocParser.TexSoup.app.conversion as conversion
 from DocParser.vrdu.block import Block
 from DocParser.vrdu.config import config
 
 
-def export_to_json(data: Union[Dict, List], file_path: str) -> None:
+def export_to_json(data: Union[Dict, List], file_path: Union[str, Path]) -> None:
+    """Write data to a JSON file with indentation.
+
+    Args:
+        data: Dictionary or list to write
+        file_path: Output JSON file path
     """
-    Write the contents of a dictionary or a list to a JSON file.
-
-    Parameters:
-        data (Union[Dict, List]): The dictionary to be written to the file.
-        file_path (str): The path to the JSON file.
-    """
-    with open(file_path, "w") as json_file:
-        json.dump(data, json_file, indent=4)
+    with open(file_path, "w") as f:
+        json.dump(data, f, indent=4)
 
 
-def load_json(file_path: str) -> Union[Dict, List]:
-    """
-    Load a JSON file into a dictionary or a list.
+def load_json(file_path: Union[str, Path]) -> Union[Dict, List]:
+    """Load data from a JSON file.
 
-    Parameters:
-        file_path (str): The path to the JSON file.
+    Args:
+        file_path: Input JSON file path
 
     Returns:
-        Union[Dict, List]: The loaded JSON data as a dictionary or a list.
+        Loaded dictionary or list
     """
-    with open(file_path, "r") as json_file:
-        data = json.load(json_file)
-    return data
+    with open(file_path) as f:
+        return json.load(f)
 
 
-def compile_latex(file: str) -> None:
+def compile_latex(file: Union[str, Path], colored: bool = False) -> None:
+    """Compile a LaTeX file using pdflatex.
+
+    Args:
+        file: Path to LaTeX file
+        colored: Whether this is the colored version requiring synctex
     """
-    Compile a LaTeX file using  pdflatex engine.
+    file_name = Path(file).name
+    base_cmd = ["pdflatex", "-interaction=nonstopmode"]
 
-    Parameters:
-        file (str): The path to the LaTeX file to be compiled.
+    # Run twice for references
+    for _ in range(2):
+        subprocess.run(base_cmd + [file_name], timeout=1000, stdout=subprocess.DEVNULL)
 
-    Returns:
-        None
-    """
-    file_name = os.path.basename(file)
-
-    subprocess.run(
-        ["pdflatex", "-interaction=nonstopmode", file_name],
-        timeout=1000,
-        stdout=subprocess.DEVNULL,
-    )
-
-    subprocess.run(
-        ["pdflatex", "-interaction=nonstopmode", file_name],
-        timeout=1000,
-        stdout=subprocess.DEVNULL,
-    )
-
-    if file_name == "paper_colored.tex":
+    # Additional run with synctex for colored version
+    if colored:
         subprocess.run(
-            ["pdflatex", "-interaction=nonstopmode", "-synctex=1", file_name],
+            base_cmd + ["-synctex=1", file_name],
             timeout=1000,
             stdout=subprocess.DEVNULL,
         )
 
 
-def pdf2jpg(pdf_path: str, output_directory: str) -> None:
-    """
-    Convert a PDF file into a series of jpg images.
+def pdf2jpg(pdf_path: Union[str, Path], output_directory: Union[str, Path]) -> None:
+    """Convert PDF pages to JPG images.
 
-    Parameters:
-        pdf_path (str): The path of the PDF file to be converted.
-        output_directory (str): The directory where the converted images will be saved.
-    Returns:
-        None
+    Args:
+        pdf_path: Input PDF file path
+        output_directory: Output directory for JPG files
 
-    Reference:
-        https://pypi.org/project/pdf2image/
+    Output files are named: thread-000x-yz.jpg
+    where x is thread index and yz is page number
     """
-    os.makedirs(output_directory, exist_ok=True)
-    # the output images has name of format: thread-000x-yz.png
-    # where x is the thread index, yz is the index of pdf page start from 1
+    output_dir = Path(output_directory)
+    output_dir.mkdir(parents=True, exist_ok=True)
+
     pdf2image.convert_from_path(
         pdf_path,
         fmt="jpg",
-        output_folder=output_directory,
+        output_folder=str(output_dir),
         output_file=generators.counter_generator(prefix="thread-", suffix="-page"),
     )
 
 
-def convert_pdf_figure_to_png_image(pdf_image: str, png_image: str, dpi: int = 72):
-    """
-    Convert a PDF to a PNG image.
+def convert_pdf_figure_to_png_image(
+    pdf_image: Union[str, Path], png_image: Union[str, Path], dpi: int = 72
+) -> None:
+    """Convert PDF figure to PNG image.
 
-    Parameters:
-        pdf_image (str): The filepath of the PDF image to convert.
-        png_image (str): The filepath where the PNG image will be saved.
-        dpi (int): The resolution for the conversion (default is 72).
-
-    Returns:
-        None
+    Args:
+        pdf_image: Input PDF file path
+        png_image: Output PNG file path
+        dpi: Resolution for conversion
     """
-    # crop the pdf image
+    # Crop PDF
     subprocess.run(
-        ["pdfcrop", pdf_image, pdf_image],
-        stdout=subprocess.DEVNULL,
+        ["pdfcrop", str(pdf_image), str(pdf_image)], stdout=subprocess.DEVNULL
     )
-    # convert the pdf image into png
+
+    # Convert to PNG
     images = pdf2image.convert_from_path(pdf_image, dpi=dpi)
     images[0].save(png_image)
 
 
-def convert_eps_image_to_pdf_image(eps_image_path: str, pdf_image_path: str):
-    """
-    A function that converts an EPS image to a PDF image.
+def convert_eps_image_to_pdf_image(
+    eps_image_path: Union[str, Path], pdf_image_path: Union[str, Path]
+) -> None:
+    """Convert EPS image to PDF.
 
     Args:
-        eps_image_path (str): The file path of the EPS image to convert.
-        pdf_image_path (str): The file path where the PDF image will be saved.
+        eps_image_path: Input EPS file path
+        pdf_image_path: Output PDF file path
     """
-    subprocess.run(["epspdf", eps_image_path, pdf_image_path])
+    subprocess.run(["epspdf", str(eps_image_path), str(pdf_image_path)])
 
 
 def export_to_coco(
     layout_info: Dict[int, List[Block]],
     image_infos: Dict[int, Dict[str, Any]],
-    file_path: str,
+    file_path: Union[str, Path],
 ) -> None:
-    """
-    Export the given layout information and image information to a COCO format JSON file.
+    """Export layout and image info to COCO format JSON.
 
     Args:
-        layout_info (Dict[int, List[Block]]):
-            A dictionary mapping page indices to lists of Block objects.
-        image_infos (Dict[int, Dict[str, Any]]):
-            A dictionary mapping page indices to dictionaries containing image information.
-        file_path (str): The name of the output JSON file.
+        layout_info: Page index to list of Block objects mapping
+        image_infos: Page index to image info mapping
+        file_path: Output JSON file path
 
-    Returns:
-        None
-
-    Reference:
-        https://cocodataset.org/#format-data
+    See: https://cocodataset.org/#format-data
     """
-    category_info = [
-        {
-            "id": index,
-            "name": category,
-            "supercategory": supercategory,
-        }
-        for index, category, supercategory in config.config["category_name"]
-    ]
     result = {
         "info": config.config["coco_info"],
         "licenses": config.config["coco_licenses"],
-        "images": [],
-        "annotations": [],
-        "categories": category_info,
+        "images": _build_coco_images(layout_info, image_infos),
+        "annotations": _build_coco_annotations(layout_info),
+        "categories": _build_coco_categories(),
     }
+    export_to_json(result, file_path)
 
-    result["images"] = [
+
+def _build_coco_categories() -> List[Dict[str, Any]]:
+    """Build COCO format category information."""
+    return [
+        {"id": index, "name": category, "supercategory": supercategory}
+        for index, category, supercategory in config.config["category_name"]
+    ]
+
+
+def _build_coco_images(
+    layout_info: Dict[int, List[Block]], image_infos: Dict[int, Dict[str, Any]]
+) -> List[Dict[str, Any]]:
+    """Build COCO format image information."""
+    return [
         {
             "id": page_index,
             "width": image_infos[page_index]["width"],
@@ -172,83 +157,209 @@ def export_to_coco(
             "file_name": image_infos[page_index]["file_name"],
             **config.config["coco_image_info"],
         }
-        for page_index in layout_info.keys()
+        for page_index in layout_info
     ]
 
+
+def _build_coco_annotations(
+    layout_info: Dict[int, List[Block]]
+) -> List[Dict[str, Any]]:
+    """Build COCO format annotation information."""
+    annotations = []
     for page_index, page_elements in layout_info.items():
         for index, element in enumerate(page_elements):
             width, height = element.width, element.height
-            annotation = {
-                "id": index,
-                "image_id": page_index,
-                "category_id": element.category,
-                "segmentation": [],
-                "bbox": [element.bbox[0], element.bbox[1], width, height],
-                "area": width * height,
-                "iscrowd": 0,
-            }
-            result["annotations"].append(annotation)
-
-    export_to_json(result, file_path)
+            annotations.append(
+                {
+                    "id": index,
+                    "image_id": page_index,
+                    "category_id": element.category,
+                    "segmentation": [],
+                    "bbox": [element.bbox[0], element.bbox[1], width, height],
+                    "area": width * height,
+                    "iscrowd": 0,
+                }
+            )
+    return annotations
 
 
 def colorize(text: str, category_name: str) -> str:
-    """
-    Given a piece of text and a category name, colorizes the text based on the category.
+    """Colorize text based on category.
 
     Args:
-        text (str): The text to be colorized.
-        category_name (str): The category name to determine the colorization.
+        text: Text to colorize
+        category_name: Category determining color
 
     Returns:
-        str: The colorized text based on the category.
+        Colorized LaTeX text
+
+    Raises:
+        NotImplementedError: For unknown categories
     """
     color = config.name2color[category_name]
-    if category_name == "Caption":
+
+    # Simple wrapping
+    if category_name in {"Table", "Title", "List", "Code"}:
+        return f"{{\\color{{{color}}}{text}}}"
+
+    # Text coloring
+    if category_name in {"Text", "Text-EQ"}:
+        return f"{{\\textcolor{{{color}}}{{{text}}}}}"
+
+    # Complex cases
+    if category_name in {"Caption", "Footnote"}:
         index = text.find("{")
-        return text[: index + 1] + "{\\color{" + color + "}" + text[index + 1 :] + "}"
-    if category_name == "Footnote":
-        index = text.find("{")
-        return text[: index + 1] + "{\\color{" + color + "}" + text[index + 1 :] + "}"
-    if category_name == "Table":
-        return "{\\color{" + color + "}" + text + "}"
+        return f"{text[:index + 1]}{{\\color{{{color}}}{text[index + 1:]}}}"
+
     if category_name == "Algorithm":
-        # skip the position arguments, like \\begin{algorithm}[hbt!]
         prefix = text.find("\\", len("\\begin{algorithm}"))
         suffix = text.find("\\end{algorithm}")
         return (
-            text[:prefix]
-            + "{\\color{"
-            + color
-            + "}"
-            + text[prefix:suffix]
-            + "}"
-            + text[suffix:]
+            f"{text[:prefix]}{{\\color{{{color}}}{text[prefix:suffix]}}}{text[suffix:]}"
         )
-    if category_name == "Title":
-        return "{\\color{" + color + "}" + text + "}"
-    if category_name == "List":
-        return "{\\color{" + color + "}" + text + "}"
-    if category_name == "Text":
-        return "{\\textcolor{" + color + "}{" + text + "}}"
-    if category_name == "Text-EQ":
-        return "{\\textcolor{" + color + "}{" + text + "}}"
+
     if category_name == "PaperTitle":
         index = text.find("{")
-        return (
-            text[: index + 1]
-            + "{\\textcolor{"
-            + color
-            + "}{"
-            + text[index + 1 :]
-            + "}}"
-        )
+        return f"{text[:index + 1]}{{\\textcolor{{{color}}}{{{text[index + 1:]}}}}}"
+
     if category_name == "Equation":
-        return "{\\color{" + color + "}{" + text + "}}"
+        return f"{{\\color{{{color}}}{{{text}}}}}"
+
     if category_name == "Abstract":
         prefix = len("\\begin{abstract}")
-        return "{" + text[:prefix] + "\\color{" + color + "}" + text[prefix:] + "}"
-    if category_name == "Code":
-        return "{\\color{" + color + "}" + text + "}"
+        return f"{{{text[:prefix]}\\color{{{color}}}{text[prefix:]}}}"
 
     raise NotImplementedError(f"Invalid category name: {category_name}")
+
+
+def extract_main_content(tex_file: str) -> Tuple[str, int, int]:
+    """Extract the main content from a LaTeX file.
+
+    Args:
+        tex_file: Path to the LaTeX file
+
+    Returns:
+        Tuple containing:
+        - Main content between document tags
+        - Start position of main content in file
+        - End position of main content in file
+
+    Raises:
+        ValueError: If document tags not found
+    """
+    with open(tex_file) as f:
+        content = f.read()
+
+    start = content.find("\\begin{document}")
+    end = content.find("\\end{document}")
+
+    if start == -1 or end == -1:
+        raise ValueError("Document tags not found")
+
+    start += len("\\begin{document}")
+    main_content = content[start:end]
+
+    return main_content, start, end
+
+
+def data_from_tex_file(tex_file: str) -> Tuple[List[Union[dict, str]], int, int]:
+    """Extract data from a TeX file using TexSoup.
+
+    Args:
+        tex_file: Path to the TeX file
+
+    Returns:
+        Tuple containing:
+        - Extracted data as list
+        - Start position of main content in file
+        - End position of main content in file
+    """
+    main_content, start, end = extract_main_content(tex_file)
+    tex_tree = TexSoup(main_content).expr.all
+    data = conversion.to_list(tex_tree)
+
+    return data, start, end
+
+
+def tex_file_from_data(
+    data: List[Union[dict, str]],
+    tex_file: Union[str, Path],
+    start: int = 0,
+    end: int = -1,
+) -> None:
+    """Generate a TeX file from TexSoup data.
+
+    Args:
+        data: Data to convert to LaTeX
+        tex_file: Output TeX file path
+        start: Start position for content replacement
+        end: End position for content replacement
+    """
+    with open(tex_file, "r") as f:
+        content = f.read()
+
+    rendered_tex = conversion.to_latex(data)
+    content = content[:start] + rendered_tex + content[end:]
+
+    with open(tex_file, "w") as f:
+        f.write(content)
+
+
+def replace_nth(string: str, old: str, new: str, n: int) -> str:
+    """Replace the n-th occurrence of a substring.
+
+    Args:
+        string: Original string
+        old: Substring to replace
+        new: Replacement substring
+        n: Which occurrence to replace (1-based)
+
+    Returns:
+        Modified string with n-th occurrence replaced
+
+    Example:
+        >>> replace_nth("Hello, hello, hello!", 'hello', 'hi', 2)
+        'Hello, hello, hi!'
+    """
+    index = string.find(old)
+    count = int(index != -1)
+
+    while index != -1 and count != n:
+        index = string.find(old, index + 1)
+        count += 1
+
+    if count == n:
+        return string[:index] + new + string[index + len(old) :]
+
+    return string
+
+
+def find_env(wrapped_env: dict, query: List[str]) -> Optional[str]:
+    """Find first matching environment variable from query list.
+
+    Args:
+        wrapped_env: Dictionary of environment variables
+        query: List of environment variables to search for
+
+    Returns:
+        First matching environment variable or None
+    """
+    return next((env for env in query if env in wrapped_env), None)
+
+
+def is_text_eq(text: str) -> bool:
+    """Check if text contains mathematical expressions.
+
+    Args:
+        text: Text to check
+
+    Returns:
+        True if contains math expressions, False otherwise
+
+    Reference:
+        https://www.overleaf.com/learn/latex/Mathematical_expressions
+    """
+    pattern = r"(\\\(.*?\\\))|(\$.*?\$)|(\\begin\{math\}.*?\\end\{math\})"
+    matches = re.findall(pattern, text)
+
+    return any(not re.search(r"\\\$", match[0]) for match in matches)

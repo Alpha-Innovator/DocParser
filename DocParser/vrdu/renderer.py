@@ -1,156 +1,144 @@
-from collections import defaultdict
-import os
-import shutil
-from typing import List, Tuple, Union
-import re
+"""LaTeX document rendering module for colorizing and processing semantic elements."""
 
+from collections import defaultdict
+import shutil
+from typing import List, Union, Dict
+import re
+from pathlib import Path
+from loguru import logger
 
 from DocParser.vrdu import utils
-from DocParser.logger import logger
 from DocParser.vrdu.config import config, envs
-
-from DocParser.TexSoup.TexSoup import TexSoup
-import DocParser.TexSoup.app.conversion as conversion
-
-log = logger.get_logger(__name__)
+from DocParser.vrdu.utils import (
+    data_from_tex_file,
+    tex_file_from_data,
+    is_text_eq,
+    find_env,
+    replace_nth,
+)
 
 
 class Renderer:
+    """Handles rendering and colorizing of LaTeX documents.
+
+    This class provides functionality to:
+    - Parse and process LaTeX documents
+    - Add color definitions and styling
+    - Render different semantic elements with distinct colors
+    - Generate individual files for each element type
+    """
+
     def __init__(self) -> None:
-        self.texts = defaultdict(list)
+        """Initialize renderer with empty text storage."""
+        self.texts: Dict[str, List[str]] = defaultdict(list)
 
-    def render(self, origin_tex: str) -> None:
-        """Render the colored version of a LaTeX document.
-
-        This method performs the rendering process for generating the colored version of a LaTeX document.
-        It includes the following steps:
-        1. Create a copy of the original LaTeX file with a new name.
-        2. Add color definitions and layout definitions to the copied file.
-        3. Remove color definitions that may cause conflicts.
-        4. Render all environments in the copied file.
-        5. Iterate over semantic elements and change their enclosing color, generating corresponding LaTeX files.
-        6. Export the rendered texts to a JSON file.
+    def render(self, origin_tex: Path) -> None:
+        """Render a colored version of a LaTeX document.
 
         Args:
-            origin_tex (str): The path to the original LaTeX file.
+            origin_tex: Path to original LaTeX file
 
-        Returns:
-            None
-
-        Examples:
-            >>> renderer = LaTeXRenderer()
-            >>> renderer.render("original.tex")
+        The rendering process:
+        1. Creates a colored copy of the original file
+        2. Adds required color and layout definitions
+        3. Removes any conflicting color definitions
+        4. Renders all semantic environments
+        5. Generates individual files per element
+        6. Exports the rendered text elements
         """
-        main_directory = os.path.dirname(origin_tex)
+        main_directory = origin_tex.parent
+        color_tex = main_directory / "paper_colored.tex"
 
-        # copy the original tex file
-        color_tex = os.path.join(main_directory, "paper_colored.tex")
+        # Setup colored document
         shutil.copyfile(origin_tex, color_tex)
+        self._setup_document_styling(color_tex)
 
-        self.add_color_definition(color_tex)
-        self.add_layout_definition(color_tex)
-
-        # remove color definitions to prevent conflict
-        self.remove_predefined_color(color_tex)
-
+        # Process environments
         self.render_all_env(color_tex)
-
-        # change the enclose color of semantic elements one by one and generate corresponding tex files
         self.render_one_env(main_directory)
 
-        text_file = os.path.join(main_directory, "output/result/texts.json")
+        # Export results
+        text_file = main_directory / "output/result/texts.json"
         utils.export_to_json(self.texts, text_file)
 
-    def render_all_env(self, color_tex: str) -> None:
-        """
-        Render all environments, it includes simple environments and float environments.
+    def _setup_document_styling(self, color_tex: Path) -> None:
+        """Set up document styling by adding color and layout definitions.
 
         Args:
-            color_tex (str): The color texture.
+            color_tex: Path to LaTeX file to modify
+        """
+        self.add_color_definition(color_tex)
+        self.add_layout_definition(color_tex)
+        self.remove_predefined_color(color_tex)
 
-        Returns:
-            None
+    def render_all_env(self, color_tex: Path) -> None:
+        """Render all environments in the document.
+
+        Args:
+            color_tex: Path to colored LaTeX file
         """
         self.render_simple_envs(color_tex)
         self.render_float_envs(color_tex)
 
-    def render_simple_envs(self, color_tex: str) -> None:
-        """Renders simple environments in a LaTeX file.
-
-        This method modifies the content of a LaTeX file by rendering various simple environments,
-        such as sections, lists, equations, and text.
-        The modifications are done in-place, directly modifying the provided file.
+    def render_simple_envs(self, color_tex: Path) -> None:
+        """Render simple environments like sections, lists, equations and text.
 
         Args:
-            color_tex (str): The path to the LaTeX file to modify.
-
-        Returns:
-            None
+            color_tex: Path to LaTeX file to modify
 
         Raises:
-            EOFError: If TexSoup failed to parse the input file due to runaway environments.
-            AssertionError: If TexSoup failed to parse the input file due to Command \\item invalid in math mode.
-
+            EOFError: If TexSoup fails to parse due to runaway environments
+            AssertionError: If TexSoup fails due to invalid math mode commands
         """
         data, start, end = data_from_tex_file(color_tex)
 
-        self.render_section(data)
-        self.render_list(data)
-        self.render_equation(data)
-        self.render_text(data)
-        # self.enclose_reference(data, color=name2color["Reference"])
+        # Process each environment type
+        for renderer in [
+            self.render_section,
+            self.render_list,
+            self.render_equation,
+            self.render_text,
+        ]:
+            renderer(data)
 
-        # Write the modified data back to the TeX file
+        # Write back to file
         tex_file_from_data(data, color_tex, start=start, end=end)
 
-    def render_float_envs(self, tex_file: str) -> None:
-        """Renders float environments in a LaTeX file.
-
-        This method applies rendering to various float environments in the LaTeX file
-        by calling specific rendering methods for each type of environment.
+    def render_float_envs(self, tex_file: Path) -> None:
+        """Render floating environments like figures, tables, algorithms etc.
 
         Args:
-            tex_file (str): The path to the LaTeX file to modify.
+            tex_file: Path to LaTeX file to modify
 
-        Returns:
-            None
+        The environments are rendered in a specific order to handle dependencies:
+        1. Algorithms
+        2. Tables
+        3. Code blocks
+        4. Footnotes
+        5. Graphics
+        6. Captions
+        7. Title
+        8. Abstract
         """
+        renderers = [
+            self.render_algorithm,
+            self.render_tabular,
+            self.render_code,
+            self.render_footnote,
+            self.extract_graphics,
+            self.render_caption,
+            self.render_title,
+            self.render_abstract,
+        ]
 
-        # Step 1: Render algorithm environments
-        self.render_algorithm(tex_file)
-
-        # Step 2: Render tabular environments
-        self.render_tabular(tex_file)
-
-        # Step 3: Render code environments
-        self.render_code(tex_file)
-
-        # Step 4: Render footnotes
-        self.render_footnote(tex_file)
-
-        # Step 5: Extract graphics paths
-        self.extract_graphics(tex_file)
-
-        # Step 6: Render captions
-        self.render_caption(tex_file)
-
-        # the following two envs are placed here because they also use string regex to render
-        # Step 7: Render titles
-        self.render_title(tex_file)
-
-        # Step 8: Render abstracts
-        self.render_abstract(tex_file)
+        for renderer in renderers:
+            renderer(tex_file)
 
     def render_section(self, data: List[Union[dict, str]]) -> None:
-        """Render sections in the given data with a configured color.
-        This function modifies the data in-place.
+        """Render section headings with configured color.
 
         Args:
-            data (List[Union[dict, str]]): The data to be enclosed.
-            color (str, optional): The color of the enclosed section. Defaults to 'red'.
-
-        Returns:
-            None
+            data: LaTeX content as structured data
         """
         for item in data:
             if not isinstance(item, dict):
@@ -164,14 +152,10 @@ class Renderer:
             item[env] = utils.colorize(item[env], "Title")
 
     def render_list(self, data: List[Union[dict, str]]) -> None:
-        """Render equations in the given data with a configured color.
-        This function modifies the data in-place.
+        """Render list environments with configured color.
 
         Args:
-            data (List[Union[dict, str]]): The list of items to be processed.
-
-        Returns:
-            None
+            data: LaTeX content as structured data
         """
         for item in data:
             if not isinstance(item, dict):
@@ -179,93 +163,80 @@ class Renderer:
 
             env = find_env(item, envs.list_envs)
             if env is None:
+                # Process nested lists recursively
                 for value in item.values():
-                    if not isinstance(value, list):
-                        continue
-                    self.render_list(value[1])
+                    if isinstance(value, list):
+                        self.render_list(value[1])
                 continue
 
             self.texts["List"].append(item[env])
             item[env] = utils.colorize(item[env], "List")
 
     def render_equation(self, data: List[Union[dict, str]]) -> None:
-        """Render equations in the given data with a configured color.
+        """Render equation environments with configured color.
 
         Args:
-            - data (List[Union[dict, str]]): The data containing equations to enclose.
-
-        Returns:
-            None
+            data: LaTeX content as structured data
         """
         for item in data:
             if not isinstance(item, dict):
                 continue
 
             env = find_env(item, envs.math_envs)
-
             if env is None:
+                # Process nested equations
                 for value in item.values():
-                    if not isinstance(value, list):
-                        continue
-                    self.render_equation(value[1])
+                    if isinstance(value, list):
+                        self.render_equation(value[1])
                 continue
 
             self.texts["Equation"].append(item[env])
             item[env] = utils.colorize(item[env], "Equation")
 
     def render_text(self, data: List[Union[dict, str]]) -> None:
-        """Render texts and text-eqs in the given data with a configured color.
-        This function modifies the data in-place.
+        """Render text content with configured colors.
+
+        Handles both regular text and text containing equations.
 
         Args:
-            data (List[Union[dict, str]]): The list of items to be processed.
-
-        Returns:
-            None
+            data: LaTeX content as structured data
         """
         for index, item in enumerate(data):
             if not isinstance(item, str):
-                if not isinstance(item, dict):
-                    continue
-                for key, value in item.items():
-                    if key.lower() not in envs.text_envs:
-                        continue
-                    if not isinstance(value, list):
-                        continue
-                    self.render_text(value[1])
+                if isinstance(item, dict):
+                    for key, value in item.items():
+                        if key.lower() in envs.text_envs and isinstance(value, list):
+                            self.render_text(value[1])
                 continue
 
-            if not item or item == "\n" or item == "\n\n" or item.isspace():
+            if not item or item.isspace():
                 continue
 
-            if is_text_eq(item):
-                data[index] = utils.colorize(item, "Text-EQ")
-                self.texts["Text-EQ"].append(item)
-            else:
-                data[index] = utils.colorize(item, "Text")
-                self.texts["Text"].append(item)
+            # Determine text type and colorize
+            text_type = "Text-EQ" if is_text_eq(item) else "Text"
+            colored_text = utils.colorize(item, text_type)
+            self.texts[text_type].append(item)
 
-            # format
+            # Preserve whitespace
             if item[0] == "\n":
-                data[index] = "\n" + data[index]
+                colored_text = "\n" + colored_text
             if item[-1] == "\n":
-                data[index] += "\n"
+                colored_text += "\n"
 
-    def add_color_definition(self, color_tex: str) -> None:
-        """Adds color definitions to a LaTeX file.
+            data[index] = colored_text
+
+    def add_color_definition(self, color_tex: Path) -> None:
+        """Add color package and definitions to LaTeX file.
 
         Args:
-            color_tex (str): The path to the LaTeX file to modify.
+            color_tex: Path to LaTeX file to modify
 
         Raises:
-            ValueError: If the beginning of the document is not found.
-
-        Returns:
-            None
+            ValueError: If document begin tag not found
         """
-        with open(color_tex, "r") as f:
-            content = f.read()
+        content = color_tex.read_text()
 
+        # Build color definitions
         definitions = ["\\usepackage{xcolor}"]
         for name, rgb_color in config.name2rgbcolor.items():
             color_name = config.name2color[name]
@@ -275,617 +246,370 @@ class Renderer:
 
         color_definitions = "\n" + "\n".join(definitions) + "\n"
 
-        # Find location to insert package
+        # Insert at document begin
         preamble = re.search(r"\\begin{document}", content)
         if not preamble:
-            raise ValueError("begin of document not found")
-        preamble_loc = preamble.start()
+            raise ValueError("Document begin tag not found")
 
-        # Insert package line
-        content = content[:preamble_loc] + color_definitions + content[preamble_loc:]
+        content = (
+            content[: preamble.start()]
+            + color_definitions
+            + content[preamble.start() :]
+        )
 
-        # Write updated content
-        with open(color_tex, "w") as f:
-            f.write(content)
+        color_tex.write_text(content)
 
-    def add_layout_definition(self, color_tex: str) -> None:
-        """Adds layout definitions to a LaTeX file.
+    def add_layout_definition(self, color_tex: Path) -> None:
+        """Add layout definitions to LaTeX file.
 
         Args:
-            color_tex (str): The path to the LaTeX file to modify.
+            color_tex: Path to LaTeX file to modify
 
         Raises:
-            ValueError: If the end of the document is not found.
-
-        Returns:
-            None
+            ValueError: If document end tag not found
 
         Reference:
             https://www.overleaf.com/learn/latex/Page_size_and_margins
         """
-        with open(color_tex, "r") as f:
-            content = f.read()
+        content = color_tex.read_text()
 
-        keys = config.layout_keys
-
+        # Build layout definitions
         definitions = ["\\message{[vrdu_data_process: Info]}"]
-        for key in keys:
+        for key in config.layout_keys:
             definition = f"\\message{{[vrdu_data_process: The {key} is: \\the\\{key}]}}"
             definitions.append(definition)
 
         layout_definitions = "\n" + "\n".join(definitions) + "\n"
 
-        package_re = r"\\end{document}"
-        match = re.search(package_re, content)
-        if not match:
-            raise ValueError("end of document not found")
+        # Insert before document end
+        doc_end = re.search(r"\\end{document}", content)
+        if not doc_end:
+            raise ValueError("Document end tag not found")
 
-        package_loc = match.start()
+        content = (
+            content[: doc_end.start()] + layout_definitions + content[doc_end.start() :]
+        )
 
-        # Insert package line
-        content = content[:package_loc] + layout_definitions + content[package_loc:]
+        color_tex.write_text(content)
 
-        # Write updated content
-        with open(color_tex, "w") as f:
-            f.write(content)
-
-    def remove_predefined_color(self, color_tex: str) -> None:
-        """Removes hyperref and lstlisting color settings from a LaTeX file.
+    def remove_predefined_color(self, color_tex: Path) -> None:
+        """Remove hyperref and lstlisting color settings.
 
         Args:
-            color_tex (str): The path to the LaTeX file to modify.
+            color_tex: Path to LaTeX file to modify
 
         Raises:
-            ValueError: If the beginning of the document is not found.
-
-        Returns:
-            None
+            ValueError: If document begin tag not found
 
         Reference:
             https://www.overleaf.com/learn/latex/Hyperlinks
         """
-        # Read the content of the input file
-        with open(color_tex, "r") as file:
-            content = file.read()
+        content = color_tex.read_text()
 
-        # Define the pattern to match the color definitions
-        pattern = r"\\usepackage{hyperref}|\\usepackage(\[)?\[.*?\]?(\])?{hyperref}"
-
+        # Find document begin
         preamble = re.search(r"\\begin{document}", content)
         if not preamble:
-            raise ValueError("begin of document not found")
-        preamble_loc = preamble.start()
+            raise ValueError("Document begin tag not found")
 
-        # forbidden the color used by hyperref
-        hyper_setup = "\\hypersetup{colorlinks=false}\n"
-        if re.search(pattern, content[:preamble_loc]):
-            content = content[:preamble_loc] + hyper_setup + content[preamble_loc:]
+        # Disable hyperref colors if present
+        hyperref_pattern = (
+            r"\\usepackage{hyperref}|\\usepackage(\[)?\[.*?\]?(\])?{hyperref}"
+        )
+        if re.search(hyperref_pattern, content[: preamble.start()]):
+            content = (
+                content[: preamble.start()]
+                + "\\hypersetup{colorlinks=false}\n"
+                + content[preamble.start() :]
+            )
 
-        # delete the lstlisting color definitions
-        pattern = r"\\lstset\{.*?\}"
-        content = re.sub(pattern, "", content)
+        # Remove lstlisting colors
+        content = re.sub(r"\\lstset\{.*?\}", "", content)
 
-        # Write the modified content back to the input file
-        with open(color_tex, "w") as file:
-            file.write(content)
+        color_tex.write_text(content)
 
-    def modify_color_definitions(self, input_file: str, output_file: str) -> None:
-        """Modify the pre-defined color definitions in the input file and write the modified content to the output file.
+    def modify_color_definitions(self, input_file: Path, output_file: Path) -> None:
+        """Modify color definitions to white in output file.
 
         Args:
-            input_file (str): The path to the input file.
-            output_file (str): The path to the output file.
-
-        Returns:
-            None
+            input_file: Source LaTeX file path
+            output_file: Destination LaTeX file path
         """
-        with open(input_file, "r") as file:
-            content = file.read()
+        content = input_file.read_text()
 
-        # Define the pattern to match the color definitions
-        for name in config.name2rgbcolor.keys():
+        # Replace each color with white
+        for name in config.name2rgbcolor:
             color_name = config.name2color[name]
-            pattern = r"\\definecolor{" + color_name + r"}{RGB}{(\d+), (\d+), (\d+)}"
-
-            # Replace the color definitions with pure white
+            pattern = rf"\\definecolor{{{color_name}}}{{RGB}}{{(\d+), (\d+), (\d+)}}"
             content = re.sub(
                 pattern,
-                r"\\definecolor{" + color_name + r"}{RGB}{255, 255, 255}",
+                rf"\\definecolor{{{color_name}}}{{RGB}}{{255, 255, 255}}",
                 content,
             )
 
-        with open(output_file, "w") as file:
-            file.write(content)
+        output_file.write_text(content)
 
-    def get_env_orders(self, tex_file: str) -> List[str]:
-        """Returns a list of environment orders based on the contents of the given `tex_file`.
+    def get_env_orders(self, tex_file: Path) -> List[str]:
+        """Get ordered list of environments from file.
 
         Args:
-            tex_file (str): The path to the .tex file.
+            tex_file: Path to LaTeX file
 
         Returns:
-            List[str]: A list of environment orders.
+            List of environment names in order of appearance
         """
-        with open(tex_file) as f:
-            contents = f.read()
+        contents = tex_file.read_text()
+
         colors = list(config.name2color.values())
-        matches = []
-
         pattern = "|".join(rf"\b{re.escape(term)}\b" for term in colors)
-        for m in re.finditer(pattern, contents):
-            matches.append(m.group(0))
+        matches = [m.group(0) for m in re.finditer(pattern, contents)]
 
-        # the definitions are discarded
+        # Skip color definitions at start
         return matches[len(colors) :]
 
-    def render_one_env(self, main_directory: str) -> None:
-        """Render one environment by modifying the corresponding rendering color to black.
+    def render_one_env(self, main_directory: Path) -> None:
+        """Render individual files with one environment highlighted.
 
         Args:
-            main_directory (str): The main directory.
-
-        Returns:
-            None: This function does not return anything.
+            main_directory: Working directory path
         """
-        color_tex_file = os.path.join(main_directory, "paper_colored.tex")
-        white_tex_file = os.path.join(main_directory, "paper_white.tex")
-        self.modify_color_definitions(color_tex_file, white_tex_file)
-        ordered_env_colors = self.get_env_orders(white_tex_file)
-        suffix = "_color"
+        color_tex = main_directory / "paper_colored.tex"
+        white_tex = main_directory / "paper_white.tex"
+
+        self.modify_color_definitions(color_tex, white_tex)
+        ordered_envs = self.get_env_orders(white_tex)
+
+        content = white_tex.read_text()
+
         index_map = defaultdict(int)
+        suffix = "_color"
 
-        with open(white_tex_file, "r") as f:
-            content = f.read()
-
-        for index, env_color in enumerate(ordered_env_colors):
+        for i, env_color in enumerate(ordered_envs):
             env = env_color[: -len(suffix)]
-            # the first one is the color definition, skip it
+            env_count = index_map[env]
+
+            # Replace nth occurrence with black
             new_content = replace_nth(
-                content, "{" + env_color + "}", r"{black}", index_map[env] + 2
+                content, "{" + env_color + "}", "{black}", env_count + 2
             )
 
-            output_file = os.path.join(
-                main_directory,
-                f"paper_{config.folder_prefix}_{str(index).zfill(5)}_{env}_{str(index_map[env]).zfill(5)}.tex",
+            # Generate output filename
+            output_file = (
+                main_directory
+                / f"paper_{config.folder_prefix}_{str(i).zfill(5)}_{env}_{str(env_count).zfill(5)}.tex"
             )
+
+            output_file.write_text(new_content)
+
             index_map[env] += 1
-            with open(output_file, "w") as f:
-                f.write(new_content)
 
-    def render_caption(self, tex_file: str) -> None:
-        """Renders captions in a LaTeX file.
-
-        This method modifies the content of a LaTeX file by rendering captions with a specified color.
-        It searches for caption commands in the file and applies colorization to their contents.
+    def render_caption(self, tex_file: Path) -> None:
+        """Render captions with color.
 
         Args:
-            tex_file (str): The path to the LaTeX file to modify.
-
-        Returns:
-            None
+            tex_file: Path to LaTeX file
         """
-        with open(tex_file) as f:
-            content = f.read()
+        content = tex_file.read_text()
 
         pattern = r"\\caption(?:\[[^\]]*\])?(?:\{[^}]*\})"
         result = self._render_simple_envs(content, pattern, "Caption")
 
-        with open(tex_file, "w") as f:
-            f.write(result)
+        tex_file.write_text(result)
 
-    def render_title(self, tex_file: str) -> None:
-        """Renders the title in a LaTeX file.
-
-        This method modifies the content of a LaTeX file by rendering the title with a specified color.
-        It searches for the title command in the file and applies colorization to its content.
+    def render_title(self, tex_file: Path) -> None:
+        """Render document title with color.
 
         Args:
-            tex_file (str): The path to the LaTeX file to modify.
-
-        Returns:
-            None
+            tex_file: Path to LaTeX file
         """
-        with open(tex_file) as f:
-            content = f.read()
+        content = tex_file.read_text()
 
         pattern = r"\\title(?:\{[^}]*\})"
         result = self._render_simple_envs(content, pattern, "PaperTitle")
 
-        with open(tex_file, "w") as f:
-            f.write(result)
+        tex_file.write_text(result)
 
-    def render_footnote(self, tex_file: str) -> None:
-        """Renders footnotes in a LaTeX file.
-
-        This method modifies the content of a LaTeX file by rendering footnotes with a specified color.
-        It searches for various footnote environments and applies colorization to their contents.
+    def render_footnote(self, tex_file: Path) -> None:
+        """Render footnotes with color.
 
         Args:
-            tex_file (str): The path to the LaTeX file to modify.
-
-        Returns:
-            None
+            tex_file: Path to LaTeX file
         """
-        # \footnote{...}, \footnote[]{...}, \footnotetext{...}, \footnotetext[]{...}, \tablefootnote{}
-        with open(tex_file) as f:
-            content = f.read()
+        content = tex_file.read_text()
 
         for env_name in envs.footnote_envs:
             pattern = r"\\" + env_name + r"(?:\[[^\]]*\])?(?:\{[^}]*\})"
-
             content = self._render_simple_envs(content, pattern, "Footnote")
 
-        with open(tex_file, "w") as f:
-            f.write(content)
+        tex_file.write_text(content)
 
     def _render_simple_envs(self, content: str, pattern: str, category: str) -> str:
-        """Renders specific environments in the content using replacement.
-
-        This method searches for occurrences of a pattern in the content and replaces them with colored versions.
-        The replacement is based on the specified category for colorization.
+        """Render simple environments with color.
 
         Args:
-            content (str): The content of the LaTeX file.
-            pattern (str): The regular expression pattern to match.
-            category (str): The category of the environment for colorization.
+            content: LaTeX content
+            pattern: Regex pattern to match
+            category: Environment category name
 
         Returns:
-            str: The modified content with the rendered environments.
+            Modified content with colored environments
         """
         matches = re.finditer(pattern, content)
         result = ""
-        index = 0
+        last_end = 0
+
         for match in matches:
             start = match.start()
             end = match.end()
 
-            # the regex is greedy, iterate to find the end of footnote env
-            num_left_brackets = content[start:end].count("{")
-            num_right_brackets = content[start:end].count("}")
-            while num_right_brackets < num_left_brackets:
+            # Handle nested brackets
+            num_left = content[start:end].count("{")
+            num_right = content[start:end].count("}")
+
+            while num_right < num_left:
                 if content[end] == "{":
-                    num_left_brackets += 1
+                    num_left += 1
                 elif content[end] == "}":
-                    num_right_brackets += 1
+                    num_right += 1
                 end += 1
 
-            category_content = content[start:end]
+            env_content = content[start:end]
+            self.texts[category].append(env_content)
 
-            self.texts[category].append(category_content)
-            colored_title = utils.colorize(category_content, category)
-            result += content[index:start]
-            result += colored_title
-            index = end
+            result += content[last_end:start]
+            result += utils.colorize(env_content, category)
+            last_end = end
 
-        result += content[index:]
+        result += content[last_end:]
         return result
 
-    def render_abstract(self, tex_file: str) -> None:
-        """Renders the abstract section in a LaTeX file.
-
-        This method modifies the content of a LaTeX file by rendering the abstract section with a specified color.
-        It searches for the abstract section in the file and applies colorization to its contents.
+    def render_abstract(self, tex_file: Path) -> None:
+        """Render abstract with color.
 
         Args:
-            tex_file (str): The path to the LaTeX file to modify.
-
-        Returns:
-            None
+            tex_file: Path to LaTeX file
 
         Raises:
-            ValueError: If more than one abstract section is found.
+            ValueError: If multiple abstracts found
         """
-        with open(tex_file) as f:
-            content = f.read()
+        content = tex_file.read_text()
 
         pattern = r"\\begin{abstract}.*?\\end{abstract}"
-        indexes = [
-            (m.start(), m.end()) for m in re.finditer(pattern, content, re.DOTALL)
-        ]
+        matches = list(re.finditer(pattern, content, re.DOTALL))
 
-        if len(indexes) > 1:
-            raise ValueError("more than one abstract found")
+        if len(matches) > 1:
+            raise ValueError("Multiple abstracts found")
 
-        if not indexes:
+        if not matches:
             return
 
-        start, end = indexes[0]
-        abstract = content[start:end]
+        match = matches[0]
+        abstract = content[match.start() : match.end()]
         self.texts["Abstract"].append(abstract)
-        colored_abstract = utils.colorize(abstract, "Abstract")
-        result = content[:start] + colored_abstract + content[end:]
 
-        with open(tex_file, "w") as f:
-            f.write(result)
+        result = (
+            content[: match.start()]
+            + utils.colorize(abstract, "Abstract")
+            + content[match.end() :]
+        )
 
-    def render_tabular(self, tex_file: str) -> None:
-        """Renders tabular environments in a LaTeX file.
+        tex_file.write_text(result)
 
-        This method modifies the content of a LaTeX file by rendering tabular environments with a specified color.
-        It searches for tabular environments in the file and applies colorization to their contents.
+    def render_tabular(self, tex_file: Path) -> None:
+        """Render tables with color.
 
         Args:
-            tex_file (str): The path to the LaTeX file to modify.
-
-        Returns:
-            None
+            tex_file: Path to LaTeX file
         """
-        with open(tex_file) as f:
-            content = f.read()
+        content = tex_file.read_text()
+
         pattern = r"\\begin{(tabular[*xy]?)}.*?\\end{\1}"
         result = self._render_float_envs(content, pattern, "Table")
 
-        with open(tex_file, "w") as f:
-            f.write(result)
+        tex_file.write_text(result)
 
-    def render_algorithm(self, tex_file: str) -> None:
-        """Renders algorithm environments in a LaTeX file.
-
-        This method modifies the content of a LaTeX file by rendering algorithm environments with a specified color.
-        It searches for algorithm environments in the file and applies colorization to their contents.
+    def render_algorithm(self, tex_file: Path) -> None:
+        """Render algorithms with color.
 
         Args:
-            tex_file (str): The path to the LaTeX file to modify.
-
-        Returns:
-            None
+            tex_file: Path to LaTeX file
         """
-        with open(tex_file) as f:
-            content = f.read()
+        content = tex_file.read_text()
 
         pattern = r"\\begin{algorithm[*]?}(.*?)\\end{algorithm[*]?}"
         result = self._render_float_envs(content, pattern, "Algorithm")
 
-        with open(tex_file, "w") as f:
-            f.write(result)
+        tex_file.write_text(result)
 
-    def render_code(self, tex_file: str) -> None:
-        """Renders code environments in a LaTeX file.
+    def render_code(self, tex_file: Path) -> None:
+        """Render code blocks with color.
 
-        This method modifies the content of a LaTeX file by rendering code environments with a specified color.
-        It searches for code environments and `\\lstinputlisting` commands in the file and applies colorization to their contents.
+        Handles both code environments and lstinputlisting.
 
         Args:
-            tex_file (str): The path to the LaTeX file to modify.
-
-        Returns:
-            None
-
-        Notes:
-            There are two types of code environments:
-            - pattern 1: code environment
-            - pattern 2: lstinputlisting to input a file
+            tex_file: Path to LaTeX file
 
         Reference:
             https://en.wikibooks.org/wiki/LaTeX/Source_Code_Listings
         """
-        with open(tex_file, "r") as file:
-            content = file.read()
+        content = tex_file.read_text()
 
-        pattern = (
-            r"\\begin{(verbatim|lstlisting|program)[*]?}(.*?)\\end{\1[*]?}"
-            + "|"
-            + r"\\lstinputlisting\[[^\]]*\]{[^\}]*}"
-        )
+        patterns = [
+            r"\\begin{(verbatim|lstlisting|program)[*]?}(.*?)\\end{\1[*]?}",
+            r"\\lstinputlisting\[[^\]]*\]{[^\}]*}",
+        ]
+        pattern = "|".join(patterns)
+
         result = self._render_float_envs(content, pattern, "Code")
 
-        with open(tex_file, "w") as f:
-            f.write(result)
+        tex_file.write_text(result)
 
     def _render_float_envs(self, content: str, pattern: str, category: str) -> str:
-        """Renders specific float environments in the content.
-
-        This method searches for occurrences of a pattern in the content and replaces them with colored versions.
-        The replacement is based on the specified category for colorization.
+        """Render floating environments with color.
 
         Args:
-            content (str): The content of the LaTeX file.
-            pattern (str): The regular expression pattern to match.
-            category (str): The category of the environment for colorization.
+            content: LaTeX content
+            pattern: Regex pattern to match
+            category: Environment category name
 
         Returns:
-            str: The modified content with the rendered float environments.
+            Modified content with colored environments
         """
-        indexes = [
-            (m.start(), m.end()) for m in re.finditer(pattern, content, re.DOTALL)
-        ]
+        matches = list(re.finditer(pattern, content, re.DOTALL))
 
-        if not indexes:
-            log.debug(f"no {category} found")
+        if not matches:
+            logger.debug(f"No {category} environments found")
             return content
 
-        result = content[: indexes[0][0]]
-        for i, _ in enumerate(indexes):
-            if i > 0:
-                result += content[indexes[i - 1][1] : indexes[i][0]]
-            float_env = content[indexes[i][0] : indexes[i][1]]
+        result = content[: matches[0].start()]
 
-            # filter table of figures
-            if category == "Table" and float_env.find("\\includegraphics") != -1:
+        for i, match in enumerate(matches):
+            if i > 0:
+                result += content[matches[i - 1].end() : match.start()]
+
+            env_content = content[match.start() : match.end()]
+
+            # Skip figures in tables
+            if category == "Table" and "\\includegraphics" in env_content:
                 continue
 
-            # TODO: filter table in equation envs
+            self.texts[category].append(env_content)
+            result += utils.colorize(env_content, category)
 
-            self.texts[category].append(float_env)
-            colored_float_env = utils.colorize(float_env, category)
-            result += colored_float_env
-
-        result += content[indexes[-1][1] :]
+        result += content[matches[-1].end() :]
         return result
 
-    def extract_graphics(self, tex_file: str) -> None:
-        """Extracts graphics paths from a LaTeX file.
-
-        This method reads a LaTeX file and extracts the paths of graphics included using the `\\includegraphics` command.
-        The extracted graphics paths are stored in the `texts["Figure"]` list.
+    def extract_graphics(self, tex_file: Path) -> None:
+        """Extract graphics commands.
 
         Args:
-            tex_file (str): The path to the LaTeX file to extract graphics from.
-
-        Returns:
-            None
+            tex_file: Path to LaTeX file
         """
-        with open(tex_file, "r") as file:
-            content = file.read()
+        content = tex_file.read_text()
 
         pattern = r"\\includegraphics(?:\[(.*?)\])?{(.*?)}"
-        matches = re.findall(pattern, content)
-        for match in matches:
+        for options, path in re.findall(pattern, content):
             graphic = "\\includegraphics"
-            if match[0]:
-                graphic += f"[{match[0]}]"
-            graphic += f"{{{match[1]}}}"
+            if options:
+                graphic += f"[{options}]"
+            graphic += f"{{{path}}}"
             self.texts["Figure"].append(graphic)
-
-
-def extract_main_content(tex_file: str) -> Tuple[str, int, int]:
-    """Extracts the main content from a LaTeX file.
-
-    Args:
-        tex_file (str): The path to the LaTeX file.
-
-    Returns:
-        Tuple[str, int, int]: A tuple containing the main content of the LaTeX file,
-            the start position of the main content in the file, and the end position
-            of the main content in the file.
-    """
-    with open(tex_file) as f:
-        content = f.read()
-
-    start = content.find("\\begin{document}")
-    end = content.find("\\end{document}")
-
-    if start == -1 or end == -1:
-        raise ValueError("Document tags not found")
-
-    start += len("\\begin{document}")
-    main_content = content[start:end]
-
-    return main_content, start, end
-
-
-def data_from_tex_file(tex_file: str) -> Tuple[List[Union[dict, str]], int, int]:
-    """Extracts data from a Tex file using TexSoup.
-
-    Args:
-        tex_file (str): The path to the Tex file.
-
-    Returns:
-        Tuple[List, int, int]: A tuple containing the extracted data, the start
-        position of the extracted content, and the end position of the extracted
-        content.
-    """
-    main_content, start, end = extract_main_content(tex_file)
-    tex_tree = TexSoup(main_content).expr.all
-    data = conversion.to_list(tex_tree)
-
-    return data, start, end
-
-
-def tex_file_from_data(
-    data: List[Union[dict, str]],
-    tex_file: str,
-    start: int = 0,
-    end: int = -1,
-) -> None:
-    """Generate a TeX file from the given TexSoup data.
-
-    Args:
-        data (List[Union[dict, str]]): The data to be converted into LaTeX.
-        tex_file (str): The path of the TeX file to be generated.
-        start (int, optional): The starting position in the TeX file to replace content. Defaults to 0.
-        end (int, optional): The ending position in the TeX file to replace content. Defaults to -1.
-
-    Returns:
-        None: This function does not return any value.
-    """
-    with open(tex_file, "r") as f:
-        content = f.read()
-
-    # convert the data into latex
-    rendered_tex = conversion.to_latex(data)
-
-    content = content[:start] + rendered_tex + content[end:]
-
-    with open(tex_file, "w") as f:
-        f.write(content)
-
-
-def replace_nth(string: str, old: str, new: str, n: int) -> str:
-    """
-    Replace the n-th occurrence of a substring in a given string with a new substring.
-
-    Args:
-        string (str): The original string to search and perform the replacement on.
-        old (str): The substring to be replaced.
-        new (str): The substring to replace the n-th occurrence of `old` in `string`.
-        n (int): The occurrence number of `old` to be replaced (1-based index).
-
-    Returns:
-        str: The modified string with the n-th occurrence of `old` replaced by `new`. If the
-        occurrence is not found, the original string is returned.
-
-    Example:
-        >>> replace_nth("Hello, hello, hello!", 'hello', 'hi', 2)
-        'Hello, hello, hi!'
-    """
-    index_of_occurrence = string.find(old)
-    occurrence = int(index_of_occurrence != -1)
-
-    while index_of_occurrence != -1 and occurrence != n:
-        index_of_occurrence = string.find(old, index_of_occurrence + 1)
-        occurrence += 1
-
-    if occurrence == n:
-        return (
-            string[:index_of_occurrence]
-            + new
-            + string[index_of_occurrence + len(old) :]
-        )
-
-    return string
-
-
-def find_env(wrapped_env: dict, query: List[str]) -> Union[str, None]:
-    """
-    Finds and returns the environment variable from the given query list
-    that exists in the wrapped_env dictionary.
-
-    Args:
-        wrapped_env (dict): A dictionary containing environment variables as keys.
-        query (list): A list of environment variables to search for.
-
-    Returns:
-        Union[str, None]: The environment variable found in the query list that exists in the wrapped_env dictionary, or None
-        if no matching environment variable is found.
-    """
-    for env in query:
-        if env in wrapped_env:
-            return env
-
-    return None
-
-
-def is_text_eq(text: str) -> bool:
-    """Check if the given text contains any mathematical expressions.
-
-    Args:
-        text (str): The text to be checked for mathematical expressions.
-
-    Returns:
-        bool: True if the text contains mathematical expressions, False otherwise.
-
-    Note:
-        This function uses a regular expression pattern to match mathematical expressions
-
-    Reference:
-        https://www.overleaf.com/learn/latex/Mathematical_expressions
-    """
-    pattern = r"(\\\(.*?\\\))|(\$.*?\$)|(\\begin\{math\}.*?\\end\{math\})"
-    matches = re.findall(pattern, text)
-
-    for match in matches:
-        if not re.search(r"\\\$", match[0]):
-            return True
-
-    return False

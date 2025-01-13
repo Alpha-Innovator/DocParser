@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 setup(
     name="DocParser",
     version="1.0.0",
-    description="process the academic papers with .tex source files",
+    description="Process academic papers with .tex source files for layout analysis",
     author="Mao Song",
     author_email="maosong@pjlab.org.cn",
     url="https://github.com/UniModal4Reasoning/DocParser.git",
@@ -22,9 +22,15 @@ setup(
         "scikit_image==0.19.3",
         "setuptools==68.0.0",
         "tqdm==4.66.1",
+        "sphinx",
+        "arxiv-cleaner",
+        "texsoup",
     ],
+    python_requires=">=3.8",
     scripts=[],
     entry_points={
-        "console_scripts": [],
+        "console_scripts": [
+            "vrdu_process=vrdu_data_process.main:main",
+        ],
     },
 )

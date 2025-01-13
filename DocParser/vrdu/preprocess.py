@@ -1,189 +1,169 @@
-import os
 import re
+from pathlib import Path
+from typing import Optional
+from loguru import logger
 
 from DocParser.arxiv_cleaner.cleaner import Cleaner
 from DocParser.vrdu.config import envs, config
 from DocParser.vrdu import utils
-from DocParser.logger import logger
 
 
-log = logger.get_logger(__name__)
-
-
-def remove_comments(original_tex: str) -> None:
+def remove_comments(tex_file: Path) -> None:
     """
-    Removes comments from a TeX file.
+    Removes LaTeX comments from a TeX file.
 
     Args:
-        original_tex (str): The path to the original TeX file.
-
-    Returns:
-        None
+        tex_file: Path to the TeX file
     """
-    with open(original_tex, "r") as file:
-        content = file.read()
+    tex_file = Path(tex_file)
+    content = tex_file.read_text()
 
     # Remove LaTeX comments
     pattern = r"\\begin{comment}(.*?)\\end{comment}"
-    removed_comments = re.sub(pattern, "", content, flags=re.DOTALL)
+    content = re.sub(pattern, "", content, flags=re.DOTALL)
 
-    with open(original_tex, "w") as file:
-        file.write(removed_comments)
+    tex_file.write_text(content)
 
 
-def clean_tex(original_tex: str) -> None:
+def clean_tex(tex_file: Path) -> None:
     """
-    Clean the given TeX file by creating a cleaner object and running the clean method.
+    Clean the given TeX file using arxiv-cleaner.
 
     Args:
-        original_tex (str): The path to the original TeX file.
-
-    Returns:
-        None
+        tex_file: Path to the TeX file
     """
-    main_directory = os.path.dirname(original_tex)
-    tex = os.path.basename(original_tex)
+    tex_file = Path(tex_file)
+    main_directory = tex_file.parent
 
-    # Create the cleaner
+    # Create and run the cleaner
     cleaner = Cleaner(
-        input_dir=main_directory,
-        output_dir=main_directory,
-        tex=tex,
+        input_dir=str(main_directory),
+        output_dir=str(main_directory),
+        tex=tex_file.name,
         command_options=config.command_options,
         verbose=False,
     )
-
-    # Run the cleaner
     cleaner.clean()
 
-    # remove comments
-    remove_comments(original_tex)
+    # Remove any remaining comments
+    remove_comments(tex_file)
 
 
-def replace_pdf_ps_figures_with_png(original_tex: str) -> None:
+def get_graphics_path(content: str) -> str:
+    """Extract graphics path from LaTeX content."""
+    pattern = r"\\graphicspath\{\{(.+?)}"
+    if match := re.search(pattern, content, re.DOTALL):
+        return match.group(1)
+    return ""
+
+
+def convert_image(
+    image_path: Path, main_dir: Path, graphics_path: str, target_ext: str = ".png"
+) -> Optional[str]:
     """
-    Replaces PDF, ps, eps figures with PNG figures in a TeX file
+    Convert image to target format if needed.
+    Returns the new image name or None if conversion failed.
+    """
+    if not image_path.exists():
+        logger.error(f"File not found: {image_path}")
+        return None
+
+    if image_path.suffix in [".eps", ".ps"]:
+        # Convert eps/ps to pdf first
+        pdf_path = image_path.with_suffix(".pdf")
+        utils.convert_eps_image_to_pdf_image(image_path, pdf_path)
+        image_path = pdf_path
+
+    if image_path.suffix == ".pdf":
+        # Convert pdf to png
+        png_path = image_path.with_suffix(".png")
+        utils.convert_pdf_figure_to_png_image(image_path, png_path)
+        return png_path.name
+
+    return image_path.name
+
+
+def replace_pdf_ps_figures_with_png(tex_file: Path) -> None:
+    """
+    Replace PDF, PS, EPS figures with PNG figures in a TeX file
     to support pdfminer detecting bounding box.
 
     Args:
-        original_tex (str): The path to the original TeX file.
-
-    Returns:
-        None: This function does not return anything.
+        tex_file: Path to the TeX file
 
     Raises:
-        FileNotFoundError: If a PDF file specified in the TeX file is not found.
+        FileNotFoundError: If an image file is not found
     """
+    tex_file = Path(tex_file)
+    main_directory = tex_file.parent
+    content = tex_file.read_text()
 
-    # FIXME: use more robust way, since the path to images may not exists.
-    main_directory = os.path.dirname(original_tex)
-    with open(original_tex) as f:
-        content = f.read()
+    graphics_path = get_graphics_path(content)
 
-    graphicspath_pattern = r"\\graphicspath\{\{(.+?)}"
-    match = re.search(graphicspath_pattern, content, re.DOTALL)
-    if match:
-        graphic_path = match.group(1)
-    else:
-        graphic_path = ""
-
-    # Replace \psfig{...} with \includegraphics{...}
+    # Replace \psfig and \epsfig with \includegraphics
     content = re.sub(r"\\psfig{([^}]*)}", r"\\includegraphics{\1}", content)
-
-    # Replace \epsfig{...} with \includegraphics{...}
     content = re.sub(r"\\epsfig{([^}]*)}", r"\\includegraphics{\1}", content)
 
-    # Regular expression pattern to match \includegraphics
-    # commands with PDF files
+    # Find all \includegraphics commands
     pattern = r"\\includegraphics(\[.*?\])?\{(.*?)\}"
-
-    # Find all matches of \includegraphics with PDF files
     matches = re.findall(pattern, content)
 
-    # Replace PDF paths with PNG paths
+    # Supported extensions
     ext_patterns = [".eps", ".ps", ".jpg", ".jpeg", ".png", ".pdf"]
-    for match in matches:
-        image_name = match[1]
+
+    # Process each image
+    for _, img_path in matches:
+        image_name = img_path
+
+        # Add extension if missing
         if not any(ext in image_name for ext in ext_patterns):
             for ext in ext_patterns:
-                image_file = os.path.join(main_directory, graphic_path, image_name, ext)
-                if os.path.exists(image_file):
-                    image_name = image_name + ext
+                test_path = Path(main_directory, graphics_path, image_name).with_suffix(
+                    ext
+                )
+                if test_path.exists():
+                    image_name = f"{image_name}{ext}"
                     break
 
-        # detectable image type, see pdfminer.six for details
-        if any(ext in image_name for ext in [".jpg", ".jpeg", "png"]):
-            content = content.replace(match[1], image_name)
+        # Skip if already in supported format
+        if any(ext in image_name for ext in [".jpg", ".jpeg", ".png"]):
+            content = content.replace(img_path, image_name)
             continue
 
-        # convert eps to pdf
-        if any(ext in image_name for ext in [".eps", ".ps"]):
-            eps_image = os.path.join(main_directory, graphic_path, image_name)
-            if not os.path.exists(eps_image):
-                log.error(f"File not found: {eps_image}")
-                continue
-            pdf_image = os.path.splitext(eps_image)[0] + ".pdf"
-            utils.convert_eps_image_to_pdf_image(eps_image, pdf_image)
-            image_name = os.path.basename(pdf_image)
+        # Convert image if needed
+        image_path = Path(main_directory, graphics_path, image_name)
+        if new_name := convert_image(image_path, main_directory, graphics_path):
+            content = content.replace(img_path, new_name)
 
-        # convert pdf to png
-        if image_name.endswith(".pdf"):
-            pdf_image = os.path.join(main_directory, graphic_path, image_name)
-            if not os.path.exists(pdf_image):
-                log.error(f"File not found: {pdf_image}")
-                continue
-            png_image = os.path.splitext(pdf_image)[0] + ".png"
-            utils.convert_pdf_figure_to_png_image(pdf_image, png_image)
-            image_name = os.path.splitext(image_name)[0] + ".png"
-
-        # replace the reference in tex file
-        content = content.replace(match[1], image_name)
-
-    with open(original_tex, "w") as f:
-        f.write(content)
+    tex_file.write_text(content)
 
 
-def delete_table_of_contents(original_tex: str) -> None:
+def delete_table_of_contents(tex_file: Path) -> None:
     """
-    Deletes the table of contents from the given original_tex file.
-    This includes table of contents, list of figures, list of tables, and list of algorithms.
-
-    Parameters:
-        original_tex (str): The path to the original .tex file.
-
-    Returns:
-        None
-    """
-    with open(original_tex, "r") as file:
-        latex_content = file.read()
-
-    pattern = r"\\(" + "|".join(envs.table_of_contents) + r")"
-    modified_content = re.sub(pattern, "", latex_content)
-
-    with open(original_tex, "w") as file:
-        file.write(modified_content)
-
-
-def run(original_tex: str) -> None:
-    """
-    Generates a modified version of the given LaTeX document by performing the following steps:
-
-    Step 0: Clean the LaTeX document with arxiv_cleaner package.
-    Step 1: Replace EPS figures with PDF to make the LaTeX document compilable with pdflatex.
-    Step 2: Replace PDF figures with PNG to make pdfminer work.
-    Step 3: Delete the table of contents from the LaTeX document.
+    Delete table of contents, list of figures/tables/algorithms.
 
     Args:
-        original_tex (str): The original LaTeX document.
-
-    Returns:
-        None
+        tex_file: Path to the TeX file
     """
-    # Step 0: clean tex
-    clean_tex(original_tex)
+    tex_file = Path(tex_file)
+    content = tex_file.read_text()
 
-    # Step 2: process images
-    replace_pdf_ps_figures_with_png(original_tex)
+    pattern = r"\\(" + "|".join(envs.table_of_contents) + r")"
+    content = re.sub(pattern, "", content)
 
-    # Step 3: delete table of contents
-    delete_table_of_contents(original_tex)
+    tex_file.write_text(content)
+
+
+def run(tex_file: Path) -> None:
+    """
+    Preprocess a LaTeX document by:
+    1. Cleaning with arxiv_cleaner
+    2. Converting figures to PNG format
+    3. Removing table of contents
+
+    Args:
+        tex_file: Path to the LaTeX document
+    """
+    clean_tex(tex_file)
+    replace_pdf_ps_figures_with_png(tex_file)
+    delete_table_of_contents(tex_file)
